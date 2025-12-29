@@ -1,0 +1,29 @@
+import 'package:chat_jyotishi/features/auth/models/verified_otp_resp_model.dart';
+
+import '../models/send_otp_resp_model.dart';
+import '../service/auth_service.dart';
+
+class AuthRepository {
+  final AuthService authService;
+
+  AuthRepository(this.authService);
+
+  Future<SendOtpResponseModel> sendOtp({required String phoneNumber}) async {
+    final data = await authService.sendOtp(phoneNumber: phoneNumber);
+
+    return SendOtpResponseModel.fromJson(data);
+  }
+
+  Future<VerifiedOtpResponseModel> verifyOtp({
+    required String phoneNumber,
+    required String sessionId,
+    required String otp,
+  }) async {
+    final data = await authService.verifyOtp(
+      phoneNumber: phoneNumber,
+      sessionId: sessionId,
+      otp: otp,
+    );
+    return VerifiedOtpResponseModel.fromJson(data);
+  }
+}
