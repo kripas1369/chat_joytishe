@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../constants/constant.dart';
 import '../../auth/widgets/input_field.dart';
-import '../../auth/widgets/star_field_background.dart';
+import '../../app_widgets/star_field_background.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});

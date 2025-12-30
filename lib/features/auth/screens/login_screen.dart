@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../constants/constant.dart';
@@ -7,7 +8,7 @@ import '../bloc/auth_bloc.dart';
 import '../repository/auth_repository.dart';
 import '../service/auth_service.dart';
 import '../widgets/login_card.dart';
-import '../widgets/star_field_background.dart';
+import '../../app_widgets/star_field_background.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -53,10 +54,21 @@ class _LoginScreenContentState extends State<LoginScreenContent>
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.backgroundDark,
+      ),
+    );
     return Scaffold(
       body: Stack(
         children: [
           StarFieldBackground(),
+          Container(
+            decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
+          ),
+
           _loginHeader(),
           Center(
             child: SingleChildScrollView(
@@ -82,7 +94,7 @@ class _LoginScreenContentState extends State<LoginScreenContent>
 
   Widget _loginHeader() {
     return Positioned(
-      top: 80,
+      top: 68,
       right: 1,
       left: 1,
       child: Column(
@@ -90,41 +102,48 @@ class _LoginScreenContentState extends State<LoginScreenContent>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.nightlight_round, color: gold),
-              SizedBox(width: 8),
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'CHAT',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2,
-                        color: Colors.white,
+              ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [Colors.white, AppColors.lightPurple],
+                ).createShader(bounds),
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Chat',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    ),
-                    TextSpan(
-                      text: 'JYOTISH',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2,
-                        color: gold,
+                      TextSpan(
+                        text: 'Jyotishi',
+                        style: TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              SizedBox(width: 8),
-              Icon(Icons.star_border, color: gold),
+              SizedBox(width: 4),
+              Icon(
+                Icons.auto_awesome,
+                size: 24,
+                color: AppColors.primaryPurple,
+              ),
             ],
           ),
           SizedBox(height: 8),
           Text(
             'PORTAL FOR CELESTIAL GUIDES',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               letterSpacing: 1.4,
               color: Colors.white70,
             ),

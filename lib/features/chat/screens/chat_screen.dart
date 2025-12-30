@@ -2,7 +2,7 @@ import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
 import 'package:flutter/material.dart';
 
-import '../../auth/widgets/star_field_background.dart';
+import '../../app_widgets/star_field_background.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});

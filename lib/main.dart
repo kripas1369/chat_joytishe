@@ -5,7 +5,7 @@ import 'package:chat_jyotishi/features/profile/screens/set_password_screen.dart'
 import 'package:flutter/material.dart';
 
 import 'features/auth/screens/login_screen.dart';
-import 'features/auth/screens/otp_screen.dart';
+
 import 'features/auth/screens/splash_screen.dart';
 import 'features/chat/screens/chat_screen.dart';
 import 'features/home/screens/home_screen.dart';
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         '/change_password_screen': (context) => ChangePasswordScreen(),
         '/chat_list_screen': (context) => ChatListScreen(),
       },
-      initialRoute: '/chat_list_screen',
+      initialRoute: '/splash_screen',
     );
   }
 }

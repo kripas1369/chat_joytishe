@@ -1,7 +1,9 @@
+import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../constants/constant.dart';
+import '../../app_widgets/app_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_events.dart';
 import '../bloc/auth_states.dart';
@@ -139,12 +141,13 @@ class _LoginCardState extends State<LoginCard> {
                               ),
                               Positioned(
                                 right: 8,
+                                bottom: 4,
                                 child: IconButton(
                                   icon: Icon(
                                     widget.passwordVisibility
                                         ? Icons.visibility
                                         : Icons.visibility_off,
-                                    color: gold,
+                                    color: Colors.white70,
                                   ),
                                   onPressed: widget.onPasswordToggle,
                                 ),
@@ -159,7 +162,7 @@ class _LoginCardState extends State<LoginCard> {
                                 onTap: () {},
                                 child: Text(
                                   'Forget password ?',
-                                  style: TextStyle(color: gold),
+                                  style: TextStyle(color: Colors.white),
                                 ),
                               ),
                             ],
@@ -183,78 +186,50 @@ class _LoginCardState extends State<LoginCard> {
                 builder: (_, __) {
                   return Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(
-                            0xFFF5C84C,
-                          ).withOpacity(0.4 + widget.glow.value * 0.3),
-                          blurRadius: 24,
-                          spreadRadius: 1,
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    child: ElevatedButton(
-                      onPressed: () {
+                    child: AppButton(
+                      title: widget.usePassword ? 'LOGIN' : 'SEND OTP',
+                      isLoading: state is AuthLoadingState,
+                      icon: Icons.auto_awesome,
+                      onTap: () {
                         if (widget.usePassword) {
                           final identifier = emailController.text.trim();
                           final password = passwordController.text.trim();
 
                           if (identifier.isEmpty || password.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Please fill all fields'),
-                                backgroundColor: Colors.red,
-                              ),
+                            showTopSnackBar(
+                              context: context,
+                              message: ' All fields are required',
+                              icon: Icons.dangerous,
+                              backgroundColor: AppColors.error,
                             );
                             return;
                           }
 
-                          // Add password login event here when implemented
                           // context.read<AuthBloc>().add(LoginWithPasswordEvent(...));
                         } else {
                           final phone = phoneController.text.trim();
+
                           if (phone.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Please enter phone number'),
-                                backgroundColor: Colors.red,
-                              ),
+                            showTopSnackBar(
+                              context: context,
+                              message: ' Phone Number or Email is required',
+                              icon: Icons.dangerous,
+                              backgroundColor: AppColors.error,
                             );
                             return;
                           }
-
                           context.read<AuthBloc>().add(
                             SendOtpEvent(phoneNumber: phone),
                           );
                         }
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: gold,
-                        foregroundColor: Colors.black,
-                        minimumSize: Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.auto_awesome),
-                          SizedBox(width: 8),
-                          Text(
-                            widget.usePassword ? 'LOGIN' : 'SEND-OTP',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   );
                 },
               ),
+
               SizedBox(height: 22),
             ],
           ),

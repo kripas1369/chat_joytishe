@@ -1,19 +1,24 @@
 import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
+import 'package:chat_jyotishi/features/home/screens/home_screen.dart';
 import 'package:flutter/material.dart';
-import '../../auth/widgets/star_field_background.dart';
+import '../../app_widgets/star_field_background.dart';
 import '../models/active_user_model.dart';
 
-class ChatListScreen extends StatelessWidget {
+class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
 
+  @override
+  State<ChatListScreen> createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends State<ChatListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
           StarFieldBackground(),
-
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
@@ -38,8 +43,12 @@ class ChatListScreen extends StatelessWidget {
 
   Widget _header() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
+        IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+        ),
         Text(
           'Chats',
           style: TextStyle(
@@ -48,13 +57,8 @@ class ChatListScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        Row(
-          children: [
-            Icon(Icons.edit_outlined, color: Colors.white),
-            SizedBox(width: 16),
-            Icon(Icons.more_vert, color: Colors.white),
-          ],
-        ),
+        Spacer(),
+        Icon(Icons.more_vert, color: Colors.white),
       ],
     );
   }

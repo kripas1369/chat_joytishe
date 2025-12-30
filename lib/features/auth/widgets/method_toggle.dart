@@ -32,19 +32,25 @@ class MethodToggle extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: enabled ? Color(0xFF6B5A1E) : Colors.transparent,
+          color: enabled
+              ? AppColors.primaryPurple.withOpacity(0.5)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: enabled ? gold : Colors.white54),
+            Icon(
+              icon,
+              size: 16,
+              color: enabled ? Colors.white : Colors.white54,
+            ),
             SizedBox(width: 6),
             Text(
               text,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: enabled ? gold : Colors.white70,
+                color: enabled ? Colors.white : Colors.white70,
               ),
             ),
           ],

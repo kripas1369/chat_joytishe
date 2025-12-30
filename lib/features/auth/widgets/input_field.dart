@@ -34,7 +34,7 @@ class InputField extends StatelessWidget {
           style: TextStyle(color: Colors.white),
           decoration: InputDecoration(
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: gold)
+                ? Icon(prefixIcon, color: Colors.white70)
                 : null,
             suffixIcon: suffixIcon != null
                 ? Icon(suffixIcon, color: gold)
@@ -42,7 +42,7 @@ class InputField extends StatelessWidget {
             hintText: hint,
             hintStyle: TextStyle(color: Colors.white),
             filled: true,
-            fillColor: Color(0xFF10162E),
+            fillColor: AppColors.primaryPurple.withOpacity(0.06),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,

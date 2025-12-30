@@ -14,12 +14,13 @@ class SendOtpResponseModel {
   });
 
   factory SendOtpResponseModel.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] ?? {};
     return SendOtpResponseModel(
       success: json['success'] ?? false,
-      sessionId: json['data']['sessionId'] ?? '',
-      isExistingUser: json['data']['isExistingUser'] ?? false,
-      message: json['data']['message'] ?? '',
-      otp: json['data']['otp'] ?? '',
+      sessionId: data['sessionId'] ?? '',
+      isExistingUser: data['isExistingUser'] ?? false,
+      message: data['message'] ?? '',
+      otp: data['otp'] ?? '',
     );
   }
 }

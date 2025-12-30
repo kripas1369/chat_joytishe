@@ -1,8 +1,6 @@
 import 'dart:math';
-import 'package:chat_jyotishi/features/auth/widgets/app_button.dart';
-import 'package:chat_jyotishi/features/auth/widgets/star_field_background.dart';
+import 'package:chat_jyotishi/features/auth/widgets/app_button_splash.dart';
 import 'package:flutter/material.dart';
-
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {

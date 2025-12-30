@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../constants/constant.dart';
+import '../../app_widgets/app_button.dart';
+import '../../app_widgets/show_top_snackBar.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_events.dart';
 import '../bloc/auth_states.dart';
 import '../repository/auth_repository.dart';
 import '../service/auth_service.dart';
-import '../widgets/star_field_background.dart';
+import '../../app_widgets/star_field_background.dart';
 import '../../home/screens/home_screen.dart';
 
 class OtpScreen extends StatelessWidget {
@@ -70,10 +72,20 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.backgroundDark,
+      ),
+    );
     return Scaffold(
       body: Stack(
         children: [
           StarFieldBackground(),
+          Container(
+            decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
+          ),
           _otpHeader(),
           Center(
             child: SingleChildScrollView(
@@ -132,29 +144,40 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'CHAT',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2,
-                        color: Colors.white,
+              ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [Colors.white, AppColors.lightPurple],
+                ).createShader(bounds),
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Chat',
+                        style: TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    ),
-                    TextSpan(
-                      text: 'JYOTISH',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2,
-                        color: gold,
+                      TextSpan(
+                        text: 'Jyotishi',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+              ),
+              SizedBox(width: 4),
+              Icon(
+                Icons.auto_awesome,
+                size: 24,
+                color: AppColors.primaryPurple,
               ),
             ],
           ),
@@ -162,7 +185,7 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
           Text(
             'OTP VERIFICATION',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               letterSpacing: 1.4,
               color: Colors.white70,
             ),
@@ -178,9 +201,8 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
     return Container(
       padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -205,55 +227,31 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
           ),
           SizedBox(height: 30),
           SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: gold,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: isLoading
-                  ? null
-                  : () {
-                      String otp = _controllers.map((c) => c.text).join();
+            child: AppButton(
+              title: 'VERIFY',
+              isLoading: isLoading,
+              icon: Icons.verified,
+              onTap: () {
+                String otp = _controllers.map((c) => c.text).join();
 
-                      if (otp.length < 6) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Please enter a 6-digit OTP'),
-                            backgroundColor: Colors.orange,
-                          ),
-                        );
-                        return;
-                      }
+                if (otp.length < 6) {
+                  showTopSnackBar(
+                    context: context,
+                    message: 'Please enter a 6-digit OTP',
+                    icon: Icons.warning_amber_rounded,
+                    backgroundColor: Colors.orange,
+                  );
+                  return;
+                }
 
-                      _authBloc.add(
-                        VerifyOtpEvent(
-                          phoneNumber: widget.phoneNumber,
-                          sessionId: _currentSessionId,
-                          otp: otp,
-                        ),
-                      );
-                    },
-              child: isLoading
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Text(
-                      'VERIFY',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
+                _authBloc.add(
+                  VerifyOtpEvent(
+                    phoneNumber: widget.phoneNumber,
+                    sessionId: _currentSessionId,
+                    otp: otp,
+                  ),
+                );
+              },
             ),
           ),
           SizedBox(height: 14),
@@ -304,14 +302,14 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
         decoration: InputDecoration(
           counterText: '',
           filled: true,
-          fillColor: Colors.white12,
+          fillColor: AppColors.primaryPurple.withOpacity(0.06),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: gold, width: 2),
+            borderSide: BorderSide(color: AppColors.primaryPurple, width: 2),
           ),
         ),
         onChanged: (value) {

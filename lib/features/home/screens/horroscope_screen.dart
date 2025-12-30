@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../constants/constant.dart';
-import '../../auth/widgets/star_field_background.dart';
+import '../../app_widgets/star_field_background.dart';
 
 class HoroscopeScreen extends StatefulWidget {
   const HoroscopeScreen({super.key});
