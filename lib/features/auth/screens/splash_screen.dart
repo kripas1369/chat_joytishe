@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:chat_jyotishi/features/auth/widgets/app_button_splash.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../constants/constant.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -32,14 +34,32 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
+
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/image/splash_image.jpg', fit: BoxFit.cover),
-          Opacity(opacity: 0.6, child: Container(color: Colors.black)),
-          const TwinklingStars(starCount: 3),
+          Container(decoration: BoxDecoration(color: Colors.black)),
 
+          // Opacity(
+          //   opacity: 0.4,
+          //   child: ClipOval(
+          //     child: Image.asset(
+          //       'assets/logo/logo.png',
+          //       width: screenWidth,
+          //       height: screenWidth,
+          //       fit: BoxFit.contain,
+          //     ),
+          //   ),
+          // ),
           Center(
             child: AnimatedBuilder(
               animation: _rotationController,
@@ -51,8 +71,8 @@ class _SplashScreenState extends State<SplashScreen>
                     child: ClipOval(
                       child: Image.asset(
                         'assets/image/splash_image1.webp',
-                        width: MediaQuery.of(context).size.width * 1,
-                        height: MediaQuery.of(context).size.width * 1,
+                        width: screenWidth,
+                        height: screenWidth,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -62,70 +82,35 @@ class _SplashScreenState extends State<SplashScreen>
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Opacity(
-                  opacity: 0.9,
-                  child: ShaderMask(
-                    shaderCallback: (bounds) => LinearGradient(
-                      colors: [
-                        Color(0xFFAC40ED),
-                        Color(0xFFD81B60),
-                        Color(0xFFF1A441),
-                      ],
-                    ).createShader(bounds),
-                    child: Text(
-                      'Chat Jyotish',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+          // Twinkling stars
+          const TwinklingStars(starCount: 3),
+
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: EdgeInsets.only(top: 50, left: 16, right: 16),
+                child: Image.asset(
+                  'assets/logo/name_logo.png',
+                  fit: BoxFit.contain,
+                  width: screenWidth * 0.6,
                 ),
-                SizedBox(height: 8),
-                Opacity(
-                  opacity: 0.75,
-                  child: Text(
-                    'Discover Your Cosmic Path',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: Colors.white70,
-                    ),
-                  ),
+              ),
+            ),
+          ),
+
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 66),
+              child: SizedBox(
+                width: 240,
+                child: AppButton(
+                  title: 'Get Started',
+                  suffixIcon: Icon(Icons.arrow_forward, color: Colors.white70),
+                  onTap: _onGetStarted,
                 ),
-                SizedBox(height: 8),
-                Opacity(
-                  opacity: 0.7,
-                  child: Text(
-                    'Connect with Verified Expert Astrologers',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: Colors.white70),
-                  ),
-                ),
-                SizedBox(height: 40),
-                SizedBox(
-                  width: 240,
-                  child: AppButton(
-                    title: 'Get Started',
-                    suffixIcon: Icon(
-                      Icons.arrow_forward,
-                      color: Colors.white70,
-                    ),
-                    onTap: _onGetStarted,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -136,7 +121,7 @@ class _SplashScreenState extends State<SplashScreen>
   void _onGetStarted() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => LoginScreen()),
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
 }

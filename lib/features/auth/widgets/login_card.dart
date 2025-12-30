@@ -1,4 +1,6 @@
 import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
+import 'package:chat_jyotishi/features/auth/widgets/input_field.dart';
+import 'package:chat_jyotishi/features/auth/widgets/method_toggle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,21 +10,17 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_events.dart';
 import '../bloc/auth_states.dart';
 import '../screens/otp_screen.dart';
-import 'input_field.dart';
-import 'method_toggle.dart';
 
 class LoginCard extends StatefulWidget {
   final bool usePassword;
   final VoidCallback onToggle;
   final bool passwordVisibility;
   final VoidCallback onPasswordToggle;
-  final Animation<double> glow;
 
   const LoginCard({
     super.key,
     required this.usePassword,
     required this.onToggle,
-    required this.glow,
     required this.passwordVisibility,
     required this.onPasswordToggle,
   });
@@ -55,8 +53,11 @@ class _LoginCardState extends State<LoginCard> {
             showDialog(
               context: context,
               barrierDismissible: false,
-              builder: (_) =>
-                  Center(child: CircularProgressIndicator(color: gold)),
+              builder: (_) => Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryPurple,
+                ),
+              ),
             );
           }
         } else {
@@ -65,6 +66,7 @@ class _LoginCardState extends State<LoginCard> {
             Navigator.of(context).pop();
           }
         }
+
         if (state is AuthOtpLoadedState) {
           Navigator.push(
             context,
@@ -78,7 +80,6 @@ class _LoginCardState extends State<LoginCard> {
         }
 
         if (state is AuthErrorState) {
-          debugPrint(state.message);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
@@ -89,7 +90,14 @@ class _LoginCardState extends State<LoginCard> {
           width: 380,
           padding: EdgeInsets.fromLTRB(26, 30, 26, 28),
           decoration: BoxDecoration(
-            color: cardColor,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryPurple.withOpacity(0.15),
+                AppColors.deepPurple.withOpacity(0.08),
+              ],
+            ),
             borderRadius: BorderRadius.circular(26),
             boxShadow: [
               BoxShadow(
@@ -116,8 +124,11 @@ class _LoginCardState extends State<LoginCard> {
                 style: TextStyle(color: Colors.white54),
               ),
               SizedBox(height: 22),
+
               MethodToggle(active: widget.usePassword, onTap: widget.onToggle),
+
               SizedBox(height: 24),
+
               AnimatedSwitcher(
                 duration: Duration(milliseconds: 300),
                 child: widget.usePassword
@@ -180,53 +191,44 @@ class _LoginCardState extends State<LoginCard> {
                         ],
                       ),
               ),
+
               SizedBox(height: 28),
-              AnimatedBuilder(
-                animation: widget.glow,
-                builder: (_, __) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: AppButton(
-                      title: widget.usePassword ? 'LOGIN' : 'SEND OTP',
-                      isLoading: state is AuthLoadingState,
-                      icon: Icons.auto_awesome,
-                      onTap: () {
-                        if (widget.usePassword) {
-                          final identifier = emailController.text.trim();
-                          final password = passwordController.text.trim();
 
-                          if (identifier.isEmpty || password.isEmpty) {
-                            showTopSnackBar(
-                              context: context,
-                              message: ' All fields are required',
-                              icon: Icons.dangerous,
-                              backgroundColor: AppColors.error,
-                            );
-                            return;
-                          }
+              AppButton(
+                title: widget.usePassword ? 'LOGIN' : 'SEND OTP',
+                isLoading: state is AuthLoadingState,
+                icon: Icons.auto_awesome,
+                onTap: () {
+                  if (widget.usePassword) {
+                    final identifier = emailController.text.trim();
+                    final password = passwordController.text.trim();
 
-                          // context.read<AuthBloc>().add(LoginWithPasswordEvent(...));
-                        } else {
-                          final phone = phoneController.text.trim();
+                    if (identifier.isEmpty || password.isEmpty) {
+                      showTopSnackBar(
+                        context: context,
+                        message: ' All fields are required',
+                        icon: Icons.dangerous,
+                        backgroundColor: AppColors.error,
+                      );
+                      return;
+                    }
+                  } else {
+                    final phone = phoneController.text.trim();
 
-                          if (phone.isEmpty) {
-                            showTopSnackBar(
-                              context: context,
-                              message: ' Phone Number or Email is required',
-                              icon: Icons.dangerous,
-                              backgroundColor: AppColors.error,
-                            );
-                            return;
-                          }
-                          context.read<AuthBloc>().add(
-                            SendOtpEvent(phoneNumber: phone),
-                          );
-                        }
-                      },
-                    ),
-                  );
+                    if (phone.isEmpty) {
+                      showTopSnackBar(
+                        context: context,
+                        message: ' Phone Number or Email is required',
+                        icon: Icons.dangerous,
+                        backgroundColor: AppColors.error,
+                      );
+                      return;
+                    }
+
+                    context.read<AuthBloc>().add(
+                      SendOtpEvent(phoneNumber: phone),
+                    );
+                  }
                 },
               ),
 

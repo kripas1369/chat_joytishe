@@ -201,7 +201,15 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
     return Container(
       padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardColor,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryPurple.withOpacity(0.15),
+            AppColors.deepPurple.withOpacity(0.08),
+          ],
+        ),
+        // color: cardColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(

@@ -24,9 +24,7 @@ class AppButton extends StatelessWidget {
       height: height ?? 50,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors:
-              gradientColors ??
-              [Color(0xFFAC40ED), Color(0xFFD81B60), Color(0xFFFF8F00)],
+          colors: gradientColors ?? [Color(0xFF460C68), Color(0xFF8309CC)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

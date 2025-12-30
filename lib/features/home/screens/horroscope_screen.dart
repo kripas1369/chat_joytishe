@@ -33,6 +33,11 @@ class _HoroscopeGridScreenState extends State<HoroscopeScreen> {
       body: Stack(
         children: [
           StarFieldBackground(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: AppColors.backgroundGradient.withOpacity(0.8),
+            ),
+          ),
 
           SafeArea(
             child: Column(
@@ -92,43 +97,45 @@ class _HoroscopeGridScreenState extends State<HoroscopeScreen> {
   Widget _zodiacCard(int index, String name, String icon) {
     bool isHovered = hoveredIndex == index;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => hoveredIndex = index),
-      onExit: (_) => setState(() => hoveredIndex = -1),
-      child: InkWell(
-        onTap: () {},
-        child: Container(
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            gradient: cardColor2.withOpacity(0.9),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white24),
-            boxShadow: isHovered
-                ? [BoxShadow(color: gold, blurRadius: 16, spreadRadius: 4)]
-                : [
-                    BoxShadow(
-                      color: Colors.black38,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-          ),
-          transform: Matrix4.identity()..scale(isHovered ? 1.05 : 1.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(icon, style: TextStyle(fontSize: 26)),
-              SizedBox(height: 6),
-              Text(
-                name,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
+    return InkWell(
+      onTap: () {},
+      child: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryPurple.withOpacity(0.4),
+              AppColors.deepPurple.withOpacity(0.08),
             ],
           ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white24),
+          boxShadow: isHovered
+              ? [BoxShadow(color: gold, blurRadius: 16, spreadRadius: 4)]
+              : [
+                  BoxShadow(
+                    color: Colors.black38,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(icon, style: TextStyle(fontSize: 26)),
+            SizedBox(height: 6),
+            Text(
+              name,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -3,20 +3,6 @@ import 'package:flutter/material.dart';
 const Color gold = Color(0xFFF5C84C);
 const Color goldShadow = Color(0xFF6B5A1E);
 const Color cardColor = Color(0xFF0A1025);
-const Color formFieldColor = Color(0xFF10162E);
-const Color primaryPurple = Color(0xFF8B30E7);
-const Color secondaryPurple = Color(0xFF512183);
-const Gradient cardColor1 = LinearGradient(
-  begin: Alignment.topLeft,
-  end: Alignment.bottomRight,
-  colors: [Color(0xFFFF6F00), Color(0xFFFF8F00), Color(0xFFFFC107)],
-);
-const Gradient cardColor2 = LinearGradient(
-  begin: Alignment.topLeft,
-  end: Alignment.topRight,
-  // colors: [Color(0xFF8B3CF6), Color(0xFFA855F7), Color(0xFFD946EF)],
-  colors: [Color(0xFFD946EF), Color(0xFF3A0481)],
-);
 
 class AppColors {
   static const Color primaryPurple = Color(0xFF9B4DFF);
@@ -39,8 +25,8 @@ class AppColors {
   static const Color starWhite = Color(0xFFE8E8FF);
   static const Color glowPurple = Color(0x409B4DFF);
 
-   static const Color success = Color(0xFF19611C);
-   static const Color error = Color(0xFFA51010);
+  static const Color success = Color(0xFF19611C);
+  static const Color error = Color(0xFFA51010);
 
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -70,5 +56,11 @@ class AppColors {
     end: Alignment.bottomRight,
     colors: [AppColors.primaryPurple, AppColors.deepPurple],
     //.withOpacity 0.15,0.08
+  );
+
+  static const LinearGradient splashGradient = LinearGradient(
+    colors: [Color(0xFF61198C), Color(0xFF8309CC)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
   );
 }

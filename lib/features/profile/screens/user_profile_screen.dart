@@ -19,7 +19,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   File? profileImage;
   final ImagePicker picker = ImagePicker();
 
-  // Controllers
   final TextEditingController nameController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
   final TextEditingController tobController = TextEditingController();
@@ -92,9 +91,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       body: Stack(
         children: [
           Container(
-            decoration: const BoxDecoration(
-              gradient: AppColors.backgroundGradient,
-            ),
+            decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
           ),
 
           Positioned(
@@ -792,15 +789,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         duration: Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          gradient: AppColors.splashGradient,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryPurple.withOpacity(0.4),
-              blurRadius: 20,
-              offset: Offset(0, 8),
-            ),
-          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

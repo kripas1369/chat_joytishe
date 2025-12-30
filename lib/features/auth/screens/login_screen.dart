@@ -78,7 +78,7 @@ class _LoginScreenContentState extends State<LoginScreenContent>
                 onToggle: () {
                   setState(() => usePassword = !usePassword);
                 },
-                glow: glowController,
+
                 passwordVisibility: passwordVisibility,
                 onPasswordToggle: () {
                   setState(() => passwordVisibility = !passwordVisibility);

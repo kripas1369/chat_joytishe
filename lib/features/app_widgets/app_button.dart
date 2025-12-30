@@ -25,15 +25,8 @@ class AppButton extends StatelessWidget {
         duration: Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          gradient: gradient ?? AppColors.primaryGradient,
+          gradient: gradient ?? AppColors.splashGradient,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryPurple.withOpacity(0.4),
-              blurRadius: 20,
-              offset: Offset(0, 8),
-            ),
-          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

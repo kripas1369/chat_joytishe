@@ -37,7 +37,7 @@ class InputField extends StatelessWidget {
                 ? Icon(prefixIcon, color: Colors.white70)
                 : null,
             suffixIcon: suffixIcon != null
-                ? Icon(suffixIcon, color: gold)
+                ? Icon(suffixIcon, color: Colors.white)
                 : null,
             hintText: hint,
             hintStyle: TextStyle(color: Colors.white),
