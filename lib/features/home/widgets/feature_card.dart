@@ -80,7 +80,7 @@ class FeatureCardState extends State<FeatureCard>
               BoxShadow(
                 color: Colors.black.withOpacity(0.3),
                 blurRadius: 16,
-                offset: const Offset(0, 8),
+                offset: Offset(0, 8),
               ),
             ],
           ),

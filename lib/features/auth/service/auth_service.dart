@@ -18,8 +18,14 @@ class AuthService {
     debugPrint('Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
+      print(response.body);
+      print("###################");
+      print("###################");
       return jsonDecode(response.body);
     } else {
+      print(response.body);
+      print("###################");
+      print("###################");
       throw Exception('Failed to send OTP');
     }
   }
@@ -48,7 +54,9 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final prefs = await SharedPreferences.getInstance();
-
+      print(response.body);
+      print("###################");
+      print("###################");
       if (response.headers.containsKey('set-cookie')) {
         final cookies = response.headers['set-cookie']!.split(',');
 
@@ -65,6 +73,9 @@ class AuthService {
       }
       return jsonDecode(response.body);
     } else {
+      print(response.body);
+      print("###################");
+      print("###################");
       throw Exception('Failed to verify OTP');
     }
   }

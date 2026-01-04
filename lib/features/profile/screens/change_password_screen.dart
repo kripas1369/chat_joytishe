@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../constants/constant.dart';
+import '../../app_widgets/app_button.dart';
 import '../../auth/widgets/input_field.dart';
 import '../../app_widgets/star_field_background.dart';
 
@@ -25,6 +26,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       body: Stack(
         children: [
           StarFieldBackground(),
+          Container(
+            decoration: BoxDecoration(gradient: AppColors.backgroundGradient.withOpacity(0.9)),
+          ),
 
           Center(
             child: SingleChildScrollView(
@@ -42,7 +46,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Container(
       padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardColor,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryPurple.withOpacity(0.15),
+            AppColors.deepPurple.withOpacity(0.08),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -69,11 +80,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 prefixIcon: Icons.lock_outline,
               ),
               Positioned(
-                bottom: 6,
+                bottom: 5,
                 child: IconButton(
                   icon: Icon(
                     newVisible ? Icons.visibility : Icons.visibility_off,
-                    color: gold,
+                    color: Colors.white70,
                   ),
                   onPressed: () {
                     setState(() => newVisible = !newVisible);
@@ -95,11 +106,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 prefixIcon: Icons.lock_outline,
               ),
               Positioned(
-                bottom: 6,
+                bottom: 5,
                 child: IconButton(
                   icon: Icon(
                     confirmVisible ? Icons.visibility : Icons.visibility_off,
-                    color: gold,
+                    color: Colors.white70,
                   ),
                   onPressed: () {
                     setState(() => confirmVisible = !confirmVisible);
@@ -111,25 +122,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           SizedBox(height: 28),
 
           SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: gold,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () {},
-              child: Text(
-                'CHANGE PASSWORD',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
+            child: AppButton(title: 'CHANGE PASSWORD', onTap: () {}),
           ),
         ],
       ),

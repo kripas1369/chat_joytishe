@@ -118,7 +118,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             ),
           ),
 
-          // Main Content
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -172,10 +171,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           Expanded(
             child: ShaderMask(
               shaderCallback: (bounds) => LinearGradient(
-                colors: [Colors.white, AppColors.lightPurple],
+                colors: [Colors.white, AppColors.accentPurple],
               ).createShader(bounds),
               child: Text(
-                'My Profile',
+                'Profile',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -185,8 +184,12 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               ),
             ),
           ),
-          // Settings Button
-          GlassIconButton(icon: Icons.settings_rounded, onTap: () {}),
+          GlassIconButton(
+            icon: Icons.settings_rounded,
+            onTap: () {
+              Navigator.of(context).pushNamed('/change_password_screen');
+            },
+          ),
         ],
       ),
     );

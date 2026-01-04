@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 const Color gold = Color(0xFFF5C84C);
-const Color goldShadow = Color(0xFF6B5A1E);
 const Color cardColor = Color(0xFF0A1025);
 
 class AppColors {
@@ -32,6 +31,16 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [primaryPurple, deepPurple],
+  );
+  static const LinearGradient featureCardGradient2 = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF7B4DFF), Color(0xFF5B2FC9)],
+  );
+  static const LinearGradient featureCardGradient1 = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF9B4DFF), Color(0xFF6B2FD9)],
   );
 
   static const LinearGradient cardGradient = LinearGradient(

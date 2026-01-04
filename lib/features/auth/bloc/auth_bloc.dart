@@ -21,6 +21,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           ),
         );
       } catch (e) {
+        print(e);
+        print(e);
+        print(e);
+        print(e);
         emit(AuthErrorState(message: e.toString()));
       }
     });
@@ -35,6 +39,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         );
         emit(AuthOtpVerifiedState(verifiedOtp: verifiedOtp));
       } catch (e) {
+        print(e);
+        print(e);
+        print(e);
+        print(e);
+
         emit(AuthErrorState(message: e.toString()));
       }
     });

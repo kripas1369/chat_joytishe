@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class AppButton extends StatelessWidget {
+class AppButtonSplash extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
   final List<Color>? gradientColors;
@@ -8,7 +8,7 @@ class AppButton extends StatelessWidget {
   final double? height;
   final Widget? suffixIcon;
 
-  const AppButton({
+  const AppButtonSplash({
     super.key,
     required this.title,
     required this.onTap,

@@ -22,19 +22,4 @@ class VerifiedOtpResponseModel {
   }
 }
 
-// Usage Example:
-//
-// final response = VerifiedOtpResponseModel.fromJson(jsonResponse);
-//
-// if (response.success) {
-//   // Store tokens
-//   await SecureStorage.saveAccessToken(response.accessToken);
-//   await SecureStorage.saveRefreshToken(response.refreshToken);
-//
-//   // Navigate based on user status
-//   if (response.isNewUser) {
-//     Navigator.pushReplacementNamed(context, '/profile-setup');
-//   } else {
-//     Navigator.pushReplacementNamed(context, '/home');
-//   }
-// }
+

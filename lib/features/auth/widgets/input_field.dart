@@ -24,7 +24,7 @@ class InputField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(label, style: TextStyle(color: Colors.white, fontSize: 12)),
         SizedBox(height: 6),
         TextFormField(
           controller: controller,

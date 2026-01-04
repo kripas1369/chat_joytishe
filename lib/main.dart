@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         '/home_screen': (context) => HomeScreen(),
         '/user_profile_screen': (context) => UserProfileScreen(),
         '/horoscope_screen': (context) => HoroscopeScreen(),
-        '/chat_screen': (context) => ChatScreen(),
+        // '/chat_screen': (context) => ChatScreen(),
         '/set_password_screen': (context) => SetPasswordScreen(),
         '/change_password_screen': (context) => ChangePasswordScreen(),
         '/chat_list_screen': (context) => ChatListScreen(),

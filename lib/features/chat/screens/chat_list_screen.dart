@@ -1,39 +1,97 @@
-import 'package:chat_jyotishi/constants/constant.dart';
-import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
-import 'package:chat_jyotishi/features/home/screens/home_screen.dart';
+import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../constants/constant.dart';
 import '../../app_widgets/star_field_background.dart';
+import '../bloc/chat_bloc.dart';
+import '../bloc/chat_events.dart';
+import '../bloc/chat_states.dart';
 import '../models/active_user_model.dart';
+import '../repository/chat_repository.dart';
+import '../service/chat_service.dart';
+import '../widgets/profile_status.dart';
+import 'chat_screen.dart';
 
-class ChatListScreen extends StatefulWidget {
+class ChatListScreen extends StatelessWidget {
   const ChatListScreen({super.key});
 
   @override
-  State<ChatListScreen> createState() => _ChatListScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) =>
+          ChatBloc(chatRepository: ChatRepository(ChatService()))
+            ..add(FetchActiveUsersEvent()),
+      child: ChatListScreenContent(),
+    );
+  }
 }
 
-class _ChatListScreenState extends State<ChatListScreen> {
+class ChatListScreenContent extends StatefulWidget {
+  const ChatListScreenContent({super.key});
+
+  @override
+  State<ChatListScreenContent> createState() => _ChatListScreenContentState();
+}
+
+class _ChatListScreenContentState extends State<ChatListScreenContent> {
+  Future<void> _openChatWithAstrologer(ActiveAstrologerModel astrologer) async {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+    final refreshToken = prefs.getString('refreshToken');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          chatId: '1',
+          otherUserId: astrologer.id,
+          otherUserName: astrologer.name,
+          otherUserPhoto: astrologer.profilePhoto,
+          currentUserId: '',
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          isOnline: astrologer.isOnline,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
           StarFieldBackground(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: AppColors.backgroundGradient.withOpacity(0.9),
+            ),
+          ),
           SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _header(),
-                  SizedBox(height: 16),
-                  _searchBar(),
-                  SizedBox(height: 20),
-                  _activeNowSection(),
-                  SizedBox(height: 20),
-                  Expanded(child: _chatList()),
-                ],
-              ),
+            child: BlocBuilder<ChatBloc, ChatState>(
+              builder: (context, state) {
+                // Determine loading & astrologers list
+                final isLoading = state is ActiveUsersLoading;
+                final astrologers = state is ActiveUsersLoaded
+                    ? state.astrologers
+                    : <ActiveAstrologerModel>[];
+
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _header(isLoading),
+                      SizedBox(height: 16),
+                      _searchBar(),
+                      SizedBox(height: 20),
+                      _activeNowSection(astrologers, isLoading),
+                      SizedBox(height: 20),
+                      Expanded(child: _chatList()),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -41,9 +99,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  Widget _header() {
+  Widget _header(bool isLoading) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         IconButton(
           onPressed: () => Navigator.pop(context),
@@ -58,6 +115,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
         ),
         Spacer(),
+        IconButton(
+          onPressed: isLoading
+              ? null
+              : () => context.read<ChatBloc>().add(RefreshActiveUsersEvent()),
+          icon: isLoading
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Icon(Icons.refresh, color: Colors.white),
+        ),
         Icon(Icons.more_vert, color: Colors.white),
       ],
     );
@@ -68,8 +140,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
       height: 42,
       padding: EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryPurple.withOpacity(0.15),
+            AppColors.deepPurple.withOpacity(0.08),
+          ],
+        ),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primaryPurple.withOpacity(0.3),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
@@ -81,64 +162,90 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  Widget _activeNowSection() {
-    final List<ActiveUser> activeUsers = [
-      ActiveUser(name: 'Alice', isActive: true),
-      ActiveUser(name: 'Sarah', isActive: true),
-      ActiveUser(name: 'Mike', isActive: true),
-      ActiveUser(name: 'Jessica', isActive: false),
-      ActiveUser(name: 'David', isActive: true),
-    ];
-
+  Widget _activeNowSection(
+    List<ActiveAstrologerModel> astrologers,
+    bool isLoading,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'ACTIVE NOW',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
-            letterSpacing: 1.2,
-          ),
+        Row(
+          children: [
+            Text(
+              'ACTIVE NOW',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                letterSpacing: 1.2,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(width: 8),
+            if (isLoading)
+              SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white54,
+                ),
+              ),
+          ],
         ),
-
         SizedBox(height: 12),
-
         SizedBox(
           height: 96,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: activeUsers.length,
-            separatorBuilder: (_, __) => SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              final user = activeUsers[index];
-
-              return Column(
-                children: [
-                  profileStatus(
-                    radius: 30, // bigger circle
-                    isActive: user.isActive,
-                    profileImageUrl: user.imageUrl,
+          child: astrologers.isEmpty && !isLoading
+              ? Center(
+                  child: Text(
+                    'No active astrologers',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
                   ),
-
-                  SizedBox(height: 6),
-
-                  SizedBox(
-                    width: 64,
-                    child: Text(
-                      user.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 11),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
+                )
+              : ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: astrologers.length,
+                  separatorBuilder: (_, __) => SizedBox(width: 16),
+                  itemBuilder: (context, index) {
+                    final astrologer = astrologers[index];
+                    return GestureDetector(
+                      onTap: () => _openChatWithAstrologer(astrologer),
+                      child: Column(
+                        children: [
+                          _buildAstrologerAvatar(astrologer),
+                          SizedBox(height: 6),
+                          SizedBox(
+                            width: 64,
+                            child: Text(
+                              astrologer.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAstrologerAvatar(ActiveAstrologerModel astrologer) {
+    final String imageUrl = astrologer.profilePhoto.startsWith('http')
+        ? astrologer.profilePhoto
+        : '${ApiEndpoints.baseUrl}${astrologer.profilePhoto}';
+
+    return profileStatus(
+      radius: 34,
+      isActive: astrologer.isOnline,
+      profileImageUrl: imageUrl,
     );
   }
 
@@ -146,32 +253,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return ListView(
       children: [
         _chatTile(
-          name: 'Alice Chen',
-          message: "That sounds great! Let's discuss more in the meeting.",
-          time: '5 minutes',
+          name: 'Alice',
+          message: 'Hello there!',
+          time: '5m',
           online: true,
-          seen: true,
         ),
-        SizedBox(height: 8),
         _chatTile(
-          name: 'Bob Johnson',
-          message: 'See you tomorrow at 10am',
-          time: 'about 3 hours',
+          name: 'Bob',
+          message: 'Meeting tomorrow',
+          time: '3h',
           unread: 2,
-        ),
-        SizedBox(height: 8),
-        _chatTile(
-          name: 'Design Team',
-          message: 'Sarah: The new mockups are looking great!',
-          time: '1 day',
-          online: true,
-          seen: true,
-        ),
-        SizedBox(height: 8),
-        _chatTile(
-          name: 'Emma Wilson',
-          message: "Thanks for the feedback! I'll update it.",
-          time: '3 days',
         ),
       ],
     );
@@ -186,97 +277,122 @@ class _ChatListScreenState extends State<ChatListScreen> {
     int unread = 0,
   }) {
     return Container(
+      margin: EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Colors.grey[300],
-                  child: Icon(Icons.person, color: Colors.grey[700]),
-                ),
-                if (online)
-                  Positioned(
-                    bottom: 2,
-                    right: 2,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black, width: 1.5),
-                      ),
-                    ),
-                  ),
-                if (unread > 0)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: gold.withOpacity(0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        unread.toString(),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    message,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.white60, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  time,
-                  style: TextStyle(color: Colors.white54, fontSize: 11),
-                ),
-                SizedBox(height: 6),
-                Icon(
-                  seen ? Icons.done_all : Icons.done,
-                  size: 16,
-                  color: seen ? Colors.blueAccent : Colors.white54,
-                ),
-              ],
-            ),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryPurple.withOpacity(0.15),
+            AppColors.deepPurple.withOpacity(0.08),
           ],
         ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primaryPurple.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primaryPurple.withOpacity(0.3),
+                      AppColors.deepPurple.withOpacity(0.3),
+                    ],
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 26,
+                  backgroundColor: Colors.transparent,
+                  child: Icon(Icons.person, color: Colors.white70),
+                ),
+              ),
+              if (online)
+                Positioned(
+                  bottom: 2,
+                  right: 2,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.greenAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.deepPurple, width: 2),
+                    ),
+                  ),
+                ),
+              if (unread > 0)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    padding: EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [gold, gold.withOpacity(0.8)],
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: gold.withOpacity(0.5),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      unread.toString(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  message,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(time, style: TextStyle(color: Colors.white54, fontSize: 11)),
+              SizedBox(height: 6),
+              Icon(
+                seen ? Icons.done_all : Icons.done,
+                size: 16,
+                color: seen ? AppColors.primaryPurple : Colors.white54,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

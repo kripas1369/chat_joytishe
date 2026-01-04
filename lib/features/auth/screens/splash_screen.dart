@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:chat_jyotishi/features/auth/widgets/app_button_splash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../constants/constant.dart';
+
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -105,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen>
               padding: EdgeInsets.only(bottom: 66),
               child: SizedBox(
                 width: 240,
-                child: AppButton(
+                child: AppButtonSplash(
                   title: 'Get Started',
                   suffixIcon: Icon(Icons.arrow_forward, color: Colors.white70),
                   onTap: _onGetStarted,

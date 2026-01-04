@@ -80,8 +80,10 @@ class _LoginCardState extends State<LoginCard> {
         }
 
         if (state is AuthErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          showTopSnackBar(
+            context: context,
+            message: state.message,
+            backgroundColor: AppColors.error,
           );
         }
       },
@@ -226,7 +228,7 @@ class _LoginCardState extends State<LoginCard> {
                     }
 
                     context.read<AuthBloc>().add(
-                      SendOtpEvent(phoneNumber: phone),
+                      SendOtpEvent(phoneNumber: phone.toString()),
                     );
                   }
                 },

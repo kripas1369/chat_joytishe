@@ -267,7 +267,6 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
             onPressed: isLoading
                 ? null
                 : () {
-                    // Clear OTP fields before resending
                     for (var controller in _controllers) {
                       controller.clear();
                     }

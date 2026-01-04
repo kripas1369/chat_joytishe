@@ -1,8 +1,8 @@
+import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
 import 'package:flutter/material.dart';
 import '../../../constants/constant.dart';
 import '../../auth/widgets/input_field.dart';
 import '../../app_widgets/star_field_background.dart';
-import '../../home/screens/home_screen.dart';
 
 class SetPasswordScreen extends StatefulWidget {
   const SetPasswordScreen({super.key});
@@ -24,7 +24,11 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       body: Stack(
         children: [
           StarFieldBackground(),
-
+          Container(
+            decoration: BoxDecoration(
+              gradient: AppColors.backgroundGradient.withOpacity(0.9),
+            ),
+          ),
           Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(20),
@@ -41,7 +45,14 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
     return Container(
       padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardColor,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryPurple.withOpacity(0.15),
+            AppColors.deepPurple.withOpacity(0.08),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -56,11 +67,11 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                 prefixIcon: Icons.lock_outline,
               ),
               Positioned(
-                bottom: 6,
+                bottom: 5,
                 child: IconButton(
                   icon: Icon(
                     passwordVisible ? Icons.visibility : Icons.visibility_off,
-                    color: gold,
+                    color: Colors.white70,
                   ),
                   onPressed: () {
                     setState(() => passwordVisible = !passwordVisible);
@@ -84,7 +95,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                 child: IconButton(
                   icon: Icon(
                     confirmVisible ? Icons.visibility : Icons.visibility_off,
-                    color: gold,
+                    color: Colors.white70,
                   ),
                   onPressed: () {
                     setState(() => confirmVisible = !confirmVisible);
@@ -95,31 +106,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
           ),
           SizedBox(height: 28),
           SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: gold,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () {
-                // Optional: check if password matches confirm
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => HomeScreen()),
-                );
-              },
-              child: Text(
-                'SET PASSWORD',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
+            child: AppButton(title: 'SET PASSWORD', onTap: () {}),
           ),
         ],
       ),
