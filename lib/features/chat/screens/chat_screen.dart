@@ -5,8 +5,9 @@ import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as path;
@@ -445,10 +446,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              AppColors.cardDark,
-              AppColors.backgroundDark,
-            ],
+            colors: [AppColors.cardDark, AppColors.backgroundDark],
           ),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -485,6 +483,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     _pickAndSendImage();
                   },
                 ),
+                SizedBox(width: 4),
                 _buildAttachmentOption(
                   icon: Icons.camera_alt_rounded,
                   label: 'Camera',
@@ -514,21 +513,14 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       child: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(18),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  color.withOpacity(0.3),
-                  color.withOpacity(0.1),
-                ],
+                colors: [color.withOpacity(0.3), color.withOpacity(0.1)],
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: color.withOpacity(0.4),
-                width: 1,
-              ),
             ),
-            child: Icon(icon, color: color, size: 32),
+            child: Icon(icon, color: color, size: 52),
           ),
           SizedBox(height: 10),
           Text(
@@ -585,16 +577,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildHeader() {
-    // Build proper image URL
-    String imageUrl = '';
-    if (widget.otherUserPhoto != null && widget.otherUserPhoto!.isNotEmpty) {
-      if (widget.otherUserPhoto!.startsWith('http')) {
-        imageUrl = widget.otherUserPhoto!;
-      } else {
-        imageUrl = '${ApiEndpoints.baseUrl}${widget.otherUserPhoto}';
-      }
-    }
-
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
@@ -620,76 +602,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             onTap: () => Navigator.pop(context),
           ),
           SizedBox(width: 12),
-          // Profile image with online status
-          Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: _isOtherUserOnline
-                      ? LinearGradient(
-                          colors: [Colors.green, Colors.greenAccent],
-                        )
-                      : LinearGradient(
-                          colors: [Colors.grey, Colors.grey.shade600],
-                        ),
-                ),
-                child: Container(
-                  padding: EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.backgroundDark,
-                  ),
-                  child: CircleAvatar(
-                    radius: 22,
-                    backgroundColor: AppColors.cardMedium,
-                    backgroundImage:
-                        imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                    child: imageUrl.isEmpty
-                        ? Text(
-                            widget.otherUserName.isNotEmpty
-                                ? widget.otherUserName[0].toUpperCase()
-                                : '?',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                  ),
-                ),
-              ),
-              // Online indicator dot
-              Positioned(
-                bottom: 2,
-                right: 2,
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color:
-                        _isOtherUserOnline ? Colors.greenAccent : Colors.grey,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.backgroundDark,
-                      width: 2,
-                    ),
-                    boxShadow: _isOtherUserOnline
-                        ? [
-                            BoxShadow(
-                              color: Colors.greenAccent.withOpacity(0.5),
-                              blurRadius: 6,
-                              spreadRadius: 1,
-                            ),
-                          ]
-                        : null,
-                  ),
-                ),
-              ),
-            ],
-          ),
+
+          profileStatus(radius: 22, isActive: _isOtherUserOnline),
           SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -704,48 +618,31 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     letterSpacing: 0.3,
                   ),
                 ),
-                SizedBox(height: 3),
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _isOtherUserOnline
-                            ? Colors.greenAccent
-                            : Colors.grey,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      _isOtherUserTyping
-                          ? 'typing...'
-                          : _isOtherUserOnline
-                              ? 'Active now'
-                              : 'Offline',
-                      style: TextStyle(
-                        color: _isOtherUserTyping
-                            ? AppColors.primaryPurple
-                            : _isOtherUserOnline
-                                ? Colors.greenAccent
-                                : Colors.white54,
-                        fontSize: 13,
-                        fontWeight: _isOtherUserTyping
-                            ? FontWeight.w500
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
+                SizedBox(height: 6),
+                SizedBox(width: 6),
+                Text(
+                  _isOtherUserTyping
+                      ? 'typing...'
+                      : _isOtherUserOnline
+                      ? 'Active now'
+                      : 'Offline',
+                  style: TextStyle(
+                    color: _isOtherUserTyping
+                        ? AppColors.primaryPurple
+                        : _isOtherUserOnline
+                        ? Colors.greenAccent
+                        : Colors.white54,
+                    fontSize: 13,
+                    fontWeight: _isOtherUserTyping
+                        ? FontWeight.w500
+                        : FontWeight.normal,
+                  ),
                 ),
               ],
             ),
           ),
           // Refresh button only
-          GlassIconButton(
-            icon: Icons.refresh_rounded,
-            onTap: _loadChatHistory,
-          ),
+          GlassIconButton(icon: Icons.refresh_rounded, onTap: _loadChatHistory),
         ],
       ),
     );
@@ -790,18 +687,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             SizedBox(height: 10),
             Text(
               'Say hi to ${widget.otherUserName}!',
-              style: TextStyle(
-                color: Colors.white60,
-                fontSize: 15,
-              ),
+              style: TextStyle(color: Colors.white60, fontSize: 15),
             ),
             SizedBox(height: 6),
             Text(
               'Send a message or share an image',
-              style: TextStyle(
-                color: Colors.white38,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: Colors.white38, fontSize: 13),
             ),
           ],
         ),
@@ -833,8 +724,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
-        crossAxisAlignment:
-            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isMe
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Container(
             padding: type == 'IMAGE'
@@ -848,10 +740,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   ? LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.primaryPurple,
-                        AppColors.deepPurple,
-                      ],
+                      colors: [AppColors.primaryPurple, AppColors.deepPurple],
                     )
                   : LinearGradient(
                       begin: Alignment.topLeft,
@@ -895,10 +784,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               children: [
                 Text(
                   _formatTime(message['createdAt']),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white54,
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.white54),
                 ),
                 if (isMe) ...[
                   SizedBox(width: 5),
@@ -946,7 +832,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             child: CircleAvatar(
               radius: 14,
               backgroundColor: AppColors.cardDark,
-              backgroundImage: widget.otherUserPhoto != null &&
+              backgroundImage:
+                  widget.otherUserPhoto != null &&
                       widget.otherUserPhoto!.isNotEmpty
                   ? NetworkImage(
                       widget.otherUserPhoto!.startsWith('http')
@@ -954,7 +841,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           : '${ApiEndpoints.baseUrl}${widget.otherUserPhoto}',
                     )
                   : null,
-              child: widget.otherUserPhoto == null ||
+              child:
+                  widget.otherUserPhoto == null ||
                       widget.otherUserPhoto!.isEmpty
                   ? Text(
                       widget.otherUserName.isNotEmpty
@@ -1132,11 +1020,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   ),
                 ],
               ),
-              child: Icon(
-                Icons.send_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
+              child: Icon(Icons.send_rounded, color: Colors.white, size: 22),
             ),
           ),
         ],
@@ -1173,7 +1057,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               child: CircularProgressIndicator(
                 value: progress.expectedTotalBytes != null
                     ? progress.cumulativeBytesLoaded /
-                        progress.expectedTotalBytes!
+                          progress.expectedTotalBytes!
                     : null,
                 color: AppColors.primaryPurple,
                 strokeWidth: 2,
@@ -1215,10 +1099,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     return Stack(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: imageWidget,
-        ),
+        ClipRRect(borderRadius: BorderRadius.circular(16), child: imageWidget),
         if (isSending)
           Positioned.fill(
             child: Container(

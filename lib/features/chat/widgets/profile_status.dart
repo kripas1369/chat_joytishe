@@ -1,37 +1,74 @@
+import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:flutter/material.dart';
 
 Widget profileStatus({
   required double radius,
   required bool isActive,
-  String? profileImageUrl,
+  String name = '',
+  String profileImageUrl = '',
 }) {
   return Stack(
     children: [
-      CircleAvatar(
-        radius: radius,
-        backgroundColor: Colors.grey[300],
-        backgroundImage: profileImageUrl != null
-            ? NetworkImage(profileImageUrl)
-            : null,
-        child: profileImageUrl == null
-            ? Icon(Icons.person, color: Colors.grey[700], size: radius / 1.5)
-            : null,
-      ),
-
-      if (isActive)
-        Positioned(
-          bottom: 3,
-          right: 2,
-          child: Container(
-            width: radius * 0.45,
-            height: radius * 0.45, // keep it perfectly circular
-            decoration: BoxDecoration(
-              color: Colors.green,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-            ),
+      Container(
+        padding: EdgeInsets.all(radius * 0.08),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: isActive
+              ? LinearGradient(colors: [Colors.green, Colors.greenAccent])
+              : LinearGradient(colors: [Colors.grey, Colors.grey.shade600]),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(radius * 0.08),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.backgroundDark,
+          ),
+          child: CircleAvatar(
+            radius: radius,
+            backgroundColor: AppColors.cardMedium,
+            backgroundImage: profileImageUrl.isNotEmpty
+                ? NetworkImage(profileImageUrl)
+                : null,
+            child: profileImageUrl.isEmpty
+                ? Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: radius * 0.8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
           ),
         ),
+      ),
+
+
+      Positioned(
+        bottom: radius * 0.1,
+        right: radius * 0.1,
+        child: Container(
+          width: radius * 0.6,
+          height: radius * 0.6,
+          decoration: BoxDecoration(
+            color: isActive ? Colors.greenAccent : Colors.grey,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.backgroundDark,
+              width: radius * 0.12,
+            ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: Colors.greenAccent.withOpacity(0.5),
+                      blurRadius: radius * 0.4,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+        ),
+      ),
     ],
   );
 }

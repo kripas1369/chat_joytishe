@@ -10,7 +10,7 @@ import '../bloc/auth_states.dart';
 import '../repository/auth_repository.dart';
 import '../service/auth_service.dart';
 import '../../app_widgets/star_field_background.dart';
-import '../../home/screens/home_screen.dart';
+import '../../home/screens/home_screen_client.dart';
 
 class OtpScreen extends StatelessWidget {
   final String phoneNumber;
@@ -107,7 +107,7 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
 
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => HomeScreen()),
+                      MaterialPageRoute(builder: (_) => HomeScreenClient()),
                     );
                   } else if (state is AuthOtpLoadedState) {
                     setState(() {

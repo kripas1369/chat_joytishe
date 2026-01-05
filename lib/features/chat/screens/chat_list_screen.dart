@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
+import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
+import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -97,12 +99,12 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
 
       if (currentUserId.isEmpty) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Invalid token. Please login again.'),
-              backgroundColor: Colors.red,
-            ),
+          showTopSnackBar(
+            context: context,
+            message: 'Invalid token. Please login again.',
+            backgroundColor: AppColors.error,
           );
+
           setState(() => _isConnecting = false);
         }
         return;
@@ -126,10 +128,12 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
         MaterialPageRoute(
           builder: (_) => ChatScreen(
             chatId: 'chat_${currentUserId}_${astrologer.id}',
-            otherUserId: astrologer.id, // Jyotishi ID as receiver
+            otherUserId: astrologer.id,
+            // Jyotishi ID as receiver
             otherUserName: astrologer.name,
             otherUserPhoto: astrologer.profilePhoto,
-            currentUserId: currentUserId, // Current user ID from JWT
+            currentUserId: currentUserId,
+            // Current user ID from JWT
             accessToken: accessToken,
             refreshToken: refreshToken,
             isOnline: astrologer.isOnline,
@@ -199,10 +203,11 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
   Widget _header(bool isLoading) {
     return Row(
       children: [
-        IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+        GlassIconButton(
+          onTap: () => Navigator.pop(context),
+          icon: Icons.arrow_back,
         ),
+        SizedBox(width: 16),
         Text(
           'Chats',
           style: TextStyle(
@@ -227,7 +232,6 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                 )
               : Icon(Icons.refresh, color: Colors.white),
         ),
-        Icon(Icons.more_vert, color: Colors.white),
       ],
     );
   }
@@ -291,7 +295,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
         ),
         SizedBox(height: 12),
         SizedBox(
-          height: 96,
+          height: 110,
           child: astrologers.isEmpty && !isLoading
               ? Center(
                   child: Text(
