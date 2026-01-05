@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,8 +11,37 @@ import '../bloc/chat_states.dart';
 import '../models/active_user_model.dart';
 import '../repository/chat_repository.dart';
 import '../service/chat_service.dart';
+import '../service/socket_service.dart';
 import '../widgets/profile_status.dart';
 import 'chat_screen.dart';
+
+/// Decode JWT token to get user info
+Map<String, dynamic>? decodeJwt(String token) {
+  try {
+    final parts = token.split('.');
+    if (parts.length != 3) return null;
+
+    String payload = parts[1];
+    // Add padding if needed
+    switch (payload.length % 4) {
+      case 1:
+        payload += '===';
+        break;
+      case 2:
+        payload += '==';
+        break;
+      case 3:
+        payload += '=';
+        break;
+    }
+
+    final decoded = utf8.decode(base64Url.decode(payload));
+    return json.decode(decoded);
+  } catch (e) {
+    debugPrint('Error decoding JWT: $e');
+    return null;
+  }
+}
 
 class ChatListScreen extends StatelessWidget {
   const ChatListScreen({super.key});
@@ -35,25 +65,92 @@ class ChatListScreenContent extends StatefulWidget {
 }
 
 class _ChatListScreenContentState extends State<ChatListScreenContent> {
+  final SocketService _socketService = SocketService();
+  bool _isConnecting = false;
+
   Future<void> _openChatWithAstrologer(ActiveAstrologerModel astrologer) async {
-    final prefs = await SharedPreferences.getInstance();
-    final accessToken = prefs.getString('accessToken');
-    final refreshToken = prefs.getString('refreshToken');
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChatScreen(
-          chatId: '1',
-          otherUserId: astrologer.id,
-          otherUserName: astrologer.name,
-          otherUserPhoto: astrologer.profilePhoto,
-          currentUserId: '',
+    if (_isConnecting) return;
+
+    setState(() => _isConnecting = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('accessToken');
+      final refreshToken = prefs.getString('refreshToken');
+
+      if (accessToken == null || refreshToken == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please login first'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isConnecting = false);
+        }
+        return;
+      }
+
+      // Decode JWT to get current user ID
+      final decodedToken = decodeJwt(accessToken);
+      final currentUserId = decodedToken?['id'] ?? '';
+
+      if (currentUserId.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Invalid token. Please login again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isConnecting = false);
+        }
+        return;
+      }
+
+      // Connect to socket if not already connected
+      if (!_socketService.connected) {
+        await _socketService.connect(
           accessToken: accessToken,
           refreshToken: refreshToken,
-          isOnline: astrologer.isOnline,
+        );
+        // Wait for connection
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      if (!mounted) return;
+
+      // Navigate to chat screen with jyotishi id as receiver
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            chatId: 'chat_${currentUserId}_${astrologer.id}',
+            otherUserId: astrologer.id, // Jyotishi ID as receiver
+            otherUserName: astrologer.name,
+            otherUserPhoto: astrologer.profilePhoto,
+            currentUserId: currentUserId, // Current user ID from JWT
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            isOnline: astrologer.isOnline,
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      debugPrint('Error opening chat: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to connect. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isConnecting = false);
+      }
+    }
   }
 
   @override

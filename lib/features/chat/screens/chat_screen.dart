@@ -6,8 +6,10 @@ import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:path/path.dart' as path;
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -171,7 +173,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         if (mounted) setState(() => _messages = loadedMessages);
       }
     } catch (e) {
-      print('Failed to load chat: $e');
+      debugPrint('Failed to load chat: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -239,6 +241,309 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
+  /// Pick image from gallery and send
+  Future<void> _pickAndSendImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+      if (image != null) {
+        await _uploadAndSendImage(File(image.path));
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Take photo with camera and send
+  Future<void> _takePhotoAndSend() async {
+    try {
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 70,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+      if (photo != null) {
+        await _uploadAndSendImage(File(photo.path));
+      }
+    } catch (e) {
+      debugPrint('Error taking photo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to take photo'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Upload image to server and send via socket
+  Future<void> _uploadAndSendImage(File imageFile) async {
+    if (!imageFile.existsSync()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Image file not found'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isSendingImage = true);
+
+    final tempId = 'temp_img_${DateTime.now().millisecondsSinceEpoch}';
+    final fileName = path.basename(imageFile.path);
+    final fileSize = await imageFile.length();
+
+    // Determine content type from extension
+    final extension = path.extension(imageFile.path).toLowerCase();
+    String mimeType = 'image/jpeg';
+    if (extension == '.png') {
+      mimeType = 'image/png';
+    } else if (extension == '.gif') {
+      mimeType = 'image/gif';
+    } else if (extension == '.webp') {
+      mimeType = 'image/webp';
+    }
+
+    // Add temp message to show upload progress
+    setState(() {
+      _messages.insert(0, {
+        'id': tempId,
+        'content': imageFile.path,
+        'senderId': widget.currentUserId,
+        'receiverId': widget.otherUserId,
+        'isRead': false,
+        'createdAt': DateTime.now().toIso8601String(),
+        'type': 'IMAGE',
+        'isSending': true,
+        'localPath': imageFile.path,
+      });
+    });
+    _scrollToBottom();
+
+    try {
+      // Create FormData with the file
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: fileName,
+          contentType: DioMediaType.parse(mimeType),
+        ),
+      });
+
+      // Make the upload request
+      final response = await _dio.post(
+        ApiEndpoints.chatUploadFile,
+        data: formData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Extract file URL from response
+        String? fileUrl;
+        final responseData = response.data;
+
+        if (responseData is Map) {
+          final data = responseData['data'];
+          if (data is Map) {
+            if (data['file'] is Map) {
+              fileUrl = data['file']['url'] as String?;
+            }
+            fileUrl ??= data['url'] as String?;
+            fileUrl ??= data['fileUrl'] as String?;
+            fileUrl ??= data['path'] as String?;
+          }
+          fileUrl ??= responseData['url'] as String?;
+          fileUrl ??= responseData['fileUrl'] as String?;
+
+          // If URL is relative, prepend base URL
+          if (fileUrl != null && fileUrl.startsWith('/')) {
+            fileUrl = '${ApiEndpoints.socketUrl}$fileUrl';
+          }
+        }
+
+        if (fileUrl != null && fileUrl.isNotEmpty) {
+          // Update temp message
+          setState(() {
+            final index = _messages.indexWhere((m) => m['id'] == tempId);
+            if (index != -1) {
+              _messages[index]['content'] = fileUrl;
+              _messages[index]['isSending'] = false;
+            }
+          });
+
+          // Send via socket
+          _socketService.sendMessage(
+            receiverId: widget.otherUserId,
+            content: fileUrl,
+            type: 'IMAGE',
+            metadata: {
+              'fileName': fileName,
+              'fileSize': fileSize,
+              'mimeType': mimeType,
+            },
+          );
+        } else {
+          throw Exception('Server did not return file URL');
+        }
+      } else {
+        throw Exception('Upload failed with status ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      debugPrint('Upload error: ${e.message}');
+      setState(() => _messages.removeWhere((m) => m['id'] == tempId));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload image'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('General upload error: $e');
+      setState(() => _messages.removeWhere((m) => m['id'] == tempId));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send image'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isSendingImage = false);
+    }
+  }
+
+  /// Show attachment options bottom sheet
+  void _showAttachmentOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.cardDark,
+              AppColors.backgroundDark,
+            ],
+          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            SizedBox(height: 24),
+            Text(
+              'Share Media',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildAttachmentOption(
+                  icon: Icons.photo_library_rounded,
+                  label: 'Gallery',
+                  color: AppColors.primaryPurple,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndSendImage();
+                  },
+                ),
+                _buildAttachmentOption(
+                  icon: Icons.camera_alt_rounded,
+                  label: 'Camera',
+                  color: Colors.green,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _takePhotoAndSend();
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  color.withOpacity(0.3),
+                  color.withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: color.withOpacity(0.4),
+                width: 1,
+              ),
+            ),
+            child: Icon(icon, color: color, size: 32),
+          ),
+          SizedBox(height: 10),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _typingTimer?.cancel();
@@ -280,28 +585,112 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildHeader() {
-    final String imageUrl = widget.otherUserPhoto != null
-        ? widget.otherUserPhoto!
-        : '';
+    // Build proper image URL
+    String imageUrl = '';
+    if (widget.otherUserPhoto != null && widget.otherUserPhoto!.isNotEmpty) {
+      if (widget.otherUserPhoto!.startsWith('http')) {
+        imageUrl = widget.otherUserPhoto!;
+      } else {
+        imageUrl = '${ApiEndpoints.baseUrl}${widget.otherUserPhoto}';
+      }
+    }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white12, width: 1)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.cardDark.withOpacity(0.8),
+            AppColors.backgroundDark.withOpacity(0.6),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.primaryPurple.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
       ),
       child: Row(
         children: [
           GlassIconButton(
-            icon: Icons.arrow_back,
+            icon: Icons.arrow_back_ios_new_rounded,
             onTap: () => Navigator.pop(context),
           ),
-          SizedBox(width: 14),
-          profileStatus(
-            radius: 22,
-            isActive: _isOtherUserOnline,
-            profileImageUrl: imageUrl,
-          ),
           SizedBox(width: 12),
+          // Profile image with online status
+          Stack(
+            children: [
+              Container(
+                padding: EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: _isOtherUserOnline
+                      ? LinearGradient(
+                          colors: [Colors.green, Colors.greenAccent],
+                        )
+                      : LinearGradient(
+                          colors: [Colors.grey, Colors.grey.shade600],
+                        ),
+                ),
+                child: Container(
+                  padding: EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.backgroundDark,
+                  ),
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.cardMedium,
+                    backgroundImage:
+                        imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                    child: imageUrl.isEmpty
+                        ? Text(
+                            widget.otherUserName.isNotEmpty
+                                ? widget.otherUserName[0].toUpperCase()
+                                : '?',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              // Online indicator dot
+              Positioned(
+                bottom: 2,
+                right: 2,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color:
+                        _isOtherUserOnline ? Colors.greenAccent : Colors.grey,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.backgroundDark,
+                      width: 2,
+                    ),
+                    boxShadow: _isOtherUserOnline
+                        ? [
+                            BoxShadow(
+                              color: Colors.greenAccent.withOpacity(0.5),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,28 +699,52 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   widget.otherUserName,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 17,
                     fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
                 ),
-                SizedBox(height: 2),
-                Text(
-                  _isOtherUserOnline ? 'Active now' : 'Offline',
-                  style: TextStyle(
-                    color: _isOtherUserOnline ? Colors.green : Colors.white54,
-                    fontSize: 12,
-                  ),
+                SizedBox(height: 3),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _isOtherUserOnline
+                            ? Colors.greenAccent
+                            : Colors.grey,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      _isOtherUserTyping
+                          ? 'typing...'
+                          : _isOtherUserOnline
+                              ? 'Active now'
+                              : 'Offline',
+                      style: TextStyle(
+                        color: _isOtherUserTyping
+                            ? AppColors.primaryPurple
+                            : _isOtherUserOnline
+                                ? Colors.greenAccent
+                                : Colors.white54,
+                        fontSize: 13,
+                        fontWeight: _isOtherUserTyping
+                            ? FontWeight.w500
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.call, color: AppColors.primaryPurple),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.videocam, color: AppColors.primaryPurple),
-            onPressed: () {},
+          // Refresh button only
+          GlassIconButton(
+            icon: Icons.refresh_rounded,
+            onTap: _loadChatHistory,
           ),
         ],
       ),
@@ -345,30 +758,50 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(24),
+              padding: EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: AppColors.cardDark,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryPurple.withOpacity(0.2),
+                    AppColors.deepPurple.withOpacity(0.1),
+                  ],
+                ),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primaryPurple.withOpacity(0.3),
+                  width: 2,
+                ),
               ),
               child: Icon(
-                Icons.chat_bubble_outline,
-                size: 48,
+                Icons.chat_bubble_outline_rounded,
+                size: 52,
                 color: AppColors.primaryPurple,
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 24),
             Text(
-              'No messages yet',
+              'Start the conversation',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 10),
             Text(
-              'Say hi to ${widget.otherUserName}! 👋',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              'Say hi to ${widget.otherUserName}!',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 15,
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Send a message or share an image',
+              style: TextStyle(
+                color: Colors.white38,
+                fontSize: 13,
+              ),
             ),
           ],
         ),
@@ -400,26 +833,49 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
-        crossAxisAlignment: isMe
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Container(
             padding: type == 'IMAGE'
                 ? EdgeInsets.all(4)
                 : EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.65,
+              maxWidth: MediaQuery.of(context).size.width * 0.72,
             ),
             decoration: BoxDecoration(
-              gradient: isMe ? AppColors.splashGradient : null,
-              color: isMe ? null : Colors.white.withOpacity(0.65),
+              gradient: isMe
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primaryPurple,
+                        AppColors.deepPurple,
+                      ],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.95),
+                        Colors.white.withOpacity(0.85),
+                      ],
+                    ),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
-                bottomLeft: Radius.circular(isMe ? 20 : 4),
-                bottomRight: Radius.circular(isMe ? 4 : 20),
+                bottomLeft: Radius.circular(isMe ? 20 : 6),
+                bottomRight: Radius.circular(isMe ? 6 : 20),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isMe
+                      ? AppColors.primaryPurple.withOpacity(0.3)
+                      : Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
             ),
             child: type == 'IMAGE'
                 ? _buildImageMessage(content, message['localPath'], isSending)
@@ -427,39 +883,42 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     content,
                     style: TextStyle(
                       color: isMe ? Colors.white : Colors.black87,
-                      fontSize: 14,
+                      fontSize: 15,
                       height: 1.4,
                     ),
                   ),
           ),
           Padding(
-            padding: EdgeInsets.only(top: 4, left: 4, right: 4),
+            padding: EdgeInsets.only(top: 6, left: 6, right: 6),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   _formatTime(message['createdAt']),
-                  style: TextStyle(fontSize: 11, color: Colors.white60),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white54,
+                  ),
                 ),
                 if (isMe) ...[
-                  SizedBox(width: 4),
+                  SizedBox(width: 5),
                   isSending
                       ? SizedBox(
                           width: 12,
                           height: 12,
                           child: CircularProgressIndicator(
                             strokeWidth: 1.5,
-                            color: Colors.white60,
+                            color: Colors.white54,
                           ),
                         )
                       : Icon(
                           message['isRead'] == true
-                              ? Icons.done_all
-                              : Icons.done,
+                              ? Icons.done_all_rounded
+                              : Icons.done_rounded,
                           size: 16,
                           color: message['isRead'] == true
-                              ? Colors.blue[300]
-                              : Colors.white60,
+                              ? Colors.greenAccent
+                              : Colors.white54,
                         ),
                 ],
               ],
@@ -472,32 +931,94 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   Widget _buildTypingIndicator() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          profileStatus(
-            radius: 16,
-            isActive: true,
-            profileImageUrl: widget.otherUserPhoto ?? '',
-          ),
-          SizedBox(width: 8),
+          // Small avatar
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: EdgeInsets.all(2),
             decoration: BoxDecoration(
-              color: Colors.white24,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              'typing...',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [AppColors.primaryPurple, AppColors.deepPurple],
               ),
+            ),
+            child: CircleAvatar(
+              radius: 14,
+              backgroundColor: AppColors.cardDark,
+              backgroundImage: widget.otherUserPhoto != null &&
+                      widget.otherUserPhoto!.isNotEmpty
+                  ? NetworkImage(
+                      widget.otherUserPhoto!.startsWith('http')
+                          ? widget.otherUserPhoto!
+                          : '${ApiEndpoints.baseUrl}${widget.otherUserPhoto}',
+                    )
+                  : null,
+              child: widget.otherUserPhoto == null ||
+                      widget.otherUserPhoto!.isEmpty
+                  ? Text(
+                      widget.otherUserName.isNotEmpty
+                          ? widget.otherUserName[0].toUpperCase()
+                          : '?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+          SizedBox(width: 10),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withOpacity(0.15),
+                  Colors.white.withOpacity(0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildTypingDot(0),
+                SizedBox(width: 4),
+                _buildTypingDot(1),
+                SizedBox(width: 4),
+                _buildTypingDot(2),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTypingDot(int index) {
+    return AnimatedBuilder(
+      animation: _typingAnimationController,
+      builder: (context, child) {
+        final value = (_typingAnimationController.value + index * 0.2) % 1.0;
+        final scale = 0.5 + (0.5 * (1 - (2 * value - 1).abs()));
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: AppColors.primaryPurple,
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -505,55 +1026,118 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.white12, width: 1)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.backgroundDark.withOpacity(0.8),
+            AppColors.cardDark,
+          ],
+        ),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.primaryPurple.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: Icon(Icons.attach_file, color: Colors.white70, size: 20),
-              onPressed: () {},
+          // Attachment button (camera/gallery)
+          GestureDetector(
+            onTap: _isSendingImage ? null : _showAttachmentOptions,
+            child: Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryPurple.withOpacity(0.3),
+                    AppColors.deepPurple.withOpacity(0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.primaryPurple.withOpacity(0.4),
+                  width: 1,
+                ),
+              ),
+              child: _isSendingImage
+                  ? SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primaryPurple,
+                      ),
+                    )
+                  : Icon(
+                      Icons.add_photo_alternate_rounded,
+                      color: AppColors.primaryPurple,
+                      size: 22,
+                    ),
             ),
           ),
           SizedBox(width: 12),
+          // Message input field
           Expanded(
             child: Container(
+              constraints: BoxConstraints(maxHeight: 120),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.12),
+                    Colors.white.withOpacity(0.08),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.15),
+                  width: 1,
+                ),
               ),
               child: TextField(
                 controller: _messageController,
                 onChanged: _handleTyping,
-                cursorColor: Colors.white,
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                cursorColor: AppColors.primaryPurple,
+                style: TextStyle(color: Colors.white, fontSize: 15),
+                maxLines: null,
+                textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   hintText: "Type a message...",
-                  hintStyle: TextStyle(color: Colors.white54, fontSize: 14),
+                  hintStyle: TextStyle(color: Colors.white38, fontSize: 15),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 12,
                   ),
                   border: InputBorder.none,
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.mic, color: Colors.white70, size: 20),
-                    onPressed: () {},
-                  ),
                 ),
               ),
             ),
           ),
           SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.splashGradient,
-              borderRadius: BorderRadius.circular(10),
+          // Send button
+          GestureDetector(
+            onTap: _sendMessage,
+            child: Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryPurple.withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
-            child: GlassIconButton(icon: Icons.send, onTap: _sendMessage),
           ),
         ],
       ),
@@ -561,18 +1145,97 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildImageMessage(String url, String? localPath, bool isSending) {
+    Widget imageWidget;
+
     if (localPath != null && File(localPath).existsSync()) {
-      return Image.file(
+      imageWidget = Image.file(
         File(localPath),
-        width: 200,
-        height: 200,
+        width: 220,
+        height: 220,
         fit: BoxFit.cover,
       );
     } else if (url.startsWith('http')) {
-      return Image.network(url, width: 200, height: 200, fit: BoxFit.cover);
+      imageWidget = Image.network(
+        url,
+        width: 220,
+        height: 220,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            width: 220,
+            height: 220,
+            decoration: BoxDecoration(
+              color: AppColors.cardDark,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: CircularProgressIndicator(
+                value: progress.expectedTotalBytes != null
+                    ? progress.cumulativeBytesLoaded /
+                        progress.expectedTotalBytes!
+                    : null,
+                color: AppColors.primaryPurple,
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, __, ___) => Container(
+          width: 220,
+          height: 220,
+          decoration: BoxDecoration(
+            color: AppColors.cardDark,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.broken_image_rounded, color: Colors.white38, size: 48),
+              SizedBox(height: 8),
+              Text(
+                'Failed to load',
+                style: TextStyle(color: Colors.white38, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
     } else {
-      return Container(width: 200, height: 200, color: Colors.grey[700]);
+      imageWidget = Container(
+        width: 220,
+        height: 220,
+        decoration: BoxDecoration(
+          color: AppColors.cardDark,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(Icons.image_rounded, color: Colors.white38, size: 48),
+      );
     }
+
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: imageWidget,
+        ),
+        if (isSending)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   String _formatTime(String? timestamp) {
