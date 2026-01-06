@@ -199,6 +199,11 @@ class SocketService {
     });
   }
 
+  /// Remove message received listener
+  void offMessageReceived() {
+    socket?.off('chat:receive');
+  }
+
   /// Listen for sent message confirmation
   void onMessageSent(Function(Map<String, dynamic>) callback) {
     socket?.on('chat:sent', (data) {
@@ -207,12 +212,22 @@ class SocketService {
     });
   }
 
+  /// Remove message sent listener
+  void offMessageSent() {
+    socket?.off('chat:sent');
+  }
+
   /// Listen for chat errors
   void onChatError(Function(Map<String, dynamic>) callback) {
     socket?.on('chat:error', (data) {
       print('❌ Chat error: ${data['message']}');
       callback(Map<String, dynamic>.from(data));
     });
+  }
+
+  /// Remove chat error listener
+  void offChatError() {
+    socket?.off('chat:error');
   }
 
   /// Send typing indicator
@@ -235,6 +250,11 @@ class SocketService {
     });
   }
 
+  /// Remove typing indicator listener
+  void offTypingIndicator() {
+    socket?.off('chat:typing-indicator');
+  }
+
   /// Mark messages as read (via socket)
   void markMessagesAsRead(List<String> messageIds) {
     if (!connected) return;
@@ -247,6 +267,23 @@ class SocketService {
     socket?.on('chat:marked-read', (data) {
       callback(Map<String, dynamic>.from(data));
     });
+  }
+
+  /// Remove marked as read listener
+  void offMarkedAsRead() {
+    socket?.off('chat:marked-read');
+  }
+
+  /// Listen for user online/offline status
+  void onUserStatus(Function(Map<String, dynamic>) callback) {
+    socket?.on('user:status', (data) {
+      callback(Map<String, dynamic>.from(data));
+    });
+  }
+
+  /// Remove user status listener
+  void offUserStatus() {
+    socket?.off('user:status');
   }
 
   // ============================================================
@@ -286,17 +323,6 @@ class SocketService {
   void onAllNotificationsMarkedAsRead(Function() callback) {
     socket?.on('notification:all-marked-read', (_) {
       callback();
-    });
-  }
-
-  // ============================================================
-  // USER STATUS EVENTS
-  // ============================================================
-
-  /// Listen for user online/offline status
-  void onUserStatus(Function(Map<String, dynamic>) callback) {
-    socket?.on('user:status', (data) {
-      callback(Map<String, dynamic>.from(data));
     });
   }
 

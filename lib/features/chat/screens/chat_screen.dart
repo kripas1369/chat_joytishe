@@ -86,6 +86,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   void _registerSocketListeners() {
+    // First, unregister any existing listeners to prevent duplicates
+    _unregisterSocketListeners();
+
     _socketService.onMessageReceived((message) {
       final senderId = message['senderId'] ?? message['sender']?['id'];
       if (senderId == widget.otherUserId) {
@@ -536,9 +539,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     );
   }
 
+  /// Unregister socket listeners to prevent memory leaks and duplicate callbacks
+  void _unregisterSocketListeners() {
+    _socketService.offMessageReceived();
+    _socketService.offMessageSent();
+    _socketService.offTypingIndicator();
+    _socketService.offUserStatus();
+  }
+
   @override
   void dispose() {
     _typingTimer?.cancel();
+    _unregisterSocketListeners();
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -838,7 +850,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   ? NetworkImage(
                       widget.otherUserPhoto!.startsWith('http')
                           ? widget.otherUserPhoto!
-                          : '${ApiEndpoints.baseUrl}${widget.otherUserPhoto}',
+                          : '${ApiEndpoints.socketUrl}${widget.otherUserPhoto}',
                     )
                   : null,
               child:

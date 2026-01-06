@@ -1,8 +1,13 @@
 import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/chat_list_screen_astrologer.dart';
+import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart'
+    show HomeScreenClient;
 import 'package:chat_jyotishi/features/home/screens/horroscope_screen.dart';
 import 'package:chat_jyotishi/features/home_astrologer/screens/home_screen_astrologer.dart';
+import 'package:chat_jyotishi/features/payment/screens/broadcast_page.dart';
+import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
+import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
 import 'package:chat_jyotishi/features/profile/screens/change_password_screen.dart';
 import 'package:chat_jyotishi/features/profile/screens/set_password_screen.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +15,6 @@ import 'package:flutter/material.dart';
 import 'features/auth/screens/login_screen.dart';
 
 import 'features/auth/screens/splash_screen.dart';
-
-import 'features/home/screens/home_screen_client.dart';
 import 'features/profile/screens/user_profile_screen.dart';
 
 void main() {
@@ -38,6 +41,10 @@ class MyApp extends StatelessWidget {
         '/change_password_screen': (context) => ChangePasswordScreen(),
         '/chat_list_screen': (context) => ChatListScreen(),
         '/astrologer_chat_list_screen': (context) => AstrologerChatListScreen(),
+        // Payment and broadcast routes
+        '/payment_page': (context) => PaymentPage(),
+        '/chat_options_page': (context) => ChatOptionsPage(),
+        '/broadcast_page': (context) => BroadcastPage(),
       },
       initialRoute: '/splash_screen',
     );
