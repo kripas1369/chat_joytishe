@@ -3,6 +3,7 @@ import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/constant.dart';
 import '../../app_widgets/glass_icon_button.dart';
 
@@ -23,6 +24,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   late Animation<double> _fadeAnimation;
 
   bool isOnline = false;
+  String astrologerId = '';
+  String accessToken = '';
+  String refreshToken = '';
 
   final String astrologerName = 'Dr. Sharma';
   final String specialization = 'Vedic Astrology';
@@ -37,6 +41,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   @override
   void initState() {
     super.initState();
+    _loadAuthData();
     _initAnimations();
   }
 
@@ -106,6 +111,38 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                           const SizedBox(height: 24),
                           _buildTodaySchedule(),
                           const SizedBox(height: 40),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Astrologer ID: $astrologerId',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                'Access Token: $accessToken',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                'Refresh Token: $refreshToken',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -1042,9 +1079,17 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     Navigator.of(context).pushNamed(route);
   }
 
-  void _handleAcceptRequest(int index) {
-    debugPrint('Accepted request $index');
+  Future<void> _loadAuthData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      astrologerId = prefs.getString('astrologerId') ?? '';
+      accessToken = prefs.getString('astrologerAccessToken') ?? '';
+      refreshToken = prefs.getString('astrologerRefreshToken') ?? '';
+    });
   }
+
+  void _handleAcceptRequest(int index) async {}
 
   void _handleRejectRequest(int index) {
     debugPrint('Rejected request $index');

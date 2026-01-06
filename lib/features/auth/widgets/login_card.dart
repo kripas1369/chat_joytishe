@@ -167,7 +167,7 @@ class _LoginCardState extends State<LoginCard> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 8),
+                          SizedBox(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -194,7 +194,7 @@ class _LoginCardState extends State<LoginCard> {
                       ),
               ),
 
-              SizedBox(height: 28),
+              SizedBox(height: 20),
 
               AppButton(
                 title: widget.usePassword ? 'LOGIN' : 'SEND OTP',
@@ -235,6 +235,29 @@ class _LoginCardState extends State<LoginCard> {
               ),
 
               SizedBox(height: 22),
+              InkWell(
+                onTap: () => Navigator.pushReplacementNamed(
+                  context,
+                  '/login_screen_astrologer',
+                ),
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '  Are you an Astrologer ?',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      TextSpan(
+                        text: ' CLICK-HERE',
+                        style: TextStyle(
+                          color: AppColors.accentPurple,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         );

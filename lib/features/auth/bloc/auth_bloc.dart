@@ -21,10 +21,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           ),
         );
       } catch (e) {
-        print(e);
-        print(e);
-        print(e);
-        print(e);
         emit(AuthErrorState(message: e.toString()));
       }
     });
@@ -39,11 +35,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         );
         emit(AuthOtpVerifiedState(verifiedOtp: verifiedOtp));
       } catch (e) {
-        print(e);
-        print(e);
-        print(e);
-        print(e);
+        emit(AuthErrorState(message: e.toString()));
+      }
+    });
+    on<AstrologerLoginWithPasswordEvent>((event, emit) async {
+      emit(AuthLoadingState());
+      try {
+        final loginResponse = await authRepository.astrologerLoginWithPassword(
+          identifier: event.identifier,
+          password: event.password,
+        );
 
+        emit(
+          AuthAstrologerPasswordLoginSuccessState(loginResponse: loginResponse),
+        );
+      } catch (e) {
         emit(AuthErrorState(message: e.toString()));
       }
     });

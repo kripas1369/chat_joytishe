@@ -79,4 +79,49 @@ class AuthService {
       throw Exception('Failed to verify OTP');
     }
   }
+
+  Future<Map<String, dynamic>> astrologerLoginWithPassword({
+    required String identifier,
+    required String password,
+  }) async {
+    final url = Uri.parse(ApiEndpoints.astrologerLoginWithPassword);
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'identifier': identifier, 'password': password}),
+    );
+
+    debugPrint('@@@@ Password Login Response @@@@');
+    debugPrint('Status: ${response.statusCode}');
+    debugPrint('Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (response.headers.containsKey('set-cookie')) {
+        final cookies = response.headers['set-cookie']!.split(',');
+
+        for (var cookie in cookies) {
+          if (cookie.contains('accessToken=')) {
+            final token = cookie.split('accessToken=')[1].split(';')[0];
+            await prefs.setString('astrologerAccessToken', token);
+          }
+          if (cookie.contains('refreshToken=')) {
+            final token = cookie.split('refreshToken=')[1].split(';')[0];
+            await prefs.setString('astrologerRefreshToken', token);
+          }
+        }
+      }
+      final data = jsonDecode(response.body);
+      final astrologerId = data['data']['astrologer']['id'];
+      if (astrologerId != null) {
+        await prefs.setString('astrologerId', astrologerId);
+      }
+
+      return data;
+    } else {
+      throw Exception('Failed to login with password');
+    }
+  }
 }

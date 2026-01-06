@@ -1,3 +1,4 @@
+import 'package:chat_jyotishi/features/auth/models/login_password_resp_model.dart';
 import 'package:equatable/equatable.dart';
 import '../models/send_otp_resp_model.dart';
 import '../models/verified_otp_resp_model.dart';
@@ -33,6 +34,15 @@ class AuthOtpVerifiedState extends AuthState {
 
   @override
   List<Object?> get props => [verifiedOtp];
+}
+
+class AuthAstrologerPasswordLoginSuccessState extends AuthState {
+  final LoginPasswordResponseModel loginResponse;
+
+  const AuthAstrologerPasswordLoginSuccessState({required this.loginResponse});
+
+  @override
+  List<Object?> get props => [loginResponse];
 }
 
 class AuthErrorState extends AuthState {

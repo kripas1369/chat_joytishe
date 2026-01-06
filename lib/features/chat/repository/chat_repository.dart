@@ -1,6 +1,6 @@
 import 'package:chat_jyotishi/features/chat/models/active_user_model.dart';
 import 'package:chat_jyotishi/features/chat/service/chat_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 class ChatRepository {
   final ChatService chatService;

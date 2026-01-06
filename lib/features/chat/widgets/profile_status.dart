@@ -42,33 +42,29 @@ Widget profileStatus({
           ),
         ),
       ),
+      if (isActive)
+        Positioned(
+          bottom: radius * 0.1,
+          right: radius * 0.1,
+          child: Container(
+            width: radius * 0.5,
+            height: radius * 0.5,
+            decoration: BoxDecoration(
+              color: Colors.greenAccent,
+              shape: BoxShape.circle,
 
-
-      Positioned(
-        bottom: radius * 0.1,
-        right: radius * 0.1,
-        child: Container(
-          width: radius * 0.6,
-          height: radius * 0.6,
-          decoration: BoxDecoration(
-            color: isActive ? Colors.greenAccent : Colors.grey,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.backgroundDark,
-              width: radius * 0.12,
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                        color: Colors.greenAccent.withOpacity(0.5),
+                        blurRadius: radius * 0.4,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
             ),
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: Colors.greenAccent.withOpacity(0.5),
-                      blurRadius: radius * 0.4,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
           ),
         ),
-      ),
     ],
   );
 }

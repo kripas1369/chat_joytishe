@@ -1,3 +1,4 @@
+import 'package:chat_jyotishi/features/auth/models/login_password_resp_model.dart';
 import 'package:chat_jyotishi/features/auth/models/verified_otp_resp_model.dart';
 
 import '../models/send_otp_resp_model.dart';
@@ -25,5 +26,17 @@ class AuthRepository {
       otp: otp,
     );
     return VerifiedOtpResponseModel.fromJson(data);
+  }
+
+  Future<LoginPasswordResponseModel> astrologerLoginWithPassword({
+    required String identifier,
+    required String password,
+  }) async {
+    final data = await authService.astrologerLoginWithPassword(
+      identifier: identifier,
+      password: password,
+    );
+
+    return LoginPasswordResponseModel.fromJson(data);
   }
 }

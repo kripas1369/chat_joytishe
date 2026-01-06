@@ -27,3 +27,16 @@ class VerifyOtpEvent extends AuthEvent {
   @override
   List<Object?> get props => [phoneNumber, sessionId, otp];
 }
+
+class AstrologerLoginWithPasswordEvent extends AuthEvent {
+  final String identifier;
+  final String password;
+
+  const AstrologerLoginWithPasswordEvent({
+    required this.identifier,
+    required this.password,
+  });
+
+  @override
+  List<Object?> get props => [identifier, password];
+}

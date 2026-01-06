@@ -1,3 +1,4 @@
+import 'package:chat_jyotishi/features/auth/widgets/login_card_astrologer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,27 +11,29 @@ import '../service/auth_service.dart';
 import '../widgets/login_card.dart';
 import '../../app_widgets/star_field_background.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class LoginScreenAstrologer extends StatelessWidget {
+  const LoginScreenAstrologer({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
           AuthBloc(authRepository: AuthRepository(AuthService())),
-      child: LoginScreenContent(),
+      child: LoginScreenAstrologerContent(),
     );
   }
 }
 
-class LoginScreenContent extends StatefulWidget {
-  const LoginScreenContent({super.key});
+class LoginScreenAstrologerContent extends StatefulWidget {
+  const LoginScreenAstrologerContent({super.key});
 
   @override
-  State<LoginScreenContent> createState() => _LoginScreenContentState();
+  State<LoginScreenAstrologerContent> createState() =>
+      _LoginScreenAstrologerContentState();
 }
 
-class _LoginScreenContentState extends State<LoginScreenContent>
+class _LoginScreenAstrologerContentState
+    extends State<LoginScreenAstrologerContent>
     with SingleTickerProviderStateMixin {
   bool usePassword = false;
   bool passwordVisibility = false;
@@ -72,12 +75,7 @@ class _LoginScreenContentState extends State<LoginScreenContent>
           Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(20),
-              child: LoginCard(
-                usePassword: usePassword,
-                onToggle: () {
-                  setState(() => usePassword = !usePassword);
-                },
-
+              child: LoginCardAstrologer(
                 passwordVisibility: passwordVisibility,
                 onPasswordToggle: () {
                   setState(() => passwordVisibility = !passwordVisibility);
@@ -140,7 +138,7 @@ class _LoginScreenContentState extends State<LoginScreenContent>
           ),
           SizedBox(height: 8),
           Text(
-            'PORTAL FOR CELESTIAL GUIDES',
+            'ASTROLOGER PORTAL',
             style: TextStyle(
               fontSize: 10,
               letterSpacing: 1.4,
