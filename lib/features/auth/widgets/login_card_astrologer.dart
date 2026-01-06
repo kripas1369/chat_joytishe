@@ -26,10 +26,10 @@ class LoginCardAstrologer extends StatefulWidget {
 
 class _LoginCardAstrologerState extends State<LoginCardAstrologer> {
   TextEditingController emailController = TextEditingController(
-    text: 'sulavkarki@jyotish.com',
+    text: "sulavkarki@jyotish.com",
   );
   TextEditingController passwordController = TextEditingController(
-    text: 'Admin@123',
+    text: "Admin@123",
   );
   bool isLoading = false;
 

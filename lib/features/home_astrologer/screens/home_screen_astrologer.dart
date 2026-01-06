@@ -1,3 +1,5 @@
+import 'package:chat_jyotishi/features/chat/screens/chat_screen.dart';
+import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
 
@@ -17,6 +19,7 @@ class HomeScreenAstrologer extends StatefulWidget {
 class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final SocketService _socketService = SocketService();
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
@@ -27,6 +30,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   String astrologerId = '';
   String accessToken = '';
   String refreshToken = '';
+
+  // Broadcast notification state
+  List<Map<String, dynamic>> _broadcastNotifications = [];
 
   final String astrologerName = 'Dr. Sharma';
   final String specialization = 'Vedic Astrology';
@@ -43,6 +49,90 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     super.initState();
     _loadAuthData();
     _initAnimations();
+    _setupBroadcastListener();
+  }
+
+  void _setupBroadcastListener() {
+    // Listen for new broadcast messages from clients
+    _socketService.socket?.on('broadcast:newMessage', (data) {
+      debugPrint('New broadcast received: $data');
+      if (mounted) {
+        setState(() {
+          _broadcastNotifications.add(Map<String, dynamic>.from(data));
+        });
+        _showBroadcastDialog(Map<String, dynamic>.from(data));
+      }
+    });
+  }
+
+  Future<void> _connectSocket() async {
+    if (accessToken.isNotEmpty && refreshToken.isNotEmpty) {
+      if (!_socketService.connected) {
+        await _socketService.connect(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        );
+      }
+    }
+  }
+
+  void _showBroadcastDialog(Map<String, dynamic> broadcast) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _BroadcastNotificationDialog(
+        broadcast: broadcast,
+        onAccept: () => _handleAcceptBroadcast(broadcast),
+        onReject: () => _handleRejectBroadcast(broadcast),
+      ),
+    );
+  }
+
+  void _handleAcceptBroadcast(Map<String, dynamic> broadcast) async {
+    Navigator.pop(context); // Close dialog
+
+    final messageId = broadcast['messageId'] ?? broadcast['id'] ?? '';
+    final clientId = broadcast['senderId'] ?? broadcast['userId'] ?? '';
+    final clientName = broadcast['senderName'] ?? broadcast['userName'] ?? 'User';
+    final clientPhoto = broadcast['senderPhoto'] ?? broadcast['userPhoto'];
+
+    // Accept the broadcast via socket
+    _socketService.acceptBroadcastMessage(messageId);
+
+    // Remove from local notifications
+    setState(() {
+      _broadcastNotifications.removeWhere((b) =>
+        (b['messageId'] ?? b['id']) == messageId);
+    });
+
+    // Navigate to chat screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          chatId: 'chat_${clientId}_$astrologerId',
+          otherUserId: clientId,
+          otherUserName: clientName,
+          otherUserPhoto: clientPhoto,
+          currentUserId: astrologerId,
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          isOnline: true,
+        ),
+      ),
+    );
+  }
+
+  void _handleRejectBroadcast(Map<String, dynamic> broadcast) {
+    Navigator.pop(context); // Close dialog
+
+    final messageId = broadcast['messageId'] ?? broadcast['id'] ?? '';
+
+    // Remove from local notifications
+    setState(() {
+      _broadcastNotifications.removeWhere((b) =>
+        (b['messageId'] ?? b['id']) == messageId);
+    });
   }
 
   void _initAnimations() {
@@ -1087,6 +1177,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       accessToken = prefs.getString('astrologerAccessToken') ?? '';
       refreshToken = prefs.getString('astrologerRefreshToken') ?? '';
     });
+
+    // Connect to socket after loading auth data
+    await _connectSocket();
+    _setupBroadcastListener();
   }
 
   void _handleAcceptRequest(int index) async {}
@@ -1097,5 +1191,206 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
   void _handleLogout() {
     debugPrint('Logout tapped');
+  }
+}
+
+/// Dialog widget for broadcast notifications
+class _BroadcastNotificationDialog extends StatelessWidget {
+  final Map<String, dynamic> broadcast;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+
+  const _BroadcastNotificationDialog({
+    required this.broadcast,
+    required this.onAccept,
+    required this.onReject,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final senderName = broadcast['senderName'] ?? broadcast['userName'] ?? 'User';
+    final message = broadcast['content'] ?? broadcast['message'] ?? '';
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.cardDark, AppColors.backgroundDark],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.orange.withOpacity(0.4),
+            width: 2,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.orange, Colors.deepOrange],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withOpacity(0.4),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.campaign_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
+            ),
+            SizedBox(height: 20),
+
+            // Title
+            Text(
+              'New Broadcast Message',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+
+            // Sender info
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryPurple.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.person_rounded, color: Colors.white70, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    senderName,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Message
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            SizedBox(height: 24),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onReject,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.red.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.close, color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Reject',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onAccept,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.green, Colors.green.shade700],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Accept',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

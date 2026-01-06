@@ -339,9 +339,10 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
   }
 
   Widget _buildAstrologerAvatar(ActiveAstrologerModel astrologer) {
+    // Use socketUrl for static files (not baseUrl which has /api/v1)
     final String imageUrl = astrologer.profilePhoto.startsWith('http')
         ? astrologer.profilePhoto
-        : '${ApiEndpoints.baseUrl}${astrologer.profilePhoto}';
+        : '${ApiEndpoints.socketUrl}${astrologer.profilePhoto}';
 
     return profileStatus(
       radius: 34,

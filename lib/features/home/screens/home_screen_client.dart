@@ -5,6 +5,9 @@ import 'package:chat_jyotishi/features/home/widgets/feature_card.dart';
 import 'package:chat_jyotishi/features/home/widgets/gradient_button.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
 import 'package:chat_jyotishi/features/home/widgets/quick_action_chip.dart';
+import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
+import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -20,6 +23,7 @@ class HomeScreenClient extends StatefulWidget {
 class _HomeScreenClientState extends State<HomeScreenClient>
     with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final CoinService _coinService = CoinService();
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
@@ -721,7 +725,33 @@ class _HomeScreenClientState extends State<HomeScreenClient>
 
   // Navigation and action handlers
   void _navigateTo(String route) {
+    // Special handling for chat - check coins first
+    if (route == '/chat_list_screen') {
+      _handleChatNavigation();
+      return;
+    }
     Navigator.of(context).pushNamed(route);
+  }
+
+  /// Handle chat navigation with coin check
+  Future<void> _handleChatNavigation() async {
+    final balance = await _coinService.getBalance();
+
+    if (!mounted) return;
+
+    if (balance > 0) {
+      // User has coins, go to chat options
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatOptionsPage()),
+      );
+    } else {
+      // No coins, go to payment page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PaymentPage()),
+      );
+    }
   }
 
   void _handleQuickAction(String action) {
