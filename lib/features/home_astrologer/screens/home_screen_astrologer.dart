@@ -55,7 +55,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     super.initState();
     _loadAuthData();
     _initAnimations();
-    _setupBroadcastListener();
+    // Note: _setupBroadcastListener is called in _loadAuthData after socket connects
     _setupNotificationHandler();
   }
 
@@ -75,11 +75,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
         // Show dialog to accept/reject
         _showBroadcastDialog({
-          'id': messageId,
           'messageId': messageId,
-          'senderId': clientId,
-          'senderName': clientName,
-          'senderPhoto': clientPhoto,
+          'clientId': clientId,
+          'clientName': clientName,
+          'clientPhoto': clientPhoto,
           'content': message,
         });
       } else if (type == 'instant') {
@@ -99,11 +98,26 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     _socketService.socket?.on('broadcast:newMessage', (data) {
       debugPrint('New broadcast received: $data');
       if (mounted) {
+        final mapData = Map<String, dynamic>.from(data);
+        // Parse the message structure from backend
+        final message = mapData['message'] ?? mapData;
+        final client = message['client'] ?? mapData['client'] ?? {};
+
+        final broadcastData = {
+          'messageId': message['id'] ?? mapData['id'] ?? '',
+          'content': message['content'] ?? mapData['content'] ?? '',
+          'type': message['type'] ?? 'TEXT',
+          'clientId': client['id'] ?? message['clientId'] ?? '',
+          'clientName': client['name'] ?? 'Client',
+          'clientPhoto': client['profilePhoto'],
+          'expiresAt': message['expiresAt'],
+        };
+
         setState(() {
-          _broadcastNotifications.add(Map<String, dynamic>.from(data));
+          _broadcastNotifications.add(broadcastData);
           _pendingBroadcastCount = _broadcastNotifications.length;
         });
-        _showBroadcastDialog(Map<String, dynamic>.from(data));
+        _showBroadcastDialog(broadcastData);
       }
     });
 
@@ -116,6 +130,32 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         });
         // Show dialog for instant requests too
         _showInstantChatDialog(Map<String, dynamic>.from(data));
+      }
+    });
+
+    // Listen for instant chat accepted confirmation (to navigate to chat)
+    _socketService.socket?.on('instantChat:accepted', (data) {
+      debugPrint('Instant chat accepted: $data');
+      if (mounted) {
+        final chat = data['chat'];
+        final client = data['client'];
+        if (chat != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatScreen(
+                chatId: chat['id'] ?? '',
+                otherUserId: client?['id'] ?? '',
+                otherUserName: client?['name'] ?? 'Client',
+                otherUserPhoto: client?['profilePhoto'],
+                currentUserId: astrologerId,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                isOnline: true,
+              ),
+            ),
+          );
+        }
       }
     });
   }
@@ -198,27 +238,29 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   void _handleAcceptBroadcast(Map<String, dynamic> broadcast) async {
     Navigator.pop(context); // Close dialog
 
-    final messageId = broadcast['messageId'] ?? broadcast['id'] ?? '';
-    final clientId = broadcast['senderId'] ?? broadcast['userId'] ?? '';
-    final clientName = broadcast['senderName'] ?? broadcast['userName'] ?? 'User';
-    final clientPhoto = broadcast['senderPhoto'] ?? broadcast['userPhoto'];
+    final messageId = broadcast['messageId'] ?? '';
+    final clientId = broadcast['clientId'] ?? '';
+    final clientName = broadcast['clientName'] ?? 'Client';
+    final clientPhoto = broadcast['clientPhoto'];
+
+    debugPrint('Accepting broadcast: messageId=$messageId, clientId=$clientId');
 
     // Accept the broadcast via socket
     _socketService.acceptBroadcastMessage(messageId);
 
     // Remove from local notifications
     setState(() {
-      _broadcastNotifications.removeWhere((b) =>
-        (b['messageId'] ?? b['id']) == messageId);
+      _broadcastNotifications.removeWhere((b) => b['messageId'] == messageId);
       _pendingBroadcastCount = _broadcastNotifications.length;
     });
 
     // Listen for acceptance confirmation to get the chat ID
     _socketService.socket?.once('broadcast:accepted', (data) {
+      debugPrint('Broadcast accepted response: $data');
       final chat = data['chat'];
-      final chatId = chat?['id'] ?? 'chat_${clientId}_$astrologerId';
+      final chatId = chat?['id'] ?? '';
 
-      if (mounted) {
+      if (mounted && chatId.isNotEmpty) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -241,12 +283,11 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   void _handleRejectBroadcast(Map<String, dynamic> broadcast) {
     Navigator.pop(context); // Close dialog
 
-    final messageId = broadcast['messageId'] ?? broadcast['id'] ?? '';
+    final messageId = broadcast['messageId'] ?? '';
 
     // Remove from local notifications
     setState(() {
-      _broadcastNotifications.removeWhere((b) =>
-        (b['messageId'] ?? b['id']) == messageId);
+      _broadcastNotifications.removeWhere((b) => b['messageId'] == messageId);
       _pendingBroadcastCount = _broadcastNotifications.length;
     });
   }
@@ -1336,8 +1377,8 @@ class _BroadcastNotificationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final senderName = broadcast['senderName'] ?? broadcast['userName'] ?? 'User';
-    final message = broadcast['content'] ?? broadcast['message'] ?? '';
+    final senderName = broadcast['clientName'] ?? 'Client';
+    final message = broadcast['content'] ?? '';
 
     return Dialog(
       backgroundColor: Colors.transparent,

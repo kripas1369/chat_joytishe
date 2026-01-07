@@ -229,7 +229,8 @@ class SocketService {
       if (enableChatNotifications && chatId != activeChatId) {
         final sender = mapData['sender'] ?? mapData['user'];
         _notificationService.showChatMessageNotification(
-          messageId: mapData['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          messageId:
+              mapData['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
           senderName: sender?['name'] ?? 'Someone',
           message: mapData['content'] ?? '',
           senderId: sender?['id'] ?? mapData['senderId'],
@@ -488,7 +489,7 @@ class SocketService {
   }) {
     if (!connected) throw Exception('Socket not connected');
 
-    socket?.emit('broadcast:send', {
+    socket?.emit('broadcast:sendMessage', {
       'content': content,
       'type': type,
       if (metadata != null) 'metadata': metadata,
@@ -498,7 +499,7 @@ class SocketService {
 
   /// Listen for broadcast sent confirmation (Client)
   void onBroadcastSent(Function(Map<String, dynamic>) callback) {
-    socket?.on('broadcast:sent', (data) {
+    socket?.on('broadcast:messageSent', (data) {
       print('✅ Broadcast sent successfully');
       print('   Message ID: ${data['message']?['id']}');
       print('   Expires at: ${data['message']?['expiresAt']}');
@@ -508,12 +509,12 @@ class SocketService {
 
   /// Remove broadcast sent listener
   void offBroadcastSent() {
-    socket?.off('broadcast:sent');
+    socket?.off('broadcast:messageSent');
   }
 
   /// Listen for when an astrologer accepts the broadcast (Client)
   void onBroadcastAccepted(Function(Map<String, dynamic>) callback) {
-    socket?.on('broadcast:accepted', (data) {
+    socket?.on('broadcast:yourMessageAccepted', (data) {
       print('✅ Astrologer accepted your broadcast!');
       callback(Map<String, dynamic>.from(data));
     });
@@ -521,7 +522,7 @@ class SocketService {
 
   /// Remove broadcast accepted listener
   void offBroadcastAccepted() {
-    socket?.off('broadcast:accepted');
+    socket?.off('broadcast:yourMessageAccepted');
   }
 
   /// Listen for broadcast expiry (Client - expires after 5 min if no accept)
