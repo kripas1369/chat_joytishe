@@ -1,7 +1,9 @@
 import 'package:chat_jyotishi/features/chat/screens/chat_screen.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
+import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
 import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
+import 'package:chat_jyotishi/features/notification/services/notification_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,6 +22,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final SocketService _socketService = SocketService();
+  final NotificationService _notificationService = NotificationService();
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
@@ -33,6 +36,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
   // Broadcast notification state
   List<Map<String, dynamic>> _broadcastNotifications = [];
+
+  // Count of pending broadcast requests for badge
+  int _pendingBroadcastCount = 0;
 
   final String astrologerName = 'Dr. Sharma';
   final String specialization = 'Vedic Astrology';
@@ -50,6 +56,42 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     _loadAuthData();
     _initAnimations();
     _setupBroadcastListener();
+    _setupNotificationHandler();
+  }
+
+  /// Setup notification tap handler for handling taps on push notifications
+  void _setupNotificationHandler() {
+    _notificationService.onNotificationTap = (data) {
+      debugPrint('Notification tapped with data: $data');
+      final type = data['type'];
+
+      if (type == 'broadcast') {
+        // Handle broadcast notification tap
+        final messageId = data['messageId'] ?? '';
+        final clientId = data['clientId'] ?? '';
+        final clientName = data['clientName'] ?? 'Client';
+        final clientPhoto = data['clientPhoto'];
+        final message = data['message'] ?? '';
+
+        // Show dialog to accept/reject
+        _showBroadcastDialog({
+          'id': messageId,
+          'messageId': messageId,
+          'senderId': clientId,
+          'senderName': clientName,
+          'senderPhoto': clientPhoto,
+          'content': message,
+        });
+      } else if (type == 'instant') {
+        // Handle instant chat notification tap - navigate to incoming requests
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const IncomingRequestsScreen(),
+          ),
+        );
+      }
+    };
   }
 
   void _setupBroadcastListener() {
@@ -59,19 +101,84 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       if (mounted) {
         setState(() {
           _broadcastNotifications.add(Map<String, dynamic>.from(data));
+          _pendingBroadcastCount = _broadcastNotifications.length;
         });
         _showBroadcastDialog(Map<String, dynamic>.from(data));
       }
+    });
+
+    // Listen for new instant chat requests
+    _socketService.socket?.on('instantChat:newRequest', (data) {
+      debugPrint('New instant chat request: $data');
+      if (mounted) {
+        setState(() {
+          _pendingBroadcastCount++;
+        });
+        // Show dialog for instant requests too
+        _showInstantChatDialog(Map<String, dynamic>.from(data));
+      }
+    });
+  }
+
+  /// Show dialog for instant chat requests
+  void _showInstantChatDialog(Map<String, dynamic> request) {
+    final requestData = request['request'] ?? request;
+    final client = requestData['client'] ?? request['client'];
+    final clientName = client?['name'] ?? requestData['clientName'] ?? 'Client';
+    final message = requestData['message'] ?? request['message'] ?? '';
+    final requestId = requestData['id'] ?? request['id'] ?? '';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _InstantChatNotificationDialog(
+        request: {
+          'id': requestId,
+          'clientName': clientName,
+          'clientPhoto': client?['profilePhoto'],
+          'clientId': client?['id'] ?? requestData['clientId'] ?? '',
+          'message': message,
+        },
+        onAccept: () => _handleAcceptInstantChat(requestId, client, clientName),
+        onReject: () => _handleRejectInstantChat(requestId),
+      ),
+    );
+  }
+
+  void _handleAcceptInstantChat(String requestId, dynamic client, String clientName) {
+    Navigator.pop(context); // Close dialog
+
+    // Accept via socket
+    _socketService.acceptInstantChatRequest(requestId);
+
+    setState(() {
+      _pendingBroadcastCount--;
+    });
+  }
+
+  void _handleRejectInstantChat(String requestId) {
+    Navigator.pop(context); // Close dialog
+
+    setState(() {
+      _pendingBroadcastCount--;
     });
   }
 
   Future<void> _connectSocket() async {
     if (accessToken.isNotEmpty && refreshToken.isNotEmpty) {
       if (!_socketService.connected) {
+        // Enable local notifications for incoming requests
+        _socketService.enableLocalNotifications = true;
+
         await _socketService.connect(
           accessToken: accessToken,
           refreshToken: refreshToken,
         );
+
+        // Subscribe to astrologer-specific notifications topic
+        if (astrologerId.isNotEmpty) {
+          await _notificationService.subscribeToTopic('astrologer_$astrologerId');
+        }
       }
     }
   }
@@ -103,24 +210,32 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     setState(() {
       _broadcastNotifications.removeWhere((b) =>
         (b['messageId'] ?? b['id']) == messageId);
+      _pendingBroadcastCount = _broadcastNotifications.length;
     });
 
-    // Navigate to chat screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChatScreen(
-          chatId: 'chat_${clientId}_$astrologerId',
-          otherUserId: clientId,
-          otherUserName: clientName,
-          otherUserPhoto: clientPhoto,
-          currentUserId: astrologerId,
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          isOnline: true,
-        ),
-      ),
-    );
+    // Listen for acceptance confirmation to get the chat ID
+    _socketService.socket?.once('broadcast:accepted', (data) {
+      final chat = data['chat'];
+      final chatId = chat?['id'] ?? 'chat_${clientId}_$astrologerId';
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              chatId: chatId,
+              otherUserId: clientId,
+              otherUserName: clientName,
+              otherUserPhoto: clientPhoto,
+              currentUserId: astrologerId,
+              accessToken: accessToken,
+              refreshToken: refreshToken,
+              isOnline: true,
+            ),
+          ),
+        );
+      }
+    });
   }
 
   void _handleRejectBroadcast(Map<String, dynamic> broadcast) {
@@ -132,6 +247,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     setState(() {
       _broadcastNotifications.removeWhere((b) =>
         (b['messageId'] ?? b['id']) == messageId);
+      _pendingBroadcastCount = _broadcastNotifications.length;
     });
   }
 
@@ -318,8 +434,20 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           ],
         ),
         NotificationButton(
-          notificationCount: 4,
-          onTap: () => _navigateTo('/notifications'),
+          notificationCount: _pendingBroadcastCount + 4, // Include pending broadcasts
+          onTap: () {
+            // Navigate to incoming requests if there are pending broadcasts
+            if (_pendingBroadcastCount > 0) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const IncomingRequestsScreen(),
+                ),
+              );
+            } else {
+              _navigateTo('/notifications');
+            }
+          },
         ),
       ],
     );
@@ -1369,6 +1497,207 @@ class _BroadcastNotificationDialog extends StatelessWidget {
                         ],
                       ),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Accept',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Dialog widget for instant chat notifications
+class _InstantChatNotificationDialog extends StatelessWidget {
+  final Map<String, dynamic> request;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+
+  const _InstantChatNotificationDialog({
+    required this.request,
+    required this.onAccept,
+    required this.onReject,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final clientName = request['clientName'] ?? 'Client';
+    final message = request['message'] ?? '';
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.cardDark, AppColors.backgroundDark],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.blue.withAlpha(102),
+            width: 2,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue, Colors.blue.shade700],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withAlpha(102),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.chat_bubble_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            const Text(
+              'New Chat Request',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Sender info
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryPurple.withAlpha(51),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.person_rounded, color: Colors.white70, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    clientName,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Message
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(13),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withAlpha(26),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onReject,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withAlpha(51),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.red.withAlpha(102),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.close, color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Reject',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onAccept,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.green, Colors.green.shade700],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withAlpha(77),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.check, color: Colors.white, size: 20),
