@@ -316,7 +316,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   }
 
   void _handleAcceptBroadcast(Map<String, dynamic> broadcast) async {
-    Navigator.pop(context); // Close dialog
+    // Close dialog if showing
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
     final messageId = broadcast['messageId'] ?? '';
     final clientId = broadcast['clientId'] ?? '';
@@ -325,38 +328,31 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
     debugPrint('Accepting broadcast: messageId=$messageId, clientId=$clientId');
 
-    // Accept the broadcast via socket
-    _socketService.acceptBroadcastMessage(messageId);
-
-    // Remove from local notifications
+    // Remove from local notifications immediately
     setState(() {
       _broadcastNotifications.removeWhere((b) => b['messageId'] == messageId);
       _pendingBroadcastCount = _broadcastNotifications.length;
     });
 
-    // Listen for acceptance confirmation to get the chat ID
-    _socketService.socket?.once('broadcast:accepted', (data) {
-      debugPrint('Broadcast accepted response: $data');
-      final chat = data['chat'];
-      final chatId = chat?['id'] ?? '';
+    // Accept the broadcast via socket
+    _socketService.acceptBroadcastMessage(messageId);
 
-      if (mounted && chatId.isNotEmpty) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AstrologerChatScreen(
-              chatId: chatId,
-              clientId: clientId,
-              clientName: clientName,
-              clientPhoto: clientPhoto,
-              astrologerId: astrologerId,
-              accessToken: accessToken,
-              refreshToken: refreshToken,
-            ),
-          ),
-        );
-      }
-    });
+    // Navigate to chat immediately - the chat screen will handle loading
+    // Use messageId as temporary chatId, the actual chatId will come from server
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AstrologerChatScreen(
+          chatId: messageId, // Use messageId initially, will be updated by server
+          clientId: clientId,
+          clientName: clientName,
+          clientPhoto: clientPhoto,
+          astrologerId: astrologerId,
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        ),
+      ),
+    );
   }
 
   void _handleRejectBroadcast(Map<String, dynamic> broadcast) {
