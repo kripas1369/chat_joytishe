@@ -51,11 +51,16 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
   bool _isSendingImage = false;
   Timer? _typingTimer;
 
+  // Actual chat ID (may be updated from server)
+  late String _actualChatId;
+
   late AnimationController _typingAnimationController;
 
   @override
   void initState() {
     super.initState();
+    _actualChatId = widget.chatId;
+
     _typingAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -63,6 +68,7 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
 
     _initializeDio();
     _registerSocketListeners();
+    _listenForChatCreated();
     _loadChatHistory();
 
     // Set active chat to prevent notifications for this chat
@@ -76,6 +82,25 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
         'Cookie': 'accessToken=${widget.accessToken}',
       },
     ));
+  }
+
+  /// Listen for broadcast:accepted event to get the actual chat ID
+  void _listenForChatCreated() {
+    _socketService.socket?.on('broadcast:accepted', (data) {
+      debugPrint('Broadcast accepted in chat screen: $data');
+      final chat = data['chat'];
+      if (chat != null && mounted) {
+        final newChatId = chat['id'] ?? '';
+        if (newChatId.isNotEmpty && newChatId != _actualChatId) {
+          setState(() {
+            _actualChatId = newChatId;
+          });
+          _socketService.setActiveChat(_actualChatId);
+          // Reload chat history with new chatId
+          _loadChatHistory();
+        }
+      }
+    });
   }
 
   void _registerSocketListeners() {
@@ -128,7 +153,7 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
   Future<void> _loadChatHistory() async {
     try {
       final response = await _dio.get(
-        '${ApiEndpoints.chatHistory}/${widget.chatId}',
+        '${ApiEndpoints.chatHistory}/$_actualChatId',
       );
 
       if (response.statusCode == 200 && mounted) {
@@ -142,8 +167,12 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
       }
     } catch (e) {
       debugPrint('Error loading chat history: $e');
+      // Chat might not exist yet (just created), that's OK - start fresh
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _messages = [];
+        });
       }
     }
   }
@@ -340,6 +369,7 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
     _socketService.offTypingIndicator();
     _socketService.offUserStatus();
     _socketService.offChatEnded();
+    _socketService.socket?.off('broadcast:accepted');
 
     super.dispose();
   }
