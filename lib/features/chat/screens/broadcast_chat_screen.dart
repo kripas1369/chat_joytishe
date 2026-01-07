@@ -161,7 +161,9 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
     }
 
     // Connect to socket if not connected
-    if (!_socketService.connected && _accessToken != null && _refreshToken != null) {
+    if (!_socketService.connected &&
+        _accessToken != null &&
+        _refreshToken != null) {
       setState(() => _isConnecting = true);
       try {
         await _socketService.connect(
@@ -252,7 +254,8 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
 
         String errorMessage = data['message'] ?? 'An error occurred';
         if (data['code'] == 'ACTIVE_CHAT_EXISTS') {
-          errorMessage = 'You already have an active chat. Please end it first.';
+          errorMessage =
+              'You already have an active chat. Please end it first.';
         } else if (data['code'] == 'NO_ASTROLOGERS_ONLINE') {
           errorMessage = 'No astrologers are available at the moment.';
         }
@@ -380,9 +383,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
                   _buildHeader(),
                   const SizedBox(height: 24),
                   Expanded(
-                    child: _isWaiting
-                        ? _buildWaitingView()
-                        : _buildInputView(),
+                    child: _isWaiting ? _buildWaitingView() : _buildInputView(),
                   ),
                 ],
               ),
@@ -452,10 +453,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         const SizedBox(height: 8),
         Text(
           'Select a topic to broadcast to all online astrologers',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
         ),
         const SizedBox(height: 20),
 
@@ -519,8 +517,9 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
                                 ? Colors.white
                                 : Colors.white.withOpacity(0.8),
                             fontSize: 14,
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                         ),
                       ),
@@ -550,15 +549,15 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         SizedBox(
           width: double.infinity,
           child: GestureDetector(
-            onTap: (_isSending || _selectedMessage == null) ? null : _sendBroadcast,
+            onTap: (_isSending || _selectedMessage == null)
+                ? null
+                : _sendBroadcast,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 gradient: _selectedMessage != null
-                    ? LinearGradient(
-                        colors: [Colors.orange, Colors.deepOrange],
-                      )
+                    ? LinearGradient(colors: [Colors.orange, Colors.deepOrange])
                     : null,
                 color: _selectedMessage == null
                     ? Colors.white.withOpacity(0.1)
@@ -598,8 +597,8 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
                     _isSending
                         ? 'Broadcasting...'
                         : _selectedMessage != null
-                            ? 'Broadcast Now'
-                            : 'Select a topic above',
+                        ? 'Broadcast Now'
+                        : 'Select a topic above',
                     style: TextStyle(
                       color: _selectedMessage != null
                           ? Colors.white
