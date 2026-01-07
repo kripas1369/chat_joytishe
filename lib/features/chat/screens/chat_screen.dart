@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
+import 'package:chat_jyotishi/features/chat/service/chat_lock_service.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
+import 'package:chat_jyotishi/features/chat/screens/service_inquiry_screen.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
 
 import 'package:flutter/material.dart';
 
@@ -40,6 +43,8 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final SocketService _socketService = SocketService();
+  final ChatLockService _chatLockService = ChatLockService();
+  final CoinService _coinService = CoinService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
@@ -52,6 +57,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   bool _isOtherUserOnline = true;
   bool _isSendingImage = false;
   Timer? _typingTimer;
+  Timer? _timeoutCheckTimer;
+
+  // Chat lock state
+  bool _isChatLocked = false;
+  bool _canSendMessage = true;
+  int _coinBalance = 0;
 
   late AnimationController _typingAnimationController;
 
@@ -66,6 +77,162 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _initializeDio();
     _registerSocketListeners();
     _loadChatHistory();
+    _loadLockStatus();
+    _loadCoinBalance();
+    _startTimeoutChecker();
+  }
+
+  /// Load coin balance
+  Future<void> _loadCoinBalance() async {
+    final balance = await _coinService.getBalance();
+    if (mounted) {
+      setState(() => _coinBalance = balance);
+    }
+  }
+
+  /// Load chat lock status
+  Future<void> _loadLockStatus() async {
+    final locked = await _chatLockService.isLocked();
+    final canSend = await _chatLockService.canSendMessageInChat(
+      widget.otherUserId,
+    );
+    if (mounted) {
+      setState(() {
+        _isChatLocked = locked;
+        _canSendMessage = canSend;
+      });
+    }
+  }
+
+  /// Start periodic timer to check for timeout
+  void _startTimeoutChecker() {
+    _timeoutCheckTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _checkTimeout(),
+    );
+  }
+
+  /// Check if waiting has exceeded timeout
+  Future<void> _checkTimeout() async {
+    if (!_isChatLocked) return;
+
+    final hasExceeded = await _chatLockService.hasExceededTimeout();
+    final lockedJyotishId = await _chatLockService.getLockedJyotishId();
+
+    // Only show inquiry if this is the chat user is waiting for reply
+    if (hasExceeded && lockedJyotishId == widget.otherUserId && mounted) {
+      _showTimeoutInquiryOption();
+    }
+  }
+
+  /// Show option to send inquiry when timeout exceeded
+  void _showTimeoutInquiryOption() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.cardDark, AppColors.backgroundDark],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.orange.withOpacity(0.4), width: 2),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.access_time_rounded, color: Colors.orange, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                'Taking too long?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '${widget.otherUserName} hasn\'t responded yet.\nWould you like to send an inquiry to support?',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Keep Waiting',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        _navigateToInquiryScreen();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.orange, Colors.deepOrange],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Send Inquiry',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Navigate to service inquiry screen
+  void _navigateToInquiryScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ServiceInquiryScreen(
+          jyotishName: widget.otherUserName,
+          jyotishId: widget.otherUserId,
+        ),
+      ),
+    );
   }
 
   void _initializeDio() {
@@ -88,7 +255,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void _registerSocketListeners() {
     // First, unregister any existing listeners to prevent duplicates
     _unregisterSocketListeners();
-
     _socketService.onMessageReceived((message) {
       final senderId = message['senderId'] ?? message['sender']?['id'];
       if (senderId == widget.otherUserId) {
@@ -112,10 +278,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           });
           _scrollToBottom();
           _socketService.markMessagesAsRead([messageId]);
+
+          // UNLOCK: Jyotish has replied, unlock all chats
+          // Call this AFTER the message is added to ensure proper state
+          Future.delayed(Duration.zero, () {
+            _handleJyotishReply(senderId);
+          });
         }
       }
     });
-
     _socketService.onMessageSent((message) {
       if (mounted) {
         setState(() {
@@ -156,6 +327,49 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
   }
 
+  /// Handle when Jyotish sends a reply - unlock chats
+  Future<void> _handleJyotishReply(String jyotishId) async {
+    // Check if this reply is from the Jyotish we're waiting for
+    final isFromLockedJyotish = await _chatLockService.isReplyFromLockedJyotish(
+      jyotishId,
+    );
+
+    if (isFromLockedJyotish) {
+      // Unlock the chats
+      await _chatLockService.unlockChats();
+
+      // Update UI state
+      if (mounted) {
+        setState(() {
+          _isChatLocked = false;
+          _canSendMessage = true;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${widget.otherUserName} has replied! You can now message any Jyotish.',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+
+      // Reload lock status to ensure consistency
+      await _loadLockStatus();
+    }
+  }
+
   Future<void> _loadChatHistory() async {
     setState(() => _isLoading = true);
     try {
@@ -183,9 +397,57 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final content = _messageController.text.trim();
     if (content.isEmpty) return;
+
+    // Check if user can send message (not locked)
+    if (!_canSendMessage) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please wait for Jyotish to reply before sending another message.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Check coin balance
+    if (_coinBalance < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Insufficient coins. Please add more coins to continue.',
+          ),
+          backgroundColor: Colors.red,
+          action: SnackBarAction(
+            label: 'Add Coins',
+            textColor: Colors.white,
+            onPressed: () => Navigator.pushNamed(context, '/payment_page'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Deduct 1 coin
+    final deductSuccess = await _coinService.deductCoins(1);
+    if (!deductSuccess) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to deduct coin. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Update coin balance
+    await _loadCoinBalance();
 
     _messageController.clear();
     _stopTyping();
@@ -212,6 +474,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       content: content,
       type: 'TEXT',
     );
+
+    // LOCK: After sending message, lock all chats
+    await _chatLockService.lockChats(
+      widget.otherUserId,
+      jyotishName: widget.otherUserName,
+    );
+    if (mounted) {
+      setState(() {
+        _isChatLocked = true;
+        _canSendMessage = false;
+      });
+    }
   }
 
   void _handleTyping(String text) {
@@ -550,6 +824,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _typingTimer?.cancel();
+    _timeoutCheckTimer?.cancel();
     _unregisterSocketListeners();
     _messageController.dispose();
     _scrollController.dispose();
@@ -569,6 +844,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             child: Column(
               children: [
                 _buildHeader(),
+                _buildCoinNoticeBanner(),
+                if (_isChatLocked) _buildLockStatusBanner(),
                 Expanded(
                   child: _isLoading
                       ? Center(
@@ -584,6 +861,117 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Build coin notice banner
+  Widget _buildCoinNoticeBanner() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.orange.withAlpha(40),
+            Colors.deepOrange.withAlpha(20),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(color: Colors.orange.withAlpha(77), width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.orange, size: 18),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'It will reduce 1 coin per message',
+              style: TextStyle(
+                color: Colors.orange,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.withAlpha(51),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.monetization_on, color: gold, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  '$_coinBalance',
+                  style: TextStyle(
+                    color: gold,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build lock status banner when waiting for reply
+  Widget _buildLockStatusBanner() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.withAlpha(40), Colors.blueAccent.withAlpha(20)],
+        ),
+        border: Border(
+          bottom: BorderSide(color: Colors.blue.withAlpha(77), width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.blue,
+            ),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Waiting for ${widget.otherUserName} to reply...',
+              style: TextStyle(
+                color: Colors.blue,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: _navigateToInquiryScreen,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blue.withAlpha(51),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Inquiry',
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -923,20 +1311,19 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildInputBar() {
+    final bool isDisabled = !_canSendMessage;
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            AppColors.backgroundDark.withOpacity(0.8),
-            AppColors.cardDark,
-          ],
+          colors: [AppColors.backgroundDark.withAlpha(204), AppColors.cardDark],
         ),
         border: Border(
           top: BorderSide(
-            color: AppColors.primaryPurple.withOpacity(0.2),
+            color: AppColors.primaryPurple.withAlpha(51),
             width: 1,
           ),
         ),
@@ -946,19 +1333,25 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         children: [
           // Attachment button (camera/gallery)
           GestureDetector(
-            onTap: _isSendingImage ? null : _showAttachmentOptions,
+            onTap: (_isSendingImage || isDisabled)
+                ? null
+                : _showAttachmentOptions,
             child: Container(
               padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryPurple.withOpacity(0.3),
-                    AppColors.deepPurple.withOpacity(0.2),
-                  ],
+                  colors: isDisabled
+                      ? [Colors.grey.withAlpha(77), Colors.grey.withAlpha(51)]
+                      : [
+                          AppColors.primaryPurple.withAlpha(77),
+                          AppColors.deepPurple.withAlpha(51),
+                        ],
                 ),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppColors.primaryPurple.withOpacity(0.4),
+                  color: isDisabled
+                      ? Colors.grey.withAlpha(102)
+                      : AppColors.primaryPurple.withAlpha(102),
                   width: 1,
                 ),
               ),
@@ -973,7 +1366,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     )
                   : Icon(
                       Icons.add_photo_alternate_rounded,
-                      color: AppColors.primaryPurple,
+                      color: isDisabled ? Colors.grey : AppColors.primaryPurple,
                       size: 22,
                     ),
             ),
@@ -986,25 +1379,28 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.white.withOpacity(0.12),
-                    Colors.white.withOpacity(0.08),
+                    Colors.white.withAlpha(31),
+                    Colors.white.withAlpha(20),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.15),
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.white.withAlpha(38), width: 1),
               ),
               child: TextField(
                 controller: _messageController,
                 onChanged: _handleTyping,
+                enabled: !isDisabled,
                 cursorColor: AppColors.primaryPurple,
-                style: TextStyle(color: Colors.white, fontSize: 15),
+                style: TextStyle(
+                  color: isDisabled ? Colors.white38 : Colors.white,
+                  fontSize: 15,
+                ),
                 maxLines: null,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  hintText: "Type a message...",
+                  hintText: isDisabled
+                      ? "Waiting for reply..."
+                      : "Type a message...",
                   hintStyle: TextStyle(color: Colors.white38, fontSize: 15),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 20,
@@ -1018,21 +1414,31 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           SizedBox(width: 12),
           // Send button
           GestureDetector(
-            onTap: _sendMessage,
+            onTap: isDisabled ? null : _sendMessage,
             child: Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
+                gradient: isDisabled
+                    ? LinearGradient(
+                        colors: [Colors.grey, Colors.grey.shade700],
+                      )
+                    : AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryPurple.withOpacity(0.4),
-                    blurRadius: 8,
-                    offset: Offset(0, 3),
-                  ),
-                ],
+                boxShadow: isDisabled
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: AppColors.primaryPurple.withAlpha(102),
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
               ),
-              child: Icon(Icons.send_rounded, color: Colors.white, size: 22),
+              child: Icon(
+                isDisabled ? Icons.lock_rounded : Icons.send_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
           ),
         ],

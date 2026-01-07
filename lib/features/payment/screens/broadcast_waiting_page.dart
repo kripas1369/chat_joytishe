@@ -79,9 +79,14 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
         final astrologer = data['astrologer'];
 
         final astrologerId = astrologer?['id'] ?? data['astrologerId'] ?? '';
-        final astrologerName = astrologer?['name'] ?? data['astrologerName'] ?? 'Astrologer';
-        final astrologerPhoto = astrologer?['profilePhoto'] ?? data['astrologerPhoto'];
-        final chatId = chat?['id'] ?? data['chatId'] ?? 'chat_${widget.currentUserId}_$astrologerId';
+        final astrologerName =
+            astrologer?['name'] ?? data['astrologerName'] ?? 'Astrologer';
+        final astrologerPhoto =
+            astrologer?['profilePhoto'] ?? data['astrologerPhoto'];
+        final chatId =
+            chat?['id'] ??
+            data['chatId'] ??
+            'chat_${widget.currentUserId}_$astrologerId';
 
         setState(() {
           _isWaiting = false;
@@ -133,7 +138,8 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
       if (mounted) {
         setState(() {
           _isWaiting = false;
-          _statusMessage = 'No astrologer accepted your request. Please try again.';
+          _statusMessage =
+              'No astrologer accepted your request. Please try again.';
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -308,10 +314,7 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
           ),
           textAlign: TextAlign.center,
         ),
-        if (_isWaiting) ...[
-          SizedBox(height: 16),
-          _buildLoadingDots(),
-        ],
+        if (_isWaiting) ...[SizedBox(height: 16), _buildLoadingDots()],
       ],
     );
   }
@@ -324,8 +327,7 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(3, (index) {
             final delay = index * 0.3;
-            final value =
-                ((_dotController.value + delay) % 1.0 * 2 - 1).abs();
+            final value = ((_dotController.value + delay) % 1.0 * 2 - 1).abs();
             return Container(
               margin: EdgeInsets.symmetric(horizontal: 4),
               width: 10,
@@ -348,10 +350,7 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,11 +372,7 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
           SizedBox(height: 8),
           Text(
             widget.message,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-              height: 1.4,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
@@ -394,10 +389,7 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 1,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
