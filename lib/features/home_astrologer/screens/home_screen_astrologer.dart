@@ -1,9 +1,12 @@
-import 'package:chat_jyotishi/features/chat/screens/chat_screen.dart';
+import 'dart:convert';
+import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
+import 'package:chat_jyotishi/features/chat_astrologer/screens/astrologer_chat_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
 import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
 import 'package:chat_jyotishi/features/notification/services/notification_service.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,6 +33,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   late Animation<double> _fadeAnimation;
 
   bool isOnline = false;
+  bool _isTogglingStatus = false;
   String astrologerId = '';
   String accessToken = '';
   String refreshToken = '';
@@ -143,15 +147,14 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ChatScreen(
+              builder: (_) => AstrologerChatScreen(
                 chatId: chat['id'] ?? '',
-                otherUserId: client?['id'] ?? '',
-                otherUserName: client?['name'] ?? 'Client',
-                otherUserPhoto: client?['profilePhoto'],
-                currentUserId: astrologerId,
+                clientId: client?['id'] ?? '',
+                clientName: client?['name'] ?? 'Client',
+                clientPhoto: client?['profilePhoto'],
+                astrologerId: astrologerId,
                 accessToken: accessToken,
                 refreshToken: refreshToken,
-                isOnline: true,
               ),
             ),
           );
@@ -223,6 +226,83 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     }
   }
 
+  /// Toggle astrologer online/offline status via API
+  Future<void> _toggleOnlineStatus(bool newStatus) async {
+    if (_isTogglingStatus) return;
+
+    setState(() => _isTogglingStatus = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiEndpoints.baseUrl}/astrologer/toggle-online'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+        body: jsonEncode({'isOnline': newStatus}),
+      );
+
+      debugPrint('Toggle online status response: ${response.statusCode} - ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() {
+          isOnline = newStatus;
+        });
+
+        // If going online, connect socket and setup listeners
+        if (newStatus) {
+          await _connectSocket();
+          _setupBroadcastListener();
+        } else {
+          // If going offline, clear notifications and disconnect socket
+          setState(() {
+            _broadcastNotifications.clear();
+            _pendingBroadcastCount = 0;
+          });
+          // Disable local notifications when offline
+          _socketService.enableLocalNotifications = false;
+        }
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(newStatus ? 'You are now online' : 'You are now offline'),
+              backgroundColor: newStatus ? Colors.green : Colors.orange,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        // API error
+        final errorBody = jsonDecode(response.body);
+        final errorMessage = errorBody['message'] ?? 'Failed to update status';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error toggling online status: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Network error. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isTogglingStatus = false);
+      }
+    }
+  }
+
   void _showBroadcastDialog(Map<String, dynamic> broadcast) {
     showDialog(
       context: context,
@@ -264,15 +344,14 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ChatScreen(
+            builder: (_) => AstrologerChatScreen(
               chatId: chatId,
-              otherUserId: clientId,
-              otherUserName: clientName,
-              otherUserPhoto: clientPhoto,
-              currentUserId: astrologerId,
+              clientId: clientId,
+              clientName: clientName,
+              clientPhoto: clientPhoto,
+              astrologerId: astrologerId,
               accessToken: accessToken,
               refreshToken: refreshToken,
-              isOnline: true,
             ),
           ),
         );
@@ -685,12 +764,21 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                   ),
                 ],
               ),
-              Switch(
-                value: isOnline,
-                onChanged: (value) => setState(() => isOnline = value),
-                activeColor: Colors.green,
-                inactiveThumbColor: Colors.orange,
-              ),
+              _isTogglingStatus
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: isOnline ? Colors.green : Colors.orange,
+                      ),
+                    )
+                  : Switch(
+                      value: isOnline,
+                      onChanged: (value) => _toggleOnlineStatus(value),
+                      activeThumbColor: Colors.green,
+                      inactiveThumbColor: Colors.orange,
+                    ),
             ],
           ),
           if (isOnline && pendingRequests > 0) ...[
@@ -847,24 +935,88 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   }
 
   Widget _buildPendingRequests() {
-    if (pendingRequests == 0) return const SizedBox.shrink();
+    // Only show requests when online
+    if (!isOnline) {
+      return Container(
+        margin: EdgeInsets.only(top: 8),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.withAlpha(26),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.orange.withAlpha(51)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.orange, size: 24),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Go online to receive broadcast and chat requests from clients.',
+                style: TextStyle(
+                  color: Colors.orange,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show broadcast notifications if any
+    if (_broadcastNotifications.isEmpty) {
+      return Container(
+        margin: EdgeInsets.only(top: 8),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.green.withAlpha(26),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.green.withAlpha(51)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.green, size: 24),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'You are online. Waiting for client requests...',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Pending Requests', '$pendingRequests new'),
+        _buildSectionTitle(
+          'Broadcast Requests',
+          '${_broadcastNotifications.length} pending',
+        ),
         SizedBox(height: 16),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: 1,
-          itemBuilder: (context, index) => _buildRequestCard(index),
+          itemCount: _broadcastNotifications.length,
+          itemBuilder: (context, index) {
+            final broadcast = _broadcastNotifications[index];
+            return _buildBroadcastRequestCard(broadcast);
+          },
         ),
       ],
     );
   }
 
-  Widget _buildRequestCard(int index) {
+  Widget _buildBroadcastRequestCard(Map<String, dynamic> broadcast) {
+    final clientName = broadcast['clientName'] ?? 'Client';
+    final content = broadcast['content'] ?? '';
+    final clientPhoto = broadcast['clientPhoto'];
+
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
@@ -873,24 +1025,51 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
-            AppColors.deepPurple.withOpacity(0.1),
+            Colors.orange.withAlpha(51),
+            Colors.deepOrange.withAlpha(26),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+        border: Border.all(color: Colors.orange.withAlpha(77), width: 1),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Broadcast badge
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.withAlpha(51),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.campaign_rounded, color: Colors.orange, size: 14),
+                SizedBox(width: 4),
+                Text(
+                  'Broadcast',
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12),
           Row(
             children: [
               CircleAvatar(
                 radius: 24,
                 backgroundColor: AppColors.cardMedium,
-                child: Icon(
-                  Icons.person_rounded,
-                  color: AppColors.textSecondary,
-                ),
+                backgroundImage: clientPhoto != null
+                    ? NetworkImage('${ApiEndpoints.socketUrl}$clientPhoto')
+                    : null,
+                child: clientPhoto == null
+                    ? Icon(Icons.person_rounded, color: AppColors.textSecondary)
+                    : null,
               ),
               SizedBox(width: 12),
               Expanded(
@@ -898,7 +1077,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Rahul Kumar',
+                      clientName,
                       style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 16,
@@ -906,48 +1085,26 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                       ),
                     ),
                     SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 14,
-                          color: AppColors.textMuted,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Chat consultation',
-                          style: TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 14,
-                          color: AppColors.textMuted,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          '5 min ago',
-                          style: TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      content,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => _handleAcceptRequest(index),
+                  onPressed: () => _handleAcceptBroadcast(broadcast),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -956,22 +1113,37 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text('Accept'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check, size: 18),
+                      SizedBox(width: 6),
+                      Text('Accept'),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => _handleRejectRequest(index),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
+                  onPressed: () => _handleRejectBroadcast(broadcast),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.withAlpha(51),
+                    foregroundColor: Colors.red,
                     padding: EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.red.withAlpha(102)),
                     ),
                   ),
-                  child: Text('Reject'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.close, size: 18),
+                      SizedBox(width: 6),
+                      Text('Reject'),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1347,15 +1519,40 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       refreshToken = prefs.getString('astrologerRefreshToken') ?? '';
     });
 
-    // Connect to socket after loading auth data
-    await _connectSocket();
-    _setupBroadcastListener();
+    // Fetch current online status from server
+    await _fetchOnlineStatus();
   }
 
-  void _handleAcceptRequest(int index) async {}
+  /// Fetch current online status from server
+  Future<void> _fetchOnlineStatus() async {
+    if (accessToken.isEmpty) return;
 
-  void _handleRejectRequest(int index) {
-    debugPrint('Rejected request $index');
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}/astrologer/profile'),
+        headers: {
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final astrologerData = data['astrologer'] ?? data['data'] ?? data;
+        final serverOnlineStatus = astrologerData['isOnline'] ?? false;
+
+        setState(() {
+          isOnline = serverOnlineStatus;
+        });
+
+        // If already online on server, connect socket and setup listeners
+        if (serverOnlineStatus) {
+          await _connectSocket();
+          _setupBroadcastListener();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching online status: $e');
+    }
   }
 
   void _handleLogout() {
