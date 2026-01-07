@@ -67,7 +67,7 @@ class MyApp extends StatelessWidget {
         '/chat_options_page': (context) => ChatOptionsPage(),
         '/broadcast_page': (context) => BroadcastPage(),
       },
-      initialRoute: '/home_screen_client',
+      initialRoute: '/splash_screen',
     );
   }
 }

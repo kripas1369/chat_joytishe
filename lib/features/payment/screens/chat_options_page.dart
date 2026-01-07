@@ -1,8 +1,8 @@
 import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
+import 'package:chat_jyotishi/features/chat/screens/broadcast_chat_screen.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
-import 'package:chat_jyotishi/features/payment/screens/broadcast_page.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
 import 'package:flutter/material.dart';
 
@@ -33,13 +33,9 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
   }
 
   Future<void> _handleSingleChat() async {
-    if (_coinBalance < 1) {
-      _showInsufficientCoinsDialog(1);
-      return;
-    }
-
-    final success = await _coinService.deductCoins(1);
-    if (success && mounted) {
+    // Don't deduct coins here - coins will be deducted when user selects an astrologer
+    // and confirms in the popup dialog
+    if (mounted) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ChatListScreen()),
@@ -48,16 +44,11 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
   }
 
   Future<void> _handleBroadcast() async {
-    if (_coinBalance < 5) {
-      _showInsufficientCoinsDialog(5);
-      return;
-    }
-
-    final success = await _coinService.deductCoins(5);
-    if (success && mounted) {
+    // Navigate to broadcast screen - no coin deduction for broadcast
+    if (mounted) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => BroadcastPage()),
+        MaterialPageRoute(builder: (_) => const BroadcastChatScreen()),
       );
     }
   }

@@ -3,6 +3,7 @@ import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
+import 'package:chat_jyotishi/features/chat/service/chat_lock_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,7 +17,6 @@ import '../repository/chat_repository.dart';
 import '../service/chat_service.dart';
 import '../service/socket_service.dart';
 import '../widgets/profile_status.dart';
-import 'broadcast_chat_screen.dart';
 import 'chat_screen.dart';
 
 /// Decode JWT token to get user info
@@ -71,13 +71,18 @@ class ChatListScreenContent extends StatefulWidget {
 class _ChatListScreenContentState extends State<ChatListScreenContent> {
   final SocketService _socketService = SocketService();
   final CoinService _coinService = CoinService();
+  final ChatLockService _chatLockService = ChatLockService();
   bool _isConnecting = false;
   int _coinBalance = 0;
+  bool _isChatsLocked = false;
+  String? _lockedJyotishId;
+  String? _lockedJyotishName;
 
   @override
   void initState() {
     super.initState();
     _loadCoinBalance();
+    _loadLockStatus();
   }
 
   Future<void> _loadCoinBalance() async {
@@ -87,402 +92,46 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
     }
   }
 
-  /// Show chat type selection dialog
-  Future<void> _showChatTypeDialog(ActiveAstrologerModel astrologer) async {
-    final result = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.cardDark, AppColors.backgroundDark],
-          ),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(
-            color: AppColors.primaryPurple.withOpacity(0.4),
-            width: 2,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title
-            Text(
-              'Chat with ${astrologer.name}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Choose how you want to connect',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Single Chat Option (Direct chat with payment)
-            _buildChatOptionTile(
-              icon: Icons.chat_bubble_rounded,
-              title: 'Single Chat',
-              description: 'Start chatting now',
-              color: Colors.green,
-              onTap: () => Navigator.pop(context, 'single'),
-            ),
-            const SizedBox(height: 12),
-
-            // Broadcast Message Option
-            _buildChatOptionTile(
-              icon: Icons.broadcast_on_personal,
-              title: 'Broadcast Message',
-              description: 'Send to all online astrologers',
-              color: Colors.orange,
-              onTap: () => Navigator.pop(context, 'broadcast'),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-
-    if (result == null) return;
-
-    if (result == 'single') {
-      // Go directly to payment confirmation and chat
-      _openChatWithAstrologer(astrologer);
-    } else if (result == 'broadcast') {
-      if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const BroadcastChatScreen(),
-        ),
-      );
+  Future<void> _loadLockStatus() async {
+    final locked = await _chatLockService.isLocked();
+    final lockedId = await _chatLockService.getLockedJyotishId();
+    final lockedName = await _chatLockService.getLockedJyotishName();
+    if (mounted) {
+      setState(() {
+        _isChatsLocked = locked;
+        _lockedJyotishId = lockedId;
+        _lockedJyotishName = lockedName;
+      });
     }
   }
 
-  Widget _buildChatOptionTile({
-    required IconData icon,
-    required String title,
-    required String description,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white.withOpacity(0.5),
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  /// Handle chat entry - go directly to chat (no popup)
+  /// If locked, only allow entry to the locked Jyotish
+  Future<void> _handleChatEntry(ActiveAstrologerModel astrologer) async {
+    // Reload lock status
+    await _loadLockStatus();
 
-  /// Show confirmation dialog before paying for chat
-  Future<bool> _showPaymentConfirmationDialog(
-    ActiveAstrologerModel astrologer,
-  ) async {
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.cardDark, AppColors.backgroundDark],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppColors.primaryPurple.withOpacity(0.4),
-              width: 2,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Icon
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.monetization_on_rounded,
-                  color: Colors.white,
-                  size: 36,
-                ),
-              ),
-              SizedBox(height: 20),
-
-              // Title
-              Text(
-                'Start Chat with ${astrologer.name}?',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 12),
-
-              // Info
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Chat Cost:',
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.monetization_on, color: gold, size: 18),
-                            SizedBox(width: 4),
-                            Text(
-                              '1 coin',
-                              style: TextStyle(
-                                color: gold,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    Divider(color: Colors.white12),
-                    SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Your Balance:',
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.monetization_on, color: gold, size: 18),
-                            SizedBox(width: 4),
-                            Text(
-                              '$_coinBalance coins',
-                              style: TextStyle(
-                                color: _coinBalance >= 1 ? gold : Colors.red,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 8),
-
-              if (_coinBalance < 1)
-                Container(
-                  padding: EdgeInsets.all(12),
-                  margin: EdgeInsets.only(top: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.red,
-                        size: 20,
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Insufficient balance! Please add coins.',
-                          style: TextStyle(color: Colors.red, fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              SizedBox(height: 24),
-
-              // Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context, false),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _coinBalance >= 1
-                          ? () => Navigator.pop(context, true)
-                          : () {
-                              Navigator.pop(context, false);
-                              Navigator.pushNamed(context, '/payment_page');
-                            },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          gradient: _coinBalance >= 1
-                              ? LinearGradient(
-                                  colors: [Colors.green, Colors.green.shade700],
-                                )
-                              : AppColors.primaryGradient,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Text(
-                            _coinBalance >= 1 ? 'Pay & Chat' : 'Add Coins',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    return result ?? false;
-  }
-
-  Future<void> _openChatWithAstrologer(ActiveAstrologerModel astrologer) async {
-    if (_isConnecting) return;
-
-    // Reload coin balance
-    await _loadCoinBalance();
-
-    // Check if already paid for this astrologer
-    final alreadyPaid = await _coinService.hasPaidForChat(astrologer.id);
-
-    if (!alreadyPaid) {
-      // Show confirmation dialog
-      final confirmed = await _showPaymentConfirmationDialog(astrologer);
-      if (!confirmed) return;
-
-      // Pay for chat
-      final paymentSuccess = await _coinService.payForChat(astrologer.id);
-      if (!paymentSuccess) {
+    // Check if chats are locked
+    if (_isChatsLocked) {
+      // Can only enter the chat of the Jyotish user is waiting for
+      if (_lockedJyotishId != astrologer.id) {
         if (mounted) {
           showTopSnackBar(
             context: context,
-            message: 'Insufficient coins. Please add more coins.',
-            backgroundColor: AppColors.error,
+            message: 'Please wait for ${_lockedJyotishName ?? "Jyotish"} to reply first.',
+            backgroundColor: Colors.orange,
           );
         }
         return;
       }
-
-      // Reload balance after payment
-      await _loadCoinBalance();
     }
+
+    // Go directly to chat
+    _openChatWithAstrologer(astrologer);
+  }
+
+  Future<void> _openChatWithAstrologer(ActiveAstrologerModel astrologer) async {
+    if (_isConnecting) return;
 
     setState(() => _isConnecting = true);
 
@@ -558,7 +207,11 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
             isOnline: astrologer.isOnline,
           ),
         ),
-      );
+      ).then((_) {
+        // Refresh lock status and coin balance when returning from chat
+        _loadLockStatus();
+        _loadCoinBalance();
+      });
     } catch (e) {
       debugPrint('Error opening chat: $e');
       if (mounted) {
@@ -604,8 +257,10 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                       _header(isLoading),
                       SizedBox(height: 16),
                       _balanceCard(),
-                      SizedBox(height: 16),
-                      _broadcastButton(),
+                      if (_isChatsLocked) ...[
+                        SizedBox(height: 12),
+                        _lockStatusBanner(),
+                      ],
                       SizedBox(height: 16),
                       _searchBar(),
                       SizedBox(height: 20),
@@ -728,85 +383,55 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
     );
   }
 
-  Widget _broadcastButton() {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const BroadcastChatScreen()),
-        );
-      },
-      child: Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.orange.withOpacity(0.3),
-              Colors.deepOrange.withOpacity(0.2),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.orange.withOpacity(0.4),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.orange.withOpacity(0.2),
-              blurRadius: 12,
-              offset: Offset(0, 4),
-            ),
+  Widget _lockStatusBanner() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.blue.withAlpha(51),
+            Colors.blueAccent.withAlpha(26),
           ],
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.orange, Colors.deepOrange],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.withAlpha(77)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.blue,
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Waiting for reply',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.broadcast_on_personal,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Everyone Jyotish',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                SizedBox(height: 2),
+                Text(
+                  'From ${_lockedJyotishName ?? "Jyotish"}',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Broadcast to all online astrologers',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.orange,
-              size: 18,
-            ),
-          ],
-        ),
+          ),
+          Icon(Icons.lock_rounded, color: Colors.blue, size: 20),
+        ],
       ),
     );
   }
@@ -902,7 +527,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                   itemBuilder: (context, index) {
                     final astrologer = astrologers[index];
                     return GestureDetector(
-                      onTap: () => _showChatTypeDialog(astrologer),
+                      onTap: () => _handleChatEntry(astrologer),
                       child: Column(
                         children: [
                           _buildAstrologerAvatar(astrologer),
