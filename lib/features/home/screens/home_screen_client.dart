@@ -747,7 +747,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       );
     } else {
       // No coins, go to payment page
-      Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentPage()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PaymentPage()),
+      );
     }
   }
 
