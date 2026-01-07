@@ -1,3 +1,5 @@
+import 'package:chat_jyotishi/features/app_widgets/app_background_gradient.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
 import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
@@ -79,8 +81,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       drawer: _buildDrawer(),
       body: Stack(
         children: [
-          _buildGradientBackground(),
+          buildGradientBackground(),
           _buildPulsingEffect(),
+          buildNightModeOverlay(),
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -124,12 +127,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: AppColors.backgroundDark,
       ),
-    );
-  }
-
-  Widget _buildGradientBackground() {
-    return Container(
-      decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
     );
   }
 
@@ -747,10 +744,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       );
     } else {
       // No coins, go to payment page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => PaymentPage()),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentPage()));
     }
   }
 

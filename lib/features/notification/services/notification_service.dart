@@ -20,7 +20,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 /// Handles Firebase Cloud Messaging and local notifications
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
+
   factory NotificationService() => _instance;
+
   NotificationService._internal();
 
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -35,35 +37,35 @@ class NotificationService {
   // Android notification channel for broadcast requests
   static const AndroidNotificationChannel _broadcastChannel =
       AndroidNotificationChannel(
-    'broadcast_channel',
-    'Broadcast Requests',
-    description: 'Notifications for incoming broadcast chat requests',
-    importance: Importance.high,
-    playSound: true,
-    enableVibration: true,
-  );
+        'broadcast_channel',
+        'Broadcast Requests',
+        description: 'Notifications for incoming broadcast chat requests',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      );
 
   // Android notification channel for instant chat requests
   static const AndroidNotificationChannel _instantChatChannel =
       AndroidNotificationChannel(
-    'instant_chat_channel',
-    'Chat Requests',
-    description: 'Notifications for incoming instant chat requests',
-    importance: Importance.high,
-    playSound: true,
-    enableVibration: true,
-  );
+        'instant_chat_channel',
+        'Chat Requests',
+        description: 'Notifications for incoming instant chat requests',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      );
 
   // Android notification channel for chat messages
   static const AndroidNotificationChannel _chatMessageChannel =
       AndroidNotificationChannel(
-    'chat_message_channel',
-    'Chat Messages',
-    description: 'Notifications for new chat messages',
-    importance: Importance.high,
-    playSound: true,
-    enableVibration: true,
-  );
+        'chat_message_channel',
+        'Chat Messages',
+        description: 'Notifications for new chat messages',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      );
 
   /// Initialize notification service
   Future<void> initialize() async {
@@ -104,7 +106,9 @@ class NotificationService {
   /// Initialize local notifications plugin
   Future<void> _initializeLocalNotifications() async {
     // Android settings
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
 
     // iOS settings
     const iosSettings = DarwinInitializationSettings(
@@ -125,9 +129,10 @@ class NotificationService {
 
     // Create notification channels for Android
     if (Platform.isAndroid) {
-      final androidPlugin =
-          _localNotifications.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
       await androidPlugin?.createNotificationChannel(_broadcastChannel);
       await androidPlugin?.createNotificationChannel(_instantChatChannel);
@@ -159,7 +164,9 @@ class NotificationService {
 
     // Handle notification tap when app is in background
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      debugPrint('Background notification tapped: ${message.notification?.title}');
+      debugPrint(
+        'Background notification tapped: ${message.notification?.title}',
+      );
       _handleMessageOpen(message);
     });
 
@@ -388,16 +395,8 @@ class NotificationService {
       category: AndroidNotificationCategory.message,
       fullScreenIntent: true,
       actions: <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'accept',
-          'Accept',
-          showsUserInterface: true,
-        ),
-        AndroidNotificationAction(
-          'reject',
-          'Reject',
-          showsUserInterface: true,
-        ),
+        AndroidNotificationAction('accept', 'Accept', showsUserInterface: true),
+        AndroidNotificationAction('reject', 'Reject', showsUserInterface: true),
       ],
     );
 
@@ -452,16 +451,8 @@ class NotificationService {
       category: AndroidNotificationCategory.message,
       fullScreenIntent: true,
       actions: <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'accept',
-          'Accept',
-          showsUserInterface: true,
-        ),
-        AndroidNotificationAction(
-          'reject',
-          'Reject',
-          showsUserInterface: true,
-        ),
+        AndroidNotificationAction('accept', 'Accept', showsUserInterface: true),
+        AndroidNotificationAction('reject', 'Reject', showsUserInterface: true),
       ],
     );
 

@@ -1,5 +1,6 @@
 import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
+import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/payment/screens/qr_code_page.dart';
 import 'package:flutter/material.dart';
@@ -49,11 +50,9 @@ class _PaymentPageState extends State<PaymentPage> {
 
   void _proceedToPayment() {
     if (_selectedCoins <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please enter a valid coin amount'),
-          backgroundColor: AppColors.error,
-        ),
+      showTopSnackBar(
+        context: context,
+        message: 'Please enter a valid coin amount',
       );
       return;
     }
@@ -61,10 +60,7 @@ class _PaymentPageState extends State<PaymentPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => QRCodePage(
-          coins: _selectedCoins,
-          amount: _totalAmount,
-        ),
+        builder: (_) => QRCodePage(coins: _selectedCoins, amount: _totalAmount),
       ),
     );
   }
@@ -184,10 +180,7 @@ class _PaymentPageState extends State<PaymentPage> {
           SizedBox(height: 8),
           Text(
             'Purchase coins to chat with astrologers',
-            style: TextStyle(
-              color: Colors.white60,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.white60, fontSize: 14),
             textAlign: TextAlign.center,
           ),
         ],
@@ -225,11 +218,7 @@ class _PaymentPageState extends State<PaymentPage> {
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.monetization_on_outlined,
-                color: gold,
-                size: 24,
-              ),
+              Icon(Icons.monetization_on_outlined, color: gold, size: 24),
               SizedBox(width: 12),
               Expanded(
                 child: TextField(
@@ -247,10 +236,7 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
               Text(
                 'coins',
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.white54, fontSize: 14),
               ),
             ],
           ),
@@ -339,11 +325,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 color: gold.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                Icons.monetization_on_rounded,
-                color: gold,
-                size: 28,
-              ),
+              child: Icon(Icons.monetization_on_rounded, color: gold, size: 28),
             ),
             SizedBox(width: 16),
             Expanded(
@@ -412,10 +394,7 @@ class _PaymentPageState extends State<PaymentPage> {
       decoration: BoxDecoration(
         gradient: AppColors.cardGradient,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       child: Column(
         children: [
@@ -424,10 +403,7 @@ class _PaymentPageState extends State<PaymentPage> {
             children: [
               Text(
                 'Coins to Purchase',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
               Row(
                 children: [
@@ -478,14 +454,11 @@ class _PaymentPageState extends State<PaymentPage> {
     return GestureDetector(
       onTap: _selectedCoins > 0 ? _proceedToPayment : null,
       child: Container(
-        width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
           gradient: _selectedCoins > 0
               ? AppColors.primaryGradient
-              : LinearGradient(
-                  colors: [Colors.grey, Colors.grey.shade700],
-                ),
+              : LinearGradient(colors: [Colors.grey, Colors.grey.shade700]),
           borderRadius: BorderRadius.circular(16),
           boxShadow: _selectedCoins > 0
               ? [
