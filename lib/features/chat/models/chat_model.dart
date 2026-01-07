@@ -75,6 +75,34 @@ enum RequestStatus {
   }
 }
 
+/// Appointment Status Enum
+enum AppointmentStatus {
+  PENDING,
+  CONFIRMED,
+  CANCELLED,
+  COMPLETED;
+
+  static AppointmentStatus fromString(String value) {
+    return AppointmentStatus.values.firstWhere(
+      (e) => e.name == value.toUpperCase(),
+      orElse: () => AppointmentStatus.PENDING,
+    );
+  }
+}
+
+/// Chat Status Enum
+enum ChatStatus {
+  ACTIVE,
+  ENDED;
+
+  static ChatStatus fromString(String value) {
+    return ChatStatus.values.firstWhere(
+      (e) => e.name == value.toUpperCase(),
+      orElse: () => ChatStatus.ACTIVE,
+    );
+  }
+}
+
 /// User Model
 class UserModel {
   final String id;
@@ -449,6 +477,129 @@ class UserStatusModel {
     return UserStatusModel(
       userId: json['userId'] ?? '',
       status: json['status'] ?? 'offline',
+    );
+  }
+}
+
+/// Appointment Model
+class AppointmentModel {
+  final String id;
+  final String astrologerId;
+  final String clientId;
+  final String date;
+  final String timeSlot;
+  final AppointmentStatus status;
+  final String? description;
+  final String? chatId;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final UserModel? astrologer;
+  final UserModel? client;
+
+  AppointmentModel({
+    required this.id,
+    required this.astrologerId,
+    required this.clientId,
+    required this.date,
+    required this.timeSlot,
+    required this.status,
+    this.description,
+    this.chatId,
+    required this.createdAt,
+    this.updatedAt,
+    this.astrologer,
+    this.client,
+  });
+
+  factory AppointmentModel.fromJson(Map<String, dynamic> json) {
+    return AppointmentModel(
+      id: json['id'] ?? '',
+      astrologerId: json['astrologerId'] ?? '',
+      clientId: json['clientId'] ?? '',
+      date: json['date'] ?? '',
+      timeSlot: json['timeSlot'] ?? '',
+      status: AppointmentStatus.fromString(json['status'] ?? 'PENDING'),
+      description: json['description'],
+      chatId: json['chatId'],
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : null,
+      astrologer: json['astrologer'] != null
+          ? UserModel.fromJson(json['astrologer'])
+          : null,
+      client: json['client'] != null
+          ? UserModel.fromJson(json['client'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'astrologerId': astrologerId,
+      'clientId': clientId,
+      'date': date,
+      'timeSlot': timeSlot,
+      'status': status.name,
+      'description': description,
+      'chatId': chatId,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'astrologer': astrologer?.toJson(),
+      'client': client?.toJson(),
+    };
+  }
+}
+
+/// Extended Chat Response Model (for broadcast/instant chat acceptance)
+class ChatResponseModel {
+  final String id;
+  final ChatStatus status;
+  final String? participant1Id;
+  final String? participant2Id;
+  final bool isLocked;
+  final String? endedBy;
+  final DateTime? endedAt;
+  final DateTime createdAt;
+  final UserModel? participant1;
+  final UserModel? participant2;
+
+  ChatResponseModel({
+    required this.id,
+    required this.status,
+    this.participant1Id,
+    this.participant2Id,
+    this.isLocked = false,
+    this.endedBy,
+    this.endedAt,
+    required this.createdAt,
+    this.participant1,
+    this.participant2,
+  });
+
+  factory ChatResponseModel.fromJson(Map<String, dynamic> json) {
+    return ChatResponseModel(
+      id: json['id'] ?? '',
+      status: ChatStatus.fromString(json['status'] ?? 'ACTIVE'),
+      participant1Id: json['participant1Id'],
+      participant2Id: json['participant2Id'],
+      isLocked: json['isLocked'] ?? false,
+      endedBy: json['endedBy'],
+      endedAt: json['endedAt'] != null
+          ? DateTime.parse(json['endedAt'])
+          : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      participant1: json['participant1'] != null
+          ? UserModel.fromJson(json['participant1'])
+          : null,
+      participant2: json['participant2'] != null
+          ? UserModel.fromJson(json['participant2'])
+          : null,
     );
   }
 }

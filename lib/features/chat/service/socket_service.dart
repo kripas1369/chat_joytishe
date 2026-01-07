@@ -1,4 +1,5 @@
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
+import 'package:chat_jyotishi/features/notification/services/notification_service.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 /// Socket Service - Singleton
@@ -15,6 +16,19 @@ class SocketService {
 
   IO.Socket? socket;
   bool isConnected = false;
+
+  // Notification service for push notifications
+  final NotificationService _notificationService = NotificationService();
+
+  // Flag to enable/disable local notifications for incoming requests
+  bool enableLocalNotifications = false;
+
+  // Flag to enable/disable chat message notifications
+  // Set to false when user is in active chat screen
+  bool enableChatNotifications = true;
+
+  // Current active chat ID (to avoid notifications for current chat)
+  String? activeChatId;
 
   /// Connect to Socket.IO server using access token and refresh token
   /// Tokens are sent as cookies in extraHeaders
@@ -167,6 +181,17 @@ class SocketService {
   /// Check if socket is connected
   bool get connected => socket?.connected ?? false;
 
+  /// Set active chat ID (call when entering a chat screen)
+  /// This prevents notifications for messages in the current chat
+  void setActiveChat(String? chatId) {
+    activeChatId = chatId;
+  }
+
+  /// Clear active chat (call when leaving a chat screen)
+  void clearActiveChat() {
+    activeChatId = null;
+  }
+
   // ============================================================
   // CHAT EVENTS
   // ============================================================
@@ -192,10 +217,28 @@ class SocketService {
   }
 
   /// Listen for incoming messages
+  /// Shows local notification if enableChatNotifications is true and
+  /// message is not from the active chat
   void onMessageReceived(Function(Map<String, dynamic>) callback) {
     socket?.on('chat:receive', (data) {
       print('📨 Message received: ${data['content']}');
-      callback(Map<String, dynamic>.from(data));
+      final mapData = Map<String, dynamic>.from(data);
+
+      // Show notification if enabled and not from active chat
+      final chatId = mapData['chatId'] ?? mapData['chat']?['id'];
+      if (enableChatNotifications && chatId != activeChatId) {
+        final sender = mapData['sender'] ?? mapData['user'];
+        _notificationService.showChatMessageNotification(
+          messageId: mapData['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          senderName: sender?['name'] ?? 'Someone',
+          message: mapData['content'] ?? '',
+          senderId: sender?['id'] ?? mapData['senderId'],
+          chatId: chatId,
+          senderPhoto: sender?['profilePhoto'],
+        );
+      }
+
+      callback(mapData);
     });
   }
 
@@ -327,30 +370,63 @@ class SocketService {
   }
 
   // ============================================================
-  // INSTANT CHAT EVENTS
+  // INSTANT CHAT EVENTS (Client requests specific astrologer)
   // ============================================================
 
-  /// Create instant chat request (Client)
-  void createInstantChatRequest({String? message}) {
+  /// Request instant chat with specific astrologer (Client)
+  void requestInstantChat({
+    required String astrologerId,
+    required String message,
+  }) {
     if (!connected) throw Exception('Socket not connected');
 
-    socket?.emit('instantChat:create', {
-      if (message != null) 'message': message,
+    socket?.emit('instantChat:request', {
+      'astrologerId': astrologerId,
+      'message': message,
+    });
+    print('📤 Instant chat request sent to astrologer: $astrologerId');
+  }
+
+  /// Listen for instant chat request sent confirmation (Client)
+  void onInstantChatRequested(Function(Map<String, dynamic>) callback) {
+    socket?.on('instantChat:requested', (data) {
+      print('✅ Instant chat request sent successfully');
+      callback(Map<String, dynamic>.from(data));
     });
   }
 
-  /// Listen for instant chat created confirmation
-  void onInstantChatCreated(Function(Map<String, dynamic>) callback) {
-    socket?.on('instantChat:created', (data) {
-      callback(Map<String, dynamic>.from(data));
-    });
+  /// Remove instant chat requested listener
+  void offInstantChatRequested() {
+    socket?.off('instantChat:requested');
   }
 
   /// Listen for new instant chat requests (Astrologer)
+  /// Shows local notification if enableLocalNotifications is true
   void onNewInstantChatRequest(Function(Map<String, dynamic>) callback) {
     socket?.on('instantChat:newRequest', (data) {
-      callback(Map<String, dynamic>.from(data));
+      print('📨 New instant chat request received');
+      final mapData = Map<String, dynamic>.from(data);
+
+      // Show local notification for astrologer
+      if (enableLocalNotifications) {
+        final request = mapData['request'] ?? mapData;
+        final client = request['client'] ?? mapData['client'];
+        _notificationService.showInstantChatNotification(
+          requestId: request['id'] ?? mapData['id'] ?? '',
+          clientName: client?['name'] ?? 'Client',
+          message: request['message'] ?? mapData['message'] ?? '',
+          clientId: client?['id'] ?? request['clientId'] ?? '',
+          clientPhoto: client?['profilePhoto'],
+        );
+      }
+
+      callback(mapData);
     });
+  }
+
+  /// Remove new instant chat request listener
+  void offNewInstantChatRequest() {
+    socket?.off('instantChat:newRequest');
   }
 
   /// Accept instant chat request (Astrologer)
@@ -358,89 +434,225 @@ class SocketService {
     if (!connected) throw Exception('Socket not connected');
 
     socket?.emit('instantChat:accept', {'requestId': requestId});
+    print('📤 Accepting instant chat request: $requestId');
   }
 
-  /// Listen for instant chat accepted (Astrologer)
+  /// Listen for instant chat accepted (Client receives when astrologer accepts)
   void onInstantChatAccepted(Function(Map<String, dynamic>) callback) {
     socket?.on('instantChat:accepted', (data) {
+      print('✅ Instant chat accepted!');
       callback(Map<String, dynamic>.from(data));
     });
   }
 
-  /// Listen for instant chat request accepted (Client)
-  void onInstantChatRequestAccepted(Function(Map<String, dynamic>) callback) {
-    socket?.on('instantChat:requestAccepted', (data) {
+  /// Remove instant chat accepted listener
+  void offInstantChatAccepted() {
+    socket?.off('instantChat:accepted');
+  }
+
+  /// Listen for instant chat rejected (Client)
+  void onInstantChatRejected(Function(Map<String, dynamic>) callback) {
+    socket?.on('instantChat:rejected', (data) {
+      print('❌ Instant chat rejected');
       callback(Map<String, dynamic>.from(data));
     });
   }
 
-  /// Cancel instant chat request (Client)
-  void cancelInstantChatRequest(String requestId) {
-    if (!connected) throw Exception('Socket not connected');
-
-    socket?.emit('instantChat:cancel', {'requestId': requestId});
-  }
-
-  /// Listen for instant chat cancelled
-  void onInstantChatCancelled(Function(Map<String, dynamic>) callback) {
-    socket?.on('instantChat:cancelled', (data) {
-      callback(Map<String, dynamic>.from(data));
-    });
+  /// Remove instant chat rejected listener
+  void offInstantChatRejected() {
+    socket?.off('instantChat:rejected');
   }
 
   /// Listen for instant chat errors
   void onInstantChatError(Function(Map<String, dynamic>) callback) {
     socket?.on('instantChat:error', (data) {
+      print('❌ Instant chat error: ${data['message']}');
       callback(Map<String, dynamic>.from(data));
     });
   }
 
+  /// Remove instant chat error listener
+  void offInstantChatError() {
+    socket?.off('instantChat:error');
+  }
+
   // ============================================================
-  // BROADCAST MESSAGE EVENTS
+  // BROADCAST CHAT EVENTS (Client broadcasts to all astrologers)
   // ============================================================
 
-  /// Send broadcast message (Client only)
-  void sendBroadcastMessage({required String content, String? type}) {
+  /// Send broadcast message to all online astrologers (Client only)
+  void sendBroadcastMessage({
+    required String content,
+    String type = 'TEXT',
+    Map<String, dynamic>? metadata,
+  }) {
     if (!connected) throw Exception('Socket not connected');
 
-    socket?.emit('broadcast:sendMessage', {
+    socket?.emit('broadcast:send', {
       'content': content,
-      if (type != null) 'type': type,
+      'type': type,
+      if (metadata != null) 'metadata': metadata,
     });
+    print('📤 Broadcast message sent: $content');
   }
 
-  /// Listen for broadcast message sent
-  void onBroadcastMessageSent(Function(Map<String, dynamic>) callback) {
-    socket?.on('broadcast:messageSent', (data) {
+  /// Listen for broadcast sent confirmation (Client)
+  void onBroadcastSent(Function(Map<String, dynamic>) callback) {
+    socket?.on('broadcast:sent', (data) {
+      print('✅ Broadcast sent successfully');
+      print('   Message ID: ${data['message']?['id']}');
+      print('   Expires at: ${data['message']?['expiresAt']}');
       callback(Map<String, dynamic>.from(data));
     });
   }
 
-  /// Accept broadcast message (Astrologer only)
+  /// Remove broadcast sent listener
+  void offBroadcastSent() {
+    socket?.off('broadcast:sent');
+  }
+
+  /// Listen for when an astrologer accepts the broadcast (Client)
+  void onBroadcastAccepted(Function(Map<String, dynamic>) callback) {
+    socket?.on('broadcast:accepted', (data) {
+      print('✅ Astrologer accepted your broadcast!');
+      callback(Map<String, dynamic>.from(data));
+    });
+  }
+
+  /// Remove broadcast accepted listener
+  void offBroadcastAccepted() {
+    socket?.off('broadcast:accepted');
+  }
+
+  /// Listen for broadcast expiry (Client - expires after 5 min if no accept)
+  void onBroadcastExpired(Function(Map<String, dynamic>) callback) {
+    socket?.on('broadcast:expired', (data) {
+      print('⏰ Broadcast expired');
+      callback(Map<String, dynamic>.from(data));
+    });
+  }
+
+  /// Remove broadcast expired listener
+  void offBroadcastExpired() {
+    socket?.off('broadcast:expired');
+  }
+
+  /// Listen for new broadcast messages (Astrologer)
+  /// Shows local notification if enableLocalNotifications is true
+  void onNewBroadcastMessage(Function(Map<String, dynamic>) callback) {
+    socket?.on('broadcast:newMessage', (data) {
+      print('📨 New broadcast message received');
+      final mapData = Map<String, dynamic>.from(data);
+
+      // Show local notification for astrologer
+      if (enableLocalNotifications) {
+        final message = mapData['message'] ?? mapData;
+        final client = message['client'] ?? mapData['client'];
+        _notificationService.showBroadcastNotification(
+          messageId: message['id'] ?? mapData['id'] ?? '',
+          clientName: client?['name'] ?? 'Client',
+          message: message['content'] ?? mapData['content'] ?? '',
+          clientId: client?['id'] ?? message['clientId'] ?? '',
+          clientPhoto: client?['profilePhoto'],
+        );
+      }
+
+      callback(mapData);
+    });
+  }
+
+  /// Remove new broadcast message listener
+  void offNewBroadcastMessage() {
+    socket?.off('broadcast:newMessage');
+  }
+
+  /// Accept a broadcast message (Astrologer only)
   void acceptBroadcastMessage(String messageId) {
     if (!connected) throw Exception('Socket not connected');
 
-    socket?.emit('broadcast:acceptMessage', {'messageId': messageId});
-  }
-
-  /// Listen for broadcast message accepted (Astrologer)
-  void onBroadcastMessageAccepted(Function(Map<String, dynamic>) callback) {
-    socket?.on('broadcast:messageAccepted', (data) {
-      callback(Map<String, dynamic>.from(data));
-    });
-  }
-
-  /// Listen for your broadcast accepted (Client)
-  void onYourBroadcastAccepted(Function(Map<String, dynamic>) callback) {
-    socket?.on('broadcast:yourMessageAccepted', (data) {
-      callback(Map<String, dynamic>.from(data));
-    });
+    socket?.emit('broadcast:accept', {'messageId': messageId});
+    print('📤 Accepting broadcast message: $messageId');
   }
 
   /// Listen for broadcast errors
   void onBroadcastError(Function(Map<String, dynamic>) callback) {
     socket?.on('broadcast:error', (data) {
+      print('❌ Broadcast error: ${data['message']}');
       callback(Map<String, dynamic>.from(data));
     });
+  }
+
+  /// Remove broadcast error listener
+  void offBroadcastError() {
+    socket?.off('broadcast:error');
+  }
+
+  // ============================================================
+  // CHAT SESSION EVENTS
+  // ============================================================
+
+  /// Listen for chat ended by other party
+  void onChatEnded(Function(Map<String, dynamic>) callback) {
+    socket?.on('chat:ended', (data) {
+      print('❌ Chat ended');
+      callback(Map<String, dynamic>.from(data));
+    });
+  }
+
+  /// Remove chat ended listener
+  void offChatEnded() {
+    socket?.off('chat:ended');
+  }
+
+  // ============================================================
+  // APPOINTMENT EVENTS
+  // ============================================================
+
+  /// Listen for appointment confirmed (Chat created)
+  void onAppointmentConfirmed(Function(Map<String, dynamic>) callback) {
+    socket?.on('appointment:confirmed', (data) {
+      print('✅ Appointment confirmed!');
+      callback(Map<String, dynamic>.from(data));
+    });
+  }
+
+  /// Remove appointment confirmed listener
+  void offAppointmentConfirmed() {
+    socket?.off('appointment:confirmed');
+  }
+
+  // ============================================================
+  // REMOVE ALL LISTENERS
+  // ============================================================
+
+  /// Remove all custom listeners (call when leaving chat screens)
+  void removeAllListeners() {
+    // Chat listeners
+    offMessageReceived();
+    offMessageSent();
+    offChatError();
+    offTypingIndicator();
+    offMarkedAsRead();
+    offUserStatus();
+    offChatEnded();
+
+    // Instant chat listeners
+    offInstantChatRequested();
+    offNewInstantChatRequest();
+    offInstantChatAccepted();
+    offInstantChatRejected();
+    offInstantChatError();
+
+    // Broadcast listeners
+    offBroadcastSent();
+    offBroadcastAccepted();
+    offBroadcastExpired();
+    offNewBroadcastMessage();
+    offBroadcastError();
+
+    // Appointment listeners
+    offAppointmentConfirmed();
+
+    print('🧹 All listeners removed');
   }
 }

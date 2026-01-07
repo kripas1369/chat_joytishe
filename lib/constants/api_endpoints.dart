@@ -29,9 +29,18 @@ class ApiEndpoints {
   static const String chatUnreadCount = '/chat/unread-count';
   static const String chatSearch = '/chat/search';
   static const String chatActiveChat = '/chat/active-chat';
+  static const String chatEnd = '/chats'; // PUT /chats/:chatId/end
+
+  // Appointment Endpoints
+  static const String appointments = '$baseUrl/appointments';
+  static const String appointmentById = '$baseUrl/appointments'; // + /:id
 
   // Notification Endpoints
   static const String notifications = '/notifications';
   static const String notificationUnreadCount = '/notifications/unread-count';
   static const String notificationMarkAllRead = '/notifications/mark-all-read';
+
+  // FCM Token Registration
+  static const String registerFcmToken = '/users/fcm-token';
+  static const String removeFcmToken = '/users/fcm-token';
 }

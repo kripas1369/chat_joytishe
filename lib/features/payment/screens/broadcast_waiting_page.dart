@@ -70,14 +70,18 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
 
   void _setupSocketListeners() {
     // Listen for broadcast accepted
-    _socketService.onYourBroadcastAccepted((data) {
+    _socketService.onBroadcastAccepted((data) {
       debugPrint('Broadcast accepted: $data');
 
       if (mounted) {
-        final astrologerId = data['astrologerId'] ?? '';
-        final astrologerName = data['astrologerName'] ?? 'Astrologer';
-        final astrologerPhoto = data['astrologerPhoto'];
-        final chatId = data['chatId'] ?? 'chat_${widget.currentUserId}_$astrologerId';
+        // Parse data according to API response format
+        final chat = data['chat'];
+        final astrologer = data['astrologer'];
+
+        final astrologerId = astrologer?['id'] ?? data['astrologerId'] ?? '';
+        final astrologerName = astrologer?['name'] ?? data['astrologerName'] ?? 'Astrologer';
+        final astrologerPhoto = astrologer?['profilePhoto'] ?? data['astrologerPhoto'];
+        final chatId = chat?['id'] ?? data['chatId'] ?? 'chat_${widget.currentUserId}_$astrologerId';
 
         setState(() {
           _isWaiting = false;
@@ -123,12 +127,40 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
         );
       }
     });
+
+    // Listen for broadcast expired (5 min timeout)
+    _socketService.onBroadcastExpired((data) {
+      if (mounted) {
+        setState(() {
+          _isWaiting = false;
+          _statusMessage = 'No astrologer accepted your request. Please try again.';
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Broadcast expired - no astrologer responded'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+
+        // Navigate back after short delay
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            _cancelBroadcast();
+          }
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     _dotController.dispose();
+    // Clean up socket listeners
+    _socketService.offBroadcastAccepted();
+    _socketService.offBroadcastError();
+    _socketService.offBroadcastExpired();
     super.dispose();
   }
 
