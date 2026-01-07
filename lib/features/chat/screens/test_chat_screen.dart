@@ -1,340 +1,796 @@
-// import 'package:chat_jyotishi/constants/constant.dart';
-// import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
-// import 'package:chat_jyotishi/features/chat/models/active_user_model.dart';
-// import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
-// import 'package:flutter/material.dart';
-// import 'package:chat_jyotishi/constants/api_endpoints.dart';
+import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
+import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
+import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
+import 'package:chat_jyotishi/features/home/widgets/feature_card.dart';
+import 'package:chat_jyotishi/features/home/widgets/gradient_button.dart';
+import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
+import 'package:chat_jyotishi/features/home/widgets/quick_action_chip.dart';
+import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
+import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-// class ChatScreen extends StatefulWidget {
-//   final ActiveAstrologerModel astrologer;
+import '../../../constants/constant.dart';
 
-//   const ChatScreen({super.key, required this.astrologer});
+class HomeScreenClient extends StatefulWidget {
+  const HomeScreenClient({super.key});
 
-//   @override
-//   State<ChatScreen> createState() => _ChatScreenState();
-// }
+  @override
+  State<HomeScreenClient> createState() => _HomeScreenClientState();
+}
 
-// class _ChatScreenState extends State<ChatScreen> {
-//   final TextEditingController _controller = TextEditingController();
-//   final List<Map<String, dynamic>> messages = [];
+class _HomeScreenClientState extends State<HomeScreenClient>
+    with TickerProviderStateMixin {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final CoinService _coinService = CoinService();
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Stack(
-//         children: [
-//           Container(
-//             decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
-//           ),
-//           SafeArea(
-//             child: Column(
-//               children: [
-//                 _header(),
-//                 Expanded(child: _chatList()),
-//                 _inputBar(),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
+  late AnimationController _fadeController;
+  late AnimationController _pulseController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _pulseAnimation;
 
-//   Widget _header() {
-//     final String imageUrl = widget.astrologer.profilePhoto.startsWith('http')
-//         ? widget.astrologer.profilePhoto
-//         : '${ApiEndpoints.baseUrl}${widget.astrologer.profilePhoto}';
+  final String userName = 'Praveen';
+  final String userEmail = 'praveen@example.com';
+  final int profileCompletion = 65;
+  final int notificationCount = 3;
 
-//     return Container(
-//       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-//       decoration: BoxDecoration(
-//         border: Border(bottom: BorderSide(color: Colors.white12, width: 1)),
-//       ),
-//       child: Row(
-//         children: [
-//           GlassIconButton(
-//             icon: Icons.arrow_back,
-//             onTap: () => Navigator.pop(context),
-//           ),
-//           SizedBox(width: 14),
-//           profileStatus(
-//             radius: 22,
-//             isActive: widget.astrologer.isOnline,
-//             profileImageUrl: imageUrl,
-//           ),
-//           SizedBox(width: 12),
-//           Expanded(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   widget.astrologer.name,
-//                   style: TextStyle(
-//                     color: Colors.white,
-//                     fontSize: 16,
-//                     fontWeight: FontWeight.w600,
-//                   ),
-//                 ),
-//                 SizedBox(height: 2),
-//                 Text(
-//                   widget.astrologer.isOnline ? 'Active now' : 'Offline',
-//                   style: TextStyle(
-//                     color: widget.astrologer.isOnline
-//                         ? Colors.green
-//                         : Colors.white54,
-//                     fontSize: 12,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           IconButton(
-//             icon: Icon(Icons.call, color: AppColors.primaryPurple),
-//             onPressed: () {},
-//           ),
-//           IconButton(
-//             icon: Icon(Icons.videocam, color: AppColors.primaryPurple),
-//             onPressed: () {},
-//           ),
-//         ],
-//       ),
-//     );
-//   }
+  @override
+  void initState() {
+    super.initState();
+    _initAnimations();
+  }
 
-//   Widget _chatList() {
-//     if (messages.isEmpty) {
-//       final String imageUrl = widget.astrologer.profilePhoto.startsWith('http')
-//           ? widget.astrologer.profilePhoto
-//           : '${ApiEndpoints.baseUrl}${widget.astrologer.profilePhoto}';
+  void _initAnimations() {
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
 
-//       return Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.start,
-//           children: [
-//             SizedBox(height: 20),
-//             profileStatus(
-//               radius: 48,
-//               isActive: widget.astrologer.isOnline,
-//               profileImageUrl: imageUrl,
-//             ),
-//             SizedBox(height: 4),
-//             Text(
-//               widget.astrologer.name,
-//               style: TextStyle(color: Colors.white, fontSize: 24),
-//             ),
-//             ElevatedButton(
-//               onPressed: () {},
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: Colors.white.withOpacity(0.2),
-//                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-//                 minimumSize: Size(0, 0),
-//                 shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(8),
-//                 ),
-//               ),
-//               child: Text(
-//                 'View Profile',
-//                 style: TextStyle(color: Colors.white, fontSize: 12),
-//               ),
-//             ),
-//           ],
-//         ),
-//       );
-//     }
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
 
-//     return Column(
-//       children: [
-//         Padding(
-//           padding: EdgeInsets.symmetric(vertical: 10),
-//           child: Text(
-//             'TODAY',
-//             style: TextStyle(
-//               color: Colors.white54,
-//               fontSize: 10,
-//               fontWeight: FontWeight.w500,
-//               letterSpacing: 1,
-//             ),
-//           ),
-//         ),
-//         Expanded(
-//           child: ListView.builder(
-//             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-//             itemCount: messages.length,
-//             reverse: true,
-//             itemBuilder: (context, index) {
-//               final message = messages[messages.length - 1 - index];
-//               return _chatBubble(
-//                 message['text'],
-//                 message['isUser'],
-//                 message['time'],
-//               );
-//             },
-//           ),
-//         ),
-//       ],
-//     );
-//   }
+    _fadeController.forward();
+  }
 
-//   Widget _chatBubble(String text, bool isUser, String time) {
-//     return Padding(
-//       padding: EdgeInsets.symmetric(vertical: 4),
-//       child: Row(
-//         mainAxisAlignment: isUser
-//             ? MainAxisAlignment.end
-//             : MainAxisAlignment.start,
-//         crossAxisAlignment: CrossAxisAlignment.end,
-//         children: [
-//           if (!isUser) ...[
-//             CircleAvatar(
-//               radius: 16,
-//               backgroundColor: Colors.grey[300],
-//               child: Icon(Icons.person, color: Colors.grey[700], size: 18),
-//             ),
-//             SizedBox(width: 8),
-//           ],
-//           Flexible(
-//             child: Column(
-//               crossAxisAlignment: isUser
-//                   ? CrossAxisAlignment.end
-//                   : CrossAxisAlignment.start,
-//               children: [
-//                 Container(
-//                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-//                   constraints: BoxConstraints(
-//                     maxWidth: MediaQuery.of(context).size.width * 0.65,
-//                   ),
-//                   decoration: BoxDecoration(
-//                     color: isUser
-//                         ? AppColors.accentPurple.withOpacity(0.9)
-//                         : Colors.white.withOpacity(0.65),
-//                     borderRadius: BorderRadius.only(
-//                       topLeft: Radius.circular(20),
-//                       topRight: Radius.circular(20),
-//                       bottomLeft: Radius.circular(isUser ? 20 : 4),
-//                       bottomRight: Radius.circular(isUser ? 4 : 20),
-//                     ),
-//                   ),
-//                   child: Text(
-//                     text,
-//                     style: TextStyle(
-//                       color: isUser ? cardColor : Colors.black87,
-//                       fontSize: 14,
-//                       height: 1.4,
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(height: 4),
-//                 Padding(
-//                   padding: EdgeInsets.symmetric(horizontal: 4),
-//                   child: Row(
-//                     mainAxisSize: MainAxisSize.min,
-//                     children: [
-//                       Text(
-//                         time,
-//                         style: TextStyle(color: Colors.white60, fontSize: 11),
-//                       ),
-//                       if (isUser) ...[
-//                         SizedBox(width: 4),
-//                         Icon(Icons.done_all, size: 14, color: Colors.blue[300]),
-//                       ],
-//                     ],
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           if (isUser) SizedBox(width: 8),
-//         ],
-//       ),
-//     );
-//   }
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
 
-//   Widget _inputBar() {
-//     return Container(
-//       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-//       decoration: BoxDecoration(
-//         border: Border(top: BorderSide(color: Colors.white12, width: 1)),
-//       ),
-//       child: Row(
-//         children: [
-//           Container(
-//             decoration: BoxDecoration(
-//               color: Colors.white.withOpacity(0.1),
-//               shape: BoxShape.circle,
-//             ),
-//             child: IconButton(
-//               icon: Icon(Icons.attach_file, color: Colors.white70, size: 20),
-//               onPressed: () {},
-//             ),
-//           ),
-//           SizedBox(width: 12),
-//           Expanded(
-//             child: Container(
-//               decoration: BoxDecoration(
-//                 color: Colors.white.withOpacity(0.15),
-//                 borderRadius: BorderRadius.circular(24),
-//               ),
-//               child: TextField(
-//                 controller: _controller,
-//                 cursorColor: Colors.white,
-//                 style: TextStyle(color: Colors.white, fontSize: 14),
-//                 decoration: InputDecoration(
-//                   hintText: "Type a message...",
-//                   hintStyle: TextStyle(color: Colors.white54, fontSize: 14),
-//                   contentPadding: EdgeInsets.symmetric(
-//                     horizontal: 20,
-//                     vertical: 12,
-//                   ),
-//                   border: InputBorder.none,
-//                   suffixIcon: IconButton(
-//                     icon: Icon(Icons.mic, color: Colors.white70, size: 20),
-//                     onPressed: () {},
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ),
-//           SizedBox(width: 12),
-//           Container(
-//             decoration: BoxDecoration(
-//               gradient: AppColors.splashGradient,
-//               borderRadius: BorderRadius.circular(12),
-//             ),
-//             child: GlassIconButton(
-//               icon: Icons.send,
-//               onTap: () {
-//                 if (_controller.text.trim().isEmpty) return;
+  @override
+  Widget build(BuildContext context) {
+    _setSystemUIOverlay();
 
-//                 final currentTime = TimeOfDay.now();
-//                 final formattedTime =
-//                     '${currentTime.hour}:${currentTime.minute.toString().padLeft(2, '0')} ${currentTime.period == DayPeriod.am ? 'AM' : 'PM'}';
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: AppColors.backgroundDark,
+      drawer: _buildDrawer(),
+      body: Stack(
+        children: [
+          _buildGradientBackground(),
+          _buildPulsingEffect(),
+          // Night mode warm overlay
+          _buildNightModeOverlay(),
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          _buildHeader(),
+                          const SizedBox(height: 32),
+                          _buildWelcomeSection(),
+                          const SizedBox(height: 32),
+                          _buildQuickActions(),
+                          const SizedBox(height: 32),
+                          _buildFeatureGrid(),
+                          const SizedBox(height: 32),
+                          _buildProfileCard(),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-//                 setState(() {
-//                   messages.add({
-//                     'text': _controller.text.trim(),
-//                     'isUser': true,
-//                     'time': formattedTime,
-//                   });
+  void _setSystemUIOverlay() {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.backgroundDark,
+      ),
+    );
+  }
 
-//                   Future.delayed(Duration(milliseconds: 500), () {
-//                     if (mounted) {
-//                       setState(() {
-//                         messages.add({
-//                           'text': "Celestial guide says: Be mindful today.",
-//                           'isUser': false,
-//                           'time': formattedTime,
-//                         });
-//                       });
-//                     }
-//                   });
+  Widget _buildGradientBackground() {
+    return Container(
+      decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
+    );
+  }
 
-//                   _controller.clear();
-//                 });
-//               },
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
+  Widget _buildPulsingEffect() {
+    return Positioned(
+      top: -100,
+      left: -50,
+      right: -50,
+      child: AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
+          return Container(
+            height: 350,
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.primaryPurple.withOpacity(
+                    0.15 * _pulseAnimation.value,
+                  ),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildNightModeOverlay() {
+    return Positioned.fill(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.orange.withOpacity(0.03),
+              Colors.deepOrange.withOpacity(0.05),
+              Colors.amber.withOpacity(0.04),
+            ],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.02),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            GlassIconButton(
+              icon: Icons.menu_rounded,
+              onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
+            const SizedBox(width: 16),
+            _buildAppLogo(),
+          ],
+        ),
+        NotificationButton(
+          notificationCount: notificationCount,
+          onTap: () => _navigateTo('/notifications'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAppLogo() {
+    return Row(
+      children: [
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Colors.white, AppColors.lightPurple],
+          ).createShader(bounds),
+          child: RichText(
+            text: const TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Chat',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                TextSpan(
+                  text: 'Jyotishi',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Icon(
+              Icons.auto_awesome,
+              size: 16,
+              color: AppColors.primaryPurple.withOpacity(_pulseAnimation.value),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWelcomeSection() {
+    return Container(
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.deepPurple.withOpacity(0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.primaryPurple.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildGreetingBadge(),
+          const SizedBox(height: 16),
+          Text(
+            'Namaste, $userName',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'The stars align in your favor today.\nDiscover what the cosmos has in store for you.',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          GradientButton(
+            text: 'View Today\'s Horoscope',
+            icon: Icons.auto_awesome,
+            onTap: () => _navigateTo('/horoscope_screen'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGreetingBadge() {
+    final hour = DateTime.now().hour;
+    String greeting;
+    IconData icon;
+
+    if (hour < 12) {
+      greeting = 'Good Morning';
+      icon = Icons.wb_sunny_rounded;
+    } else if (hour < 17) {
+      greeting = 'Good Afternoon';
+      icon = Icons.wb_sunny_outlined;
+    } else {
+      greeting = 'Good Evening';
+      icon = Icons.nightlight_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primaryPurple.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.lightPurple),
+          const SizedBox(width: 6),
+          Text(
+            greeting,
+            style: const TextStyle(
+              color: AppColors.lightPurple,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    final actions = [
+      {'icon': Icons.favorite_rounded, 'label': 'Love'},
+      {'icon': Icons.work_rounded, 'label': 'Career'},
+      {'icon': Icons.attach_money_rounded, 'label': 'Finance'},
+      {'icon': Icons.health_and_safety_rounded, 'label': 'Health'},
+      {'icon': Icons.school_rounded, 'label': 'Education'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Quick Actions', 'Services we provide'),
+        const SizedBox(height: 16),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: actions.map((action) {
+              return QuickActionChip(
+                icon: action['icon'] as IconData,
+                label: action['label'] as String,
+                onTap: () => _handleQuickAction(action['label'] as String),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureGrid() {
+    final features = [
+      {
+        'icon': Icons.chat_bubble_rounded,
+        'title': 'Chat',
+        'subtitle': 'Talk to astrologers',
+        'gradient': AppColors.featureCardGradient1,
+        'route': '/chat_list_screen',
+        'delay': 0,
+      },
+      {
+        'icon': Icons.auto_awesome,
+        'title': 'Horoscope',
+        'subtitle': 'Daily predictions',
+        'gradient': AppColors.featureCardGradient2,
+        'route': '/horoscope_screen',
+        'delay': 100,
+      },
+      {
+        'icon': Icons.videocam_rounded,
+        'title': 'Live Session',
+        'subtitle': '1:1 consultation',
+        'gradient': AppColors.featureCardGradient2,
+        'route': '/live_session',
+        'delay': 200,
+      },
+      {
+        'icon': Icons.self_improvement_rounded,
+        'title': 'Kundali',
+        'subtitle': 'Birth chart analysis',
+        'gradient': AppColors.featureCardGradient1,
+        'route': '/kundali',
+        'delay': 300,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Explore', 'Discover cosmic insights'),
+        const SizedBox(height: 20),
+        GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.0,
+          ),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: features.length,
+          itemBuilder: (context, index) {
+            final feature = features[index];
+            return FeatureCard(
+              icon: feature['icon'] as IconData,
+              title: feature['title'] as String,
+              subtitle: feature['subtitle'] as String,
+              gradient: feature['gradient'] as LinearGradient,
+              onTap: () => _navigateTo(feature['route'] as String),
+              delay: feature['delay'] as int,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileCard() {
+    return GestureDetector(
+      onTap: () => _navigateTo('/user_profile_screen'),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: AppColors.cardGradient,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _buildProfileAvatar(),
+            const SizedBox(width: 16),
+            Expanded(child: _buildProfileInfo()),
+            const SizedBox(width: 12),
+            _buildArrowButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar() {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: AppColors.primaryGradient,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(2),
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.cardDark,
+        ),
+        child: const CircleAvatar(
+          radius: 28,
+          backgroundColor: AppColors.cardMedium,
+          child: Icon(
+            Icons.person_rounded,
+            color: AppColors.textSecondary,
+            size: 28,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Complete Your Profile',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Add birth details for accurate readings',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+        ),
+        const SizedBox(height: 12),
+        _buildProgressBar(),
+        const SizedBox(height: 6),
+        Text(
+          '$profileCompletion% Complete',
+          style: const TextStyle(
+            color: AppColors.primaryPurple,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressBar() {
+    return Stack(
+      children: [
+        Container(
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        FractionallySizedBox(
+          widthFactor: profileCompletion / 100,
+          child: Container(
+            height: 4,
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildArrowButton() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.primaryPurple.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 16,
+        color: AppColors.primaryPurple,
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, String subtitle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+            ),
+          ],
+        ),
+        TextButton(
+          onPressed: () => _handleSeeAll(title),
+          child: const Text(
+            'See All',
+            style: TextStyle(
+              color: AppColors.primaryPurple,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      backgroundColor: AppColors.backgroundDark,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppColors.cardDark, AppColors.backgroundDark],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildDrawerHeader(),
+              Divider(color: Colors.white.withOpacity(0.08)),
+              Expanded(child: _buildDrawerItems()),
+              Divider(color: Colors.white.withOpacity(0.08)),
+              _buildDrawerLogout(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerHeader() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppColors.primaryGradient,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.cardDark,
+              ),
+              child: const CircleAvatar(
+                radius: 40,
+                backgroundColor: AppColors.cardMedium,
+                child: Icon(
+                  Icons.person_rounded,
+                  color: AppColors.textSecondary,
+                  size: 40,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '$userName Shrestha',
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            userEmail,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerItems() {
+    final items = [
+      {
+        'icon': Icons.home_rounded,
+        'title': 'Home',
+        'selected': true,
+        'route': null,
+      },
+      {
+        'icon': Icons.person_rounded,
+        'title': 'Profile',
+        'route': '/user_profile_screen',
+      },
+      {'icon': Icons.history_rounded, 'title': 'History', 'route': '/history'},
+      {
+        'icon': Icons.settings_rounded,
+        'title': 'Settings',
+        'route': '/set_password_screen',
+      },
+      {
+        'icon': Icons.help_outline_rounded,
+        'title': 'Help & Support',
+        'route': '/support',
+      },
+      {
+        'icon': Icons.info_outline_rounded,
+        'title': 'About Us',
+        'route': '/about',
+      },
+      {
+        'icon': Icons.privacy_tip_outlined,
+        'title': 'Privacy Policy',
+        'route': '/privacy',
+      },
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      children: items.map((item) {
+        return DrawerItem(
+          icon: item['icon'] as IconData,
+          title: item['title'] as String,
+          isSelected: item['selected'] as bool? ?? false,
+          onTap: () {
+            if (item['route'] != null) {
+              _navigateTo(item['route'] as String);
+            } else {
+              Navigator.pop(context);
+            }
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildDrawerLogout() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: DrawerItem(
+        icon: Icons.logout_rounded,
+        title: 'Logout',
+        isDestructive: true,
+        onTap: _handleLogout,
+      ),
+    );
+  }
+
+  // Navigation and action handlers
+  void _navigateTo(String route) {
+    // Special handling for chat - check coins first
+    if (route == '/chat_list_screen') {
+      _handleChatNavigation();
+      return;
+    }
+    Navigator.of(context).pushNamed(route);
+  }
+
+  /// Handle chat navigation with coin check
+  Future<void> _handleChatNavigation() async {
+    final balance = await _coinService.getBalance();
+
+    if (!mounted) return;
+
+    if (balance > 0) {
+      // User has coins, go to chat options
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatOptionsPage()),
+      );
+    } else {
+      // No coins, go to payment page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PaymentPage()),
+      );
+    }
+  }
+
+  void _handleQuickAction(String action) {
+    debugPrint('Quick action tapped: $action');
+  }
+
+  void _handleSeeAll(String section) {
+    debugPrint('See all tapped for: $section');
+  }
+
+  void _handleLogout() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
+}

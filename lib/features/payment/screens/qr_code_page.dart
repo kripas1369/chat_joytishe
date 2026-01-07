@@ -16,11 +16,7 @@ class QRCodePage extends StatefulWidget {
   final int coins;
   final int amount;
 
-  const QRCodePage({
-    super.key,
-    required this.coins,
-    required this.amount,
-  });
+  const QRCodePage({super.key, required this.coins, required this.amount});
 
   @override
   State<QRCodePage> createState() => _QRCodePageState();
@@ -35,8 +31,8 @@ class _QRCodePageState extends State<QRCodePage> {
     try {
       setState(() => _isProcessing = true);
 
-      final boundary = _qrKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
+      final boundary =
+          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
 
       final image = await boundary.toImage(pixelRatio: 3.0);
@@ -75,8 +71,8 @@ class _QRCodePageState extends State<QRCodePage> {
     try {
       setState(() => _isProcessing = true);
 
-      final boundary = _qrKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
+      final boundary =
+          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
 
       final image = await boundary.toImage(pixelRatio: 3.0);
@@ -89,7 +85,8 @@ class _QRCodePageState extends State<QRCodePage> {
 
       await Share.shareXFiles(
         [XFile(file.path)],
-        text: 'Payment QR Code\nAmount: Rs ${widget.amount}\nCoins: ${widget.coins}',
+        text:
+            'Payment QR Code\nAmount: Rs ${widget.amount}\nCoins: ${widget.coins}',
       );
     } catch (e) {
       if (mounted) {
@@ -240,10 +237,7 @@ class _QRCodePageState extends State<QRCodePage> {
               SizedBox(width: 16),
               Text(
                 'Rs ${widget.amount}',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
             ],
           ),
@@ -262,10 +256,7 @@ class _QRCodePageState extends State<QRCodePage> {
           SizedBox(height: 16),
           Text(
             'ChatJyotishi Payment',
-            style: TextStyle(
-              color: Colors.white60,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.white60, fontSize: 14),
           ),
         ],
       ),
@@ -279,10 +270,7 @@ class _QRCodePageState extends State<QRCodePage> {
       width: 200,
       height: 200,
       child: CustomPaint(
-        painter: _QRPainter(
-          amount: widget.amount,
-          coins: widget.coins,
-        ),
+        painter: _QRPainter(amount: widget.amount, coins: widget.coins),
       ),
     );
   }
@@ -321,10 +309,7 @@ class _QRCodePageState extends State<QRCodePage> {
         decoration: BoxDecoration(
           gradient: AppColors.cardGradient,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-            width: 1,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -350,16 +335,10 @@ class _QRCodePageState extends State<QRCodePage> {
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.blue.withOpacity(0.1),
-            Colors.blue.withOpacity(0.05),
-          ],
+          colors: [Colors.blue.withOpacity(0.1), Colors.blue.withOpacity(0.05)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.blue.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.blue.withOpacity(0.3), width: 1),
       ),
       child: Column(
         children: [
@@ -418,10 +397,7 @@ class _QRCodePageState extends State<QRCodePage> {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ),
       ],
@@ -488,7 +464,13 @@ class _QRPainter extends CustomPainter {
     // Draw position detection patterns (corners)
     _drawPositionPattern(canvas, paint, 0, 0, cellSize);
     _drawPositionPattern(canvas, paint, size.width - 7 * cellSize, 0, cellSize);
-    _drawPositionPattern(canvas, paint, 0, size.height - 7 * cellSize, cellSize);
+    _drawPositionPattern(
+      canvas,
+      paint,
+      0,
+      size.height - 7 * cellSize,
+      cellSize,
+    );
 
     // Draw timing patterns
     for (int i = 8; i < 17; i++) {
@@ -508,9 +490,7 @@ class _QRPainter extends CustomPainter {
     for (int y = 0; y < 25; y++) {
       for (int x = 0; x < 25; x++) {
         // Skip position patterns
-        if ((x < 8 && y < 8) ||
-            (x >= 17 && y < 8) ||
-            (x < 8 && y >= 17)) {
+        if ((x < 8 && y < 8) || (x >= 17 && y < 8) || (x < 8 && y >= 17)) {
           continue;
         }
 
@@ -534,22 +514,14 @@ class _QRPainter extends CustomPainter {
     double cellSize,
   ) {
     // Outer square
-    canvas.drawRect(
-      Rect.fromLTWH(x, y, 7 * cellSize, 7 * cellSize),
-      paint,
-    );
+    canvas.drawRect(Rect.fromLTWH(x, y, 7 * cellSize, 7 * cellSize), paint);
 
     // White middle square
     final whitePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
     canvas.drawRect(
-      Rect.fromLTWH(
-        x + cellSize,
-        y + cellSize,
-        5 * cellSize,
-        5 * cellSize,
-      ),
+      Rect.fromLTWH(x + cellSize, y + cellSize, 5 * cellSize, 5 * cellSize),
       whitePaint,
     );
 
