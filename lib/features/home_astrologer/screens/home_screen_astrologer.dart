@@ -772,7 +772,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                   : Switch(
                       value: isOnline,
                       onChanged: (value) => _toggleOnlineStatus(value),
-                      activeThumbColor: Colors.green,
+                      // activeThumbColor: Colors.green,
                       inactiveThumbColor: Colors.orange,
                     ),
             ],
