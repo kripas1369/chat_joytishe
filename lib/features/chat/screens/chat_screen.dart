@@ -3,17 +3,25 @@ import 'dart:io';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
+import 'package:chat_jyotishi/features/chat/bloc/chat_states.dart';
+import 'package:chat_jyotishi/features/chat/repository/chat_repository.dart';
+import 'package:chat_jyotishi/features/chat/service/chat_end_service.dart';
 import 'package:chat_jyotishi/features/chat/service/chat_lock_service.dart';
+
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
 import 'package:chat_jyotishi/features/chat/screens/service_inquiry_screen.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as path;
+
+import '../bloc/chat_bloc.dart';
+import '../bloc/chat_events.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -51,6 +59,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final ImagePicker _imagePicker = ImagePicker();
 
   late Dio _dio;
+  late ChatBloc _chatBloc;
   List<Map<String, dynamic>> _messages = [];
   bool _isLoading = true;
   bool _isOtherUserTyping = false;
@@ -69,6 +78,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _chatBloc = ChatBloc(
+      chatRepository: ChatRepository(chatEndService: ChatEndService()),
+    );
     _typingAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -230,6 +242,155 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         builder: (_) => ServiceInquiryScreen(
           jyotishName: widget.otherUserName,
           jyotishId: widget.otherUserId,
+        ),
+      ),
+    );
+  }
+
+  void _showEndChatDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => BlocProvider.value(
+        value: _chatBloc, // Provide the existing ChatBloc to the dialog
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.cardDark, AppColors.backgroundDark],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.red.withOpacity(0.4), width: 2),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.call_end_rounded, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'End Chat?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Are you sure you want to end this chat with ${widget.otherUserName}?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+                BlocConsumer<ChatBloc, ChatState>(
+                  listener: (context, state) {
+                    if (state is ChatEndSuccessState) {
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Chat ended successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      // Navigate back after a short delay
+                      Future.delayed(Duration(milliseconds: 500), () {
+                        if (mounted) Navigator.pop(context);
+                      });
+                    } else if (state is ChatErrorState) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to end chat: ${state.message}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  builder: (context, state) {
+                    final isLoading = state is ChatLoadingState;
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: isLoading
+                                ? null
+                                : () => Navigator.pop(dialogContext),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: isLoading
+                                    ? Colors.grey.withOpacity(0.3)
+                                    : Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    color: isLoading
+                                        ? Colors.white30
+                                        : Colors.white70,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: isLoading
+                                ? null
+                                : () {
+                                    // Trigger the end chat event using ChatBloc
+                                    _chatBloc.add(
+                                      EndChatRequestedEvent(
+                                        chatId: widget.chatId,
+                                      ),
+                                    );
+                                  },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: isLoading
+                                      ? [Colors.grey, Colors.grey.shade700]
+                                      : [Colors.red, Colors.redAccent],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: isLoading
+                                    ? SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(
+                                        'End Chat',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -835,30 +996,27 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
-          child: SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(),
-                _buildCoinNoticeBanner(),
-                if (_isChatLocked) _buildLockStatusBanner(),
-                Expanded(
-                  child: _isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF6C5CE7),
-                          ),
-                        )
-                      : _buildMessagesList(),
-                ),
-                if (_isOtherUserTyping) _buildTypingIndicator(),
-                _buildInputBar(),
-              ],
-            ),
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildCoinNoticeBanner(),
+              if (_isChatLocked) _buildLockStatusBanner(),
+              Expanded(
+                child: _isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF6C5CE7),
+                        ),
+                      )
+                    : _buildMessagesList(),
+              ),
+              if (_isOtherUserTyping) _buildTypingIndicator(),
+              _buildInputBar(),
+            ],
           ),
         ),
       ),
@@ -876,9 +1034,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             Colors.deepOrange.withAlpha(20),
           ],
         ),
-        border: Border(
-          bottom: BorderSide(color: Colors.orange.withAlpha(77), width: 1),
-        ),
+        // border: Border(
+        //   bottom: BorderSide(color: Colors.orange.withAlpha(77), width: 1),
+        // ),
       ),
       child: Row(
         children: [
@@ -1028,7 +1186,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       : 'Offline',
                   style: TextStyle(
                     color: _isOtherUserTyping
-                        ? AppColors.primaryPurple
+                        ? Colors.green
                         : _isOtherUserOnline
                         ? Colors.greenAccent
                         : Colors.white54,
@@ -1041,7 +1199,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ],
             ),
           ),
-          // Refresh button only
+
+          GlassIconButton(
+            icon: Icons.call_end,
+            onTap: () => _showEndChatDialog(),
+          ),
+          SizedBox(width: 8),
           GlassIconButton(icon: Icons.refresh_rounded, onTap: _loadChatHistory),
         ],
       ),
@@ -1137,11 +1300,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             ),
             decoration: BoxDecoration(
               gradient: isMe
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.primaryPurple, AppColors.deepPurple],
-                    )
+                  ? AppColors.splashGradient
                   : LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -1203,7 +1362,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                               : Icons.done_rounded,
                           size: 16,
                           color: message['isRead'] == true
-                              ? Colors.greenAccent
+                              ? Colors.blue
                               : Colors.white54,
                         ),
                 ],
@@ -1260,19 +1419,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           SizedBox(width: 10),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withOpacity(0.15),
-                  Colors.white.withOpacity(0.08),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1418,21 +1565,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             child: Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                gradient: isDisabled
-                    ? LinearGradient(
-                        colors: [Colors.grey, Colors.grey.shade700],
-                      )
-                    : AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: isDisabled
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: AppColors.primaryPurple.withAlpha(102),
-                          blurRadius: 8,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  colors: isDisabled
+                      ? [Colors.grey.withAlpha(77), Colors.grey.withAlpha(51)]
+                      : [AppColors.primaryPurple, AppColors.deepPurple],
+                ),
               ),
               child: Icon(
                 isDisabled ? Icons.lock_rounded : Icons.send_rounded,

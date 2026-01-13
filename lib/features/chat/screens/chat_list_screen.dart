@@ -4,6 +4,7 @@ import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
 import 'package:chat_jyotishi/features/chat/service/chat_lock_service.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,7 +55,7 @@ class ChatListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
-          ChatBloc(chatRepository: ChatRepository(ChatService()))
+          ChatBloc(chatRepository: ChatRepository(chatService: ChatService()))
             ..add(FetchActiveUsersEvent()),
       child: ChatListScreenContent(),
     );
@@ -118,7 +119,8 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
         if (mounted) {
           showTopSnackBar(
             context: context,
-            message: 'Please wait for ${_lockedJyotishName ?? "Jyotish"} to reply first.',
+            message:
+                'Please wait for ${_lockedJyotishName ?? "Jyotish"} to reply first.',
             backgroundColor: Colors.orange,
           );
         }
@@ -128,6 +130,69 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
 
     // Go directly to chat
     _openChatWithAstrologer(astrologer);
+  }
+
+  Future<String?> _getOrCreateChatId(String astrologerId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('accessToken');
+      final refreshToken = prefs.getString('refreshToken');
+
+      if (accessToken == null || refreshToken == null) {
+        debugPrint('No tokens available');
+        return null;
+      }
+
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: ApiEndpoints.baseUrl,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+          },
+        ),
+      );
+
+      debugPrint('Creating/getting chat with astrologer: $astrologerId');
+
+      // Try to create or get existing chat
+      final response = await dio.post(
+        ApiEndpoints.chatChats,
+        data: {'participantId': astrologerId},
+      );
+
+      debugPrint('Chat creation response: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data['data'];
+
+        // Try different possible field names
+        String? chatId =
+            data['id'] ??
+            data['chatId'] ??
+            data['_id'] ??
+            data['conversationId'];
+
+        if (chatId != null) {
+          debugPrint('Got chat ID: $chatId');
+          return chatId;
+        } else {
+          debugPrint('No chat ID found in response: $data');
+          return null;
+        }
+      }
+
+      debugPrint('Unexpected status code: ${response.statusCode}');
+      return null;
+    } on DioException catch (e) {
+      debugPrint('DioException creating chat: ${e.message}');
+      debugPrint('Response data: ${e.response?.data}');
+      return null;
+    } catch (e) {
+      debugPrint('Error creating/getting chat: $e');
+      return null;
+    }
   }
 
   Future<void> _openChatWithAstrologer(ActiveAstrologerModel astrologer) async {
@@ -195,7 +260,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
         context,
         MaterialPageRoute(
           builder: (_) => ChatScreen(
-            chatId: 'chat_${currentUserId}_${astrologer.id}',
+            chatId: '',
             otherUserId: astrologer.id,
             // Jyotishi ID as receiver
             otherUserName: astrologer.name,
@@ -244,8 +309,8 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
             child: BlocBuilder<ChatBloc, ChatState>(
               builder: (context, state) {
                 // Determine loading & astrologers list
-                final isLoading = state is ActiveUsersLoading;
-                final astrologers = state is ActiveUsersLoaded
+                final isLoading = state is ChatLoadingState;
+                final astrologers = state is ActiveUsersLoadedState
                     ? state.astrologers
                     : <ActiveAstrologerModel>[];
 
@@ -256,7 +321,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                     children: [
                       _header(isLoading),
                       SizedBox(height: 16),
-                      _balanceCard(),
+
                       if (_isChatsLocked) ...[
                         SizedBox(height: 12),
                         _lockStatusBanner(),
@@ -323,75 +388,12 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
     );
   }
 
-  Widget _balanceCard() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.monetization_on_rounded, color: gold, size: 28),
-          SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Your Balance',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              Text(
-                '$_coinBalance coins',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          Spacer(),
-          GestureDetector(
-            onTap: () async {
-              await Navigator.pushNamed(context, '/payment_page');
-              _loadCoinBalance();
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.add, color: Colors.white, size: 18),
-                  SizedBox(width: 4),
-                  Text(
-                    'Add',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _lockStatusBanner() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.blue.withAlpha(51),
-            Colors.blueAccent.withAlpha(26),
-          ],
+          colors: [Colors.blue.withAlpha(51), Colors.blueAccent.withAlpha(26)],
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.blue.withAlpha(77)),
@@ -422,10 +424,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                 SizedBox(height: 2),
                 Text(
                   'From ${_lockedJyotishName ?? "Jyotish"}',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
@@ -489,7 +488,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                '1 coin/chat',
+                '2 coins/chat',
                 style: TextStyle(
                   color: Colors.green,
                   fontSize: 10,

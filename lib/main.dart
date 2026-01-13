@@ -8,8 +8,9 @@ import 'package:chat_jyotishi/features/home/screens/horroscope_screen.dart';
 import 'package:chat_jyotishi/features/home_astrologer/screens/home_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/notification/services/notification_service.dart';
 import 'package:chat_jyotishi/features/payment/screens/broadcast_page.dart';
-import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
+import 'package:chat_jyotishi/features/chat/screens/chat_options_screen.dart';
 import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
+import 'package:chat_jyotishi/features/profile/screens/astrologer_profile_screen.dart';
 import 'package:chat_jyotishi/features/profile/screens/change_password_screen.dart';
 import 'package:chat_jyotishi/features/profile/screens/set_password_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -54,20 +55,23 @@ class MyApp extends StatelessWidget {
         '/home_screen_client': (context) => HomeScreenClient(),
         '/home_screen_astrologer': (context) => HomeScreenAstrologer(),
         '/user_profile_screen': (context) => UserProfileScreen(),
+        '/astrologer_profile_screen': (context) => AstrologerProfileScreen(),
         '/horoscope_screen': (context) => HoroscopeScreen(),
         // '/chat_screen': (context) => ChatScreen(),
         '/set_password_screen': (context) => SetPasswordScreen(),
         '/change_password_screen': (context) => ChangePasswordScreen(),
         '/chat_list_screen': (context) => ChatListScreen(),
         '/astrologer_chat_list_screen': (context) => AstrologerChatListScreen(),
-        // Astrologer incoming requests
+
+        /// Astrologer incoming requests
         '/incoming_requests': (context) => IncomingRequestsScreen(),
-        // Payment and broadcast routes
+
+        ///Payment and broadcast routes
         '/payment_page': (context) => PaymentPage(),
-        '/chat_options_page': (context) => ChatOptionsPage(),
+        '/chat_options_page': (context) => ChatOptionsScreen(),
         '/broadcast_page': (context) => BroadcastPage(),
       },
-      initialRoute: '/splash_screen',
+      initialRoute: '/user_profile_screen',
     );
   }
 }

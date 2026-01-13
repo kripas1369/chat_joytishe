@@ -4,22 +4,38 @@ abstract class ChatState {
   const ChatState();
 }
 
-class ChatInitial extends ChatState {
-  const ChatInitial();
+class ChatInitialState extends ChatState {
+  const ChatInitialState();
 }
 
-class ActiveUsersLoading extends ChatState {
-  const ActiveUsersLoading();
+class ChatLoadingState extends ChatState {
+  const ChatLoadingState();
 }
 
-class ActiveUsersLoaded extends ChatState {
-  final List<ActiveAstrologerModel> astrologers;
-
-  const ActiveUsersLoaded(this.astrologers);
-}
-
-class ActiveUsersError extends ChatState {
+class ChatErrorState extends ChatState {
   final String message;
 
-  const ActiveUsersError(this.message);
+  const ChatErrorState(this.message);
+}
+
+/// Success state when online jyotish list fetched successfully
+class ActiveUsersLoadedState extends ChatState {
+  final List<ActiveAstrologerModel> astrologers;
+
+  const ActiveUsersLoadedState(this.astrologers);
+}
+
+/// Success state when chat ended successfully
+class ChatEndSuccessState extends ChatState {
+  final String chatId;
+  final String endedBy;
+  final DateTime endedAt;
+
+  const ChatEndSuccessState({
+    required this.chatId,
+    required this.endedBy,
+    required this.endedAt,
+  });
+
+  List<Object?> get props => [chatId, endedBy, endedAt];
 }

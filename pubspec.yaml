@@ -53,6 +53,8 @@ dependencies:
   firebase_messaging: ^15.1.6
   # Local notifications for foreground
   flutter_local_notifications: ^18.0.1
+  nepali_date_picker: ^6.0.2
+  nepali_calendar_plus: ^0.0.7
 
 dev_dependencies:
   flutter_test:

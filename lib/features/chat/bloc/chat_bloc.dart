@@ -8,48 +8,76 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final ChatRepository chatRepository;
   List<ActiveAstrologerModel> _cachedActiveAstrologers = [];
 
-  ChatBloc({required this.chatRepository}) : super(const ChatInitial()) {
+  ChatBloc({required this.chatRepository}) : super(const ChatInitialState()) {
     on<FetchActiveUsersEvent>(_onFetchActiveAstrologers);
     on<RefreshActiveUsersEvent>(_onRefreshActiveAstrologers);
+    on<EndChatRequestedEvent>(_onEndChatRequested);
+    on<ChatEndResetEvent>(_onChatEndReset);
   }
 
   // Fetch active astrologers initially
   Future<void> _onFetchActiveAstrologers(
-      FetchActiveUsersEvent event,
-      Emitter<ChatState> emit,
-      ) async {
-    emit(const ActiveUsersLoading());
+    FetchActiveUsersEvent event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(const ChatLoadingState());
     try {
       final activeAstrologers = await chatRepository.getActiveAstrologers();
       _cachedActiveAstrologers = activeAstrologers;
-      emit(ActiveUsersLoaded(activeAstrologers));
+      emit(ActiveUsersLoadedState(activeAstrologers));
     } catch (e) {
-      emit(ActiveUsersError(e.toString()));
+      emit(ChatErrorState(e.toString()));
     }
   }
 
   // Refresh the active astrologers list
   Future<void> _onRefreshActiveAstrologers(
-      RefreshActiveUsersEvent event,
-      Emitter<ChatState> emit,
-      ) async {
+    RefreshActiveUsersEvent event,
+    Emitter<ChatState> emit,
+  ) async {
     if (_cachedActiveAstrologers.isNotEmpty) {
-      emit(ActiveUsersLoaded(_cachedActiveAstrologers));
+      emit(ActiveUsersLoadedState(_cachedActiveAstrologers));
     } else {
-      emit(const ActiveUsersLoading());
+      emit(const ChatLoadingState());
     }
 
     try {
       final activeAstrologers = await chatRepository.getActiveAstrologers();
       _cachedActiveAstrologers = activeAstrologers;
-      emit(ActiveUsersLoaded(activeAstrologers));
+      emit(ActiveUsersLoadedState(activeAstrologers));
     } catch (e) {
       if (_cachedActiveAstrologers.isNotEmpty) {
-        emit(ActiveUsersError(e.toString()));
-        emit(ActiveUsersLoaded(_cachedActiveAstrologers));
+        emit(ChatErrorState(e.toString()));
+        emit(ActiveUsersLoadedState(_cachedActiveAstrologers));
       } else {
-        emit(ActiveUsersError(e.toString()));
+        emit(ChatErrorState(e.toString()));
       }
     }
+  }
+
+  Future<void> _onEndChatRequested(
+    EndChatRequestedEvent event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(const ChatLoadingState());
+
+    try {
+      final result = await chatRepository.endChat(chatId: event.chatId);
+
+      emit(
+        ChatEndSuccessState(
+          chatId: result['chatId'] as String,
+          endedBy: result['endedBy'] as String,
+          endedAt: result['endedAt'] as DateTime,
+        ),
+      );
+    } catch (e) {
+      emit(ChatErrorState(e.toString()));
+    }
+  }
+
+  /// Reset the state
+  void _onChatEndReset(ChatEndResetEvent event, Emitter<ChatState> emit) {
+    emit(const ChatInitialState());
   }
 }

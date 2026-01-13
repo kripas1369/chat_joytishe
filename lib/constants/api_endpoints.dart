@@ -11,6 +11,7 @@ class ApiEndpoints {
   static const String changePassword = '$baseUrl/auth/change-password';
   static const String getActiveAstrologers = '$baseUrl/users/chatable';
   static const String getAstrologerProfile = '$baseUrl/astrologers/:id';
+  static const String getUserProfile = '';
 
   static const String socketUrl = 'http://192.168.0.206:4000';
 
@@ -29,7 +30,7 @@ class ApiEndpoints {
   static const String chatUnreadCount = '/chat/unread-count';
   static const String chatSearch = '/chat/search';
   static const String chatActiveChat = '/chat/active-chat';
-  static const String chatEnd = '/chats'; // PUT /chats/:chatId/end
+  static const String chatEnd = '/chat/chats/:chatId/end';
 
   // Appointment Endpoints
   static const String appointments = '$baseUrl/appointments';

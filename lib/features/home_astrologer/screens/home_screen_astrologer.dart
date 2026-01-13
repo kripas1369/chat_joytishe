@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
+import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
+import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/astrologer_chat_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
@@ -39,7 +41,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   String refreshToken = '';
 
   // Broadcast notification state
-  List<Map<String, dynamic>> _broadcastNotifications = [];
+  final List<Map<String, dynamic>> _broadcastNotifications = [];
 
   // Count of pending broadcast requests for badge
   int _pendingBroadcastCount = 0;
@@ -89,9 +91,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         // Handle instant chat notification tap - navigate to incoming requests
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => const IncomingRequestsScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const IncomingRequestsScreen()),
         );
       }
     };
@@ -188,7 +188,11 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     );
   }
 
-  void _handleAcceptInstantChat(String requestId, dynamic client, String clientName) {
+  void _handleAcceptInstantChat(
+    String requestId,
+    dynamic client,
+    String clientName,
+  ) {
     Navigator.pop(context); // Close dialog
 
     // Accept via socket
@@ -220,7 +224,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
         // Subscribe to astrologer-specific notifications topic
         if (astrologerId.isNotEmpty) {
-          await _notificationService.subscribeToTopic('astrologer_$astrologerId');
+          await _notificationService.subscribeToTopic(
+            'astrologer_$astrologerId',
+          );
         }
       }
     }
@@ -242,7 +248,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         body: jsonEncode({'isOnline': newStatus}),
       );
 
-      debugPrint('Toggle online status response: ${response.statusCode} - ${response.body}');
+      debugPrint(
+        'Toggle online status response: ${response.statusCode} - ${response.body}',
+      );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         setState(() {
@@ -267,7 +275,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(newStatus ? 'You are now online' : 'You are now offline'),
+              content: Text(
+                newStatus ? 'You are now online' : 'You are now offline',
+              ),
               backgroundColor: newStatus ? Colors.green : Colors.orange,
               duration: const Duration(seconds: 2),
             ),
@@ -279,10 +289,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         final errorMessage = errorBody['message'] ?? 'Failed to update status';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
           );
         }
       }
@@ -343,7 +350,8 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       context,
       MaterialPageRoute(
         builder: (_) => AstrologerChatScreen(
-          chatId: messageId, // Use messageId initially, will be updated by server
+          chatId: messageId,
+          // Use messageId initially, will be updated by server
           clientId: clientId,
           clientName: clientName,
           clientPhoto: clientPhoto,
@@ -550,7 +558,8 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           ],
         ),
         NotificationButton(
-          notificationCount: _pendingBroadcastCount + 4, // Include pending broadcasts
+          notificationCount: _pendingBroadcastCount + 4,
+          // Include pending broadcasts
           onTap: () {
             // Navigate to incoming requests if there are pending broadcasts
             if (_pendingBroadcastCount > 0) {
@@ -948,10 +957,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
             Expanded(
               child: Text(
                 'Go online to receive broadcast and chat requests from clients.',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: Colors.orange, fontSize: 13),
               ),
             ),
           ],
@@ -976,10 +982,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
             Expanded(
               child: Text(
                 'You are online. Waiting for client requests...',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: Colors.green, fontSize: 13),
               ),
             ),
           ],
@@ -1552,7 +1555,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   }
 
   void _handleLogout() {
-    debugPrint('Logout tapped');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreenAstrologer()),
+    );
   }
 }
 
@@ -1584,10 +1590,7 @@ class _BroadcastNotificationDialog extends StatelessWidget {
             colors: [AppColors.cardDark, AppColors.backgroundDark],
           ),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Colors.orange.withOpacity(0.4),
-            width: 2,
-          ),
+          border: Border.all(color: Colors.orange.withOpacity(0.4), width: 2),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1785,10 +1788,7 @@ class _InstantChatNotificationDialog extends StatelessWidget {
             colors: [AppColors.cardDark, AppColors.backgroundDark],
           ),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Colors.blue.withAlpha(102),
-            width: 2,
-          ),
+          border: Border.all(color: Colors.blue.withAlpha(102), width: 2),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1838,7 +1838,11 @@ class _InstantChatNotificationDialog extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.person_rounded, color: Colors.white70, size: 16),
+                  const Icon(
+                    Icons.person_rounded,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     clientName,
@@ -1860,10 +1864,7 @@ class _InstantChatNotificationDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white.withAlpha(13),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withAlpha(26),
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.white.withAlpha(26), width: 1),
               ),
               child: Text(
                 message,

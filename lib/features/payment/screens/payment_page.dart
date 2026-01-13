@@ -1,4 +1,6 @@
 import 'package:chat_jyotishi/constants/constant.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_background_gradient.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
@@ -70,19 +72,14 @@ class _PaymentPageState extends State<PaymentPage> {
     return Scaffold(
       body: Stack(
         children: [
-          StarFieldBackground(),
-          Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.backgroundGradient.withOpacity(0.9),
-            ),
-          ),
+          buildGradientBackground(),
           SafeArea(
             child: SingleChildScrollView(
               physics: BouncingScrollPhysics(),
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SizedBox(height: 16),
                     _buildHeader(),
@@ -135,10 +132,11 @@ class _PaymentPageState extends State<PaymentPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
-            AppColors.deepPurple.withOpacity(0.1),
+            AppColors.primaryPurple.withOpacity(0.15),
+            AppColors.deepPurple.withOpacity(0.08),
           ],
         ),
+
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: AppColors.primaryPurple.withOpacity(0.3),
@@ -451,41 +449,16 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Widget _buildPayButton() {
-    return GestureDetector(
+    return AppButton(
+      title: 'Proceed to Pay',
+      icon: Icons.qr_code_rounded,
+      isLoading: false,
       onTap: _selectedCoins > 0 ? _proceedToPayment : null,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 18),
-        decoration: BoxDecoration(
-          gradient: _selectedCoins > 0
-              ? AppColors.primaryGradient
-              : LinearGradient(colors: [Colors.grey, Colors.grey.shade700]),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: _selectedCoins > 0
-              ? [
-                  BoxShadow(
-                    color: AppColors.primaryPurple.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: Offset(0, 6),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.qr_code_rounded, color: Colors.white, size: 24),
-            SizedBox(width: 12),
-            Text(
-              'Proceed to Pay',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+      gradient: _selectedCoins > 0
+          ? AppColors.splashReverseGradient
+          : LinearGradient(
+              colors: [Colors.grey.shade700, Colors.grey.shade900],
             ),
-          ],
-        ),
-      ),
     );
   }
 }

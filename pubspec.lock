@@ -472,6 +472,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  nepali_calendar_plus:
+    dependency: "direct main"
+    description:
+      name: nepali_calendar_plus
+      sha256: "88199721039edc81b801b8dbb1ea7f92ce065c9aee187a5aaa51e39d05db696a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.7"
+  nepali_date_picker:
+    dependency: "direct main"
+    description:
+      name: nepali_date_picker
+      sha256: b2b59072228ac42c290420e6ca9962683c5ad9b5c2d341f1c12dc14d77674eb4
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.2"
+  nepali_utils:
+    dependency: transitive
+    description:
+      name: nepali_utils
+      sha256: "686ac878ca844e0ec264a7c0da6404ab7992db5b9120d3ffe1356a3b1de266f4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.8"
   nested:
     dependency: transitive
     description:

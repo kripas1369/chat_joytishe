@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/constant.dart';
 import '../../app_widgets/glass_icon_button.dart';
 import '../../app_widgets/show_top_snackBar.dart';
-import '../../app_widgets/star_field_background.dart';
 import '../service/socket_service.dart';
 import 'chat_screen.dart';
 
-/// Default broadcast messages for quick selection
 const List<Map<String, dynamic>> defaultBroadcastMessages = [
   {
     'icon': Icons.help_outline_rounded,
@@ -368,12 +367,10 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
     return Scaffold(
       body: Stack(
         children: [
-          StarFieldBackground(),
           Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.backgroundGradient.withOpacity(0.9),
-            ),
+            decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
           ),
+
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -404,36 +401,111 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
   }
 
   Widget _buildHeader() {
-    return Row(
+    return Column(
       children: [
-        GlassIconButton(
-          onTap: () => Navigator.pop(context),
-          icon: Icons.arrow_back,
+        Row(
+          children: [
+            GlassIconButton(
+              onTap: () => Navigator.pop(context),
+              icon: Icons.arrow_back,
+            ),
+            const SizedBox(width: 16),
+            const Text(
+              'Broadcast Message',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        const SizedBox(height: 24),
+        _buildInfoCard(),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.deepPurple.withOpacity(0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          Row(
             children: [
-              const Text(
-                'Everyone Jyotish',
-                style: TextStyle(
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.orange.withOpacity(0.8),
+                      Colors.deepOrange.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.campaign_rounded,
                   color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  size: 28,
                 ),
               ),
-              Text(
-                'Broadcast to all astrologers',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 12,
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Broadcast to All Astrologers',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Your message will be sent to all available astrologers',
+                      style: TextStyle(color: Colors.white60, fontSize: 13),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-      ],
+          SizedBox(height: 16),
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.orange, size: 18),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'First astrologer to accept will start a chat with you',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -441,22 +513,6 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header text
-        const Text(
-          'What do you need help with?',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Select a topic to broadcast to all online astrologers',
-          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
-        ),
-        const SizedBox(height: 20),
-
         // Message options grid
         Expanded(
           child: ListView.separated(
@@ -545,72 +601,25 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         ),
         const SizedBox(height: 16),
 
-        // Send button
-        SizedBox(
-          width: double.infinity,
-          child: GestureDetector(
-            onTap: (_isSending || _selectedMessage == null)
-                ? null
-                : _sendBroadcast,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                gradient: _selectedMessage != null
-                    ? LinearGradient(colors: [Colors.orange, Colors.deepOrange])
-                    : null,
-                color: _selectedMessage == null
-                    ? Colors.white.withOpacity(0.1)
-                    : null,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: _selectedMessage != null
-                    ? [
-                        BoxShadow(
-                          color: Colors.orange.withOpacity(0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (_isSending)
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  else
-                    Icon(
-                      Icons.broadcast_on_personal,
-                      color: _selectedMessage != null
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.5),
-                    ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isSending
-                        ? 'Broadcasting...'
-                        : _selectedMessage != null
-                        ? 'Broadcast Now'
-                        : 'Select a topic above',
-                    style: TextStyle(
-                      color: _selectedMessage != null
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.5),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        AppButton(
+          title: _isSending
+              ? 'Broadcasting...'
+              : _selectedMessage != null
+              ? 'Broadcast Now'
+              : 'Select a topic above',
+          onTap: (_isSending || _selectedMessage == null)
+              ? null
+              : _sendBroadcast,
+          isLoading: _isSending,
+          icon: Icons.broadcast_on_personal,
+          gradient: _selectedMessage != null
+              ? AppColors.splashGradient
+              : LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.1),
+                    Colors.white.withOpacity(0.1),
+                  ],
+                ),
         ),
       ],
     );
@@ -641,7 +650,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.broadcast_on_personal,
                     size: 50,
                     color: Colors.white,

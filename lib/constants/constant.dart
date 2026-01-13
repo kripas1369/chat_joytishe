@@ -72,4 +72,9 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+  static const LinearGradient splashReverseGradient = LinearGradient(
+    colors: [Color(0xFF8309CC), Color(0xFF61198C)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }
