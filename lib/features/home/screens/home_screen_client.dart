@@ -172,7 +172,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         ),
         NotificationButton(
           notificationCount: notificationCount,
-          onTap: () => _navigateTo('/notifications'),
+          onTap: () => _navigateTo('/notification_screen'),
         ),
       ],
     );

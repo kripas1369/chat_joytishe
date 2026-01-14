@@ -407,7 +407,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
           children: [
             GlassIconButton(
               onTap: () => Navigator.pop(context),
-              icon: Icons.arrow_back,
+              icon: Icons.arrow_back_ios_new_rounded,
             ),
             const SizedBox(width: 16),
             const Text(

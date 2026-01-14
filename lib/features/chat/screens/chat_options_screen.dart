@@ -165,7 +165,7 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
             context,
             MaterialPageRoute(builder: (context) => HomeScreenClient()),
           ),
-          icon: Icons.arrow_back,
+          icon: Icons.arrow_back_ios_new_rounded,
         ),
         SizedBox(width: 16),
         Text(

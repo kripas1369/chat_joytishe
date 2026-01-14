@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'features/auth/screens/login_screen.dart';
 
 import 'features/auth/screens/splash_screen.dart';
+import 'features/notification/screens/notification_screen.dart';
 import 'features/profile/screens/user_profile_screen.dart';
 
 /// Global navigator key for navigation from notification service
@@ -74,8 +75,11 @@ class MyApp extends StatelessWidget {
 
         ///Appointment feature
         '/appointment_screen': (context) => AppointmentScreen(),
+
+        ///Notification service route
+        '/notification_screen': (context) => NotificationScreen(),
       },
-      initialRoute: '/home_screen_client',
+      initialRoute: '/splash_screen',
     );
   }
 }

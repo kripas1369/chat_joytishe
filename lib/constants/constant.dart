@@ -77,4 +77,12 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  static const LinearGradient standardGradient = LinearGradient(
+    colors: [Color(0xFFC0C0C0), Color(0xFF808080)],
+  );
+
+  static const LinearGradient premiumGradient = LinearGradient(
+    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+  );
 }

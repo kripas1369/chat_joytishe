@@ -100,7 +100,7 @@ class _HoroscopeGridScreenState extends State<HoroscopeScreen>
       child: Row(
         children: [
           GlassIconButton(
-            icon: Icons.arrow_back,
+            icon: Icons.arrow_back_ios_new_rounded,
             onTap: () => Navigator.pop(context),
           ),
           SizedBox(width: 16),

@@ -109,7 +109,7 @@ class _PaymentPageState extends State<PaymentPage> {
       children: [
         GlassIconButton(
           onTap: () => Navigator.pop(context),
-          icon: Icons.arrow_back,
+          icon: Icons.arrow_back_ios_new_rounded,
         ),
         SizedBox(width: 16),
         Text(

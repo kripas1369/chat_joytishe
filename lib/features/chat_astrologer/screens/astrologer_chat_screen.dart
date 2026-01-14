@@ -414,7 +414,7 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
       child: Row(
         children: [
           GlassIconButton(
-            icon: Icons.arrow_back,
+            icon: Icons.arrow_back_ios_new_rounded,
             onTap: () => Navigator.pop(context),
           ),
           const SizedBox(width: 12),

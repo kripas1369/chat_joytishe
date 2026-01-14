@@ -498,15 +498,11 @@ class _AppointmentScreenState extends State<AppointmentScreen>
   LinearGradient _getTierGradient(String tier) {
     switch (tier.toLowerCase()) {
       case 'premium':
-        return const LinearGradient(
-          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-        );
+        return AppColors.premiumGradient;
       case 'professional':
         return AppColors.cardGradient1;
       default:
-        return const LinearGradient(
-          colors: [Color(0xFFC0C0C0), Color(0xFF808080)],
-        );
+        return AppColors.standardGradient;
     }
   }
 

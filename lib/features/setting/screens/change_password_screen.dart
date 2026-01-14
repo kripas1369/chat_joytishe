@@ -44,7 +44,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             top: 78,
             left: 24,
             child: GlassIconButton(
-              icon: Icons.arrow_back,
+              icon: Icons.arrow_back_ios_new_rounded,
               onTap: () => Navigator.pop(context),
             ),
           ),

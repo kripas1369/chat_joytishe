@@ -342,7 +342,7 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
       children: [
         GlassIconButton(
           onTap: () => Navigator.pop(context),
-          icon: Icons.arrow_back,
+          icon: Icons.arrow_back_ios_new_rounded,
         ),
         const SizedBox(width: 16),
         Expanded(

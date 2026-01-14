@@ -141,11 +141,7 @@ class _ServiceInquiryScreenState extends State<ServiceInquiryScreen> {
           ),
           child: Column(
             children: [
-              Icon(
-                Icons.access_time_rounded,
-                color: Colors.orange,
-                size: 48,
-              ),
+              Icon(Icons.access_time_rounded, color: Colors.orange, size: 48),
               const SizedBox(height: 16),
               Text(
                 'Delayed Response',
@@ -264,10 +260,7 @@ class _ServiceInquiryScreenState extends State<ServiceInquiryScreen> {
             onPressed: _cancelAndUnlock,
             child: Text(
               'Cancel Chat & Try Another Jyotish',
-              style: TextStyle(
-                color: Colors.red.shade300,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.red.shade300, fontSize: 14),
             ),
           ),
         ),
@@ -310,11 +303,7 @@ class _ServiceInquiryScreenState extends State<ServiceInquiryScreen> {
         Text(
           'Our support team will review your inquiry\nand get back to you soon.',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
-            height: 1.5,
-          ),
+          style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
         ),
         const SizedBox(height: 32),
         GestureDetector(
@@ -340,10 +329,7 @@ class _ServiceInquiryScreenState extends State<ServiceInquiryScreen> {
           onPressed: _cancelAndUnlock,
           child: Text(
             'Cancel & Try Another Jyotish',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.white54, fontSize: 14),
           ),
         ),
       ],
