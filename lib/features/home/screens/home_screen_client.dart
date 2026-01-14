@@ -375,11 +375,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         'delay': 200,
       },
       {
-        'icon': Icons.self_improvement_rounded,
-        'title': 'Kundali',
-        'subtitle': 'Birth chart analysis',
+        'icon': Icons.calendar_today_rounded,
+        'title': 'Appointment',
+        'subtitle': 'Book a session',
         'gradient': AppColors.featureCardGradient1,
-        'route': '/kundali',
+        'route': '/appointment_screen',
         'delay': 300,
       },
     ];

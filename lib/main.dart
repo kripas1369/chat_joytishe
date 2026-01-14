@@ -1,3 +1,4 @@
+import 'package:chat_jyotishi/features/appointment/screens/appointment_screen.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/chat_list_screen_astrologer.dart';
@@ -70,8 +71,11 @@ class MyApp extends StatelessWidget {
         '/payment_page': (context) => PaymentPage(),
         '/chat_options_page': (context) => ChatOptionsScreen(),
         '/broadcast_page': (context) => BroadcastPage(),
+
+        ///Appointment feature
+        '/appointment_screen': (context) => AppointmentScreen(),
       },
-      initialRoute: '/splash_screen',
+      initialRoute: '/home_screen_client',
     );
   }
 }

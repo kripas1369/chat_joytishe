@@ -104,17 +104,12 @@ class _HoroscopeGridScreenState extends State<HoroscopeScreen>
             onTap: () => Navigator.pop(context),
           ),
           SizedBox(width: 16),
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [Colors.white, AppColors.lightPurple],
-            ).createShader(bounds),
-            child: Text(
-              'Horoscope',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
+          Text(
+            'Horoscope',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

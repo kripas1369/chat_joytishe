@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const Color gold = Color(0xFFF5C84C);
+const Color gold = Color(0xFFFFD700);
 const Color cardColor = Color(0xFF0A1025);
 
 class AppColors {
