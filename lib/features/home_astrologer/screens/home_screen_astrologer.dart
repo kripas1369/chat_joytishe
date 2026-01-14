@@ -1441,7 +1441,11 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   Widget _buildDrawerItems() {
     final items = [
       {'icon': Icons.home_rounded, 'title': 'Home', 'selected': true},
-      {'icon': Icons.person_rounded, 'title': 'Profile', 'route': '/profile'},
+      {
+        'icon': Icons.person_rounded,
+        'title': 'Profile',
+        'route': '/astrologer_profile_screen',
+      },
       {
         'icon': Icons.account_balance_wallet_rounded,
         'title': 'Earnings',

@@ -11,8 +11,8 @@ import 'package:chat_jyotishi/features/payment/screens/broadcast_page.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_options_screen.dart';
 import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
 import 'package:chat_jyotishi/features/profile/screens/astrologer_profile_screen.dart';
-import 'package:chat_jyotishi/features/profile/screens/change_password_screen.dart';
-import 'package:chat_jyotishi/features/profile/screens/set_password_screen.dart';
+import 'package:chat_jyotishi/features/setting/screens/change_password_screen.dart';
+import 'package:chat_jyotishi/features/setting/screens/set_password_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -71,7 +71,7 @@ class MyApp extends StatelessWidget {
         '/chat_options_page': (context) => ChatOptionsScreen(),
         '/broadcast_page': (context) => BroadcastPage(),
       },
-      initialRoute: '/user_profile_screen',
+      initialRoute: '/splash_screen',
     );
   }
 }

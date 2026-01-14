@@ -1,8 +1,9 @@
+import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
+import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
+import 'package:chat_jyotishi/features/setting/widgets/password_text_field.dart';
 import 'package:flutter/material.dart';
 import '../../../constants/constant.dart';
 import '../../app_widgets/app_button.dart';
-import '../../auth/widgets/input_field.dart';
-import '../../app_widgets/star_field_background.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -21,15 +22,32 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final TextEditingController confirmController = TextEditingController();
 
   @override
+  void dispose() {
+    currentController.dispose();
+    newController.dispose();
+    confirmController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
           StarFieldBackground(),
           Container(
-            decoration: BoxDecoration(gradient: AppColors.backgroundGradient.withOpacity(0.9)),
+            decoration: BoxDecoration(
+              gradient: AppColors.backgroundGradient.withOpacity(0.9),
+            ),
           ),
-
+          Positioned(
+            top: 78,
+            left: 24,
+            child: GlassIconButton(
+              icon: Icons.arrow_back,
+              onTap: () => Navigator.pop(context),
+            ),
+          ),
           Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(20),
@@ -59,65 +77,36 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Current Password
-          Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              InputField(
-                label: 'Current Password',
-                obscure: !currentVisible,
-                prefixIcon: Icons.lock_outline,
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              InputField(
-                label: 'New Password',
-                obscure: !newVisible,
-                prefixIcon: Icons.lock_outline,
-              ),
-              Positioned(
-                bottom: 5,
-                child: IconButton(
-                  icon: Icon(
-                    newVisible ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.white70,
-                  ),
-                  onPressed: () {
-                    setState(() => newVisible = !newVisible);
-                  },
-                ),
-              ),
-            ],
+          PasswordTextField(
+            controller: currentController,
+            label: 'Current Password',
+            hint: 'Enter your current password',
+            isVisible: currentVisible,
+            onVisibilityToggle: () {
+              setState(() => currentVisible = !currentVisible);
+            },
           ),
           SizedBox(height: 16),
 
-          // Confirm New Password
-          Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              InputField(
-                label: 'Confirm New Password',
+          PasswordTextField(
+            controller: newController,
+            label: 'New Password',
+            hint: 'Enter your new password',
+            isVisible: newVisible,
+            onVisibilityToggle: () {
+              setState(() => newVisible = !newVisible);
+            },
+          ),
+          SizedBox(height: 16),
 
-                obscure: !confirmVisible,
-                prefixIcon: Icons.lock_outline,
-              ),
-              Positioned(
-                bottom: 5,
-                child: IconButton(
-                  icon: Icon(
-                    confirmVisible ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.white70,
-                  ),
-                  onPressed: () {
-                    setState(() => confirmVisible = !confirmVisible);
-                  },
-                ),
-              ),
-            ],
+          PasswordTextField(
+            controller: confirmController,
+            label: 'Confirm New Password',
+            hint: 'Re-enter your new password',
+            isVisible: confirmVisible,
+            onVisibilityToggle: () {
+              setState(() => confirmVisible = !confirmVisible);
+            },
           ),
           SizedBox(height: 28),
 

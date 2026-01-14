@@ -3,6 +3,8 @@ import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_bloc.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_events.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_states.dart';
+import 'package:chat_jyotishi/features/profile/repository/profile_repository.dart';
+import 'package:chat_jyotishi/features/profile/service/profile_service.dart';
 import 'package:chat_jyotishi/features/profile/widgets/profile_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,15 +13,30 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../app_widgets/show_top_snackBar.dart';
 
-class AstrologerProfileScreen extends StatefulWidget {
+class AstrologerProfileScreen extends StatelessWidget {
   const AstrologerProfileScreen({super.key});
 
   @override
-  State<AstrologerProfileScreen> createState() =>
-      _AstrologerProfileScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) =>
+          ProfileBloc(repository: ProfileRepository(ProfileService()))
+            ..add(LoadAstrologerProfile()), // Load profile immediately
+      child: const AstrologerProfileScreenContent(),
+    );
+  }
 }
 
-class _AstrologerProfileScreenState extends State<AstrologerProfileScreen>
+class AstrologerProfileScreenContent extends StatefulWidget {
+  const AstrologerProfileScreenContent({super.key});
+
+  @override
+  State<AstrologerProfileScreenContent> createState() =>
+      _AstrologerProfileScreenContentState();
+}
+
+class _AstrologerProfileScreenContentState
+    extends State<AstrologerProfileScreenContent>
     with TickerProviderStateMixin {
   File? profileImage;
   final ImagePicker picker = ImagePicker();
@@ -44,11 +61,15 @@ class _AstrologerProfileScreenState extends State<AstrologerProfileScreen>
   late AnimationController _pulseController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _pulseAnimation;
+  late ProfileBloc _profileBloc; // Will be initialized in initState
 
   @override
   void initState() {
     super.initState();
 
+    _profileBloc = context.read<ProfileBloc>();
+
+    // Initialize animations
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -68,8 +89,6 @@ class _AstrologerProfileScreenState extends State<AstrologerProfileScreen>
     );
 
     _fadeController.forward();
-
-    context.read<ProfileBloc>().add(LoadAstrologerProfile());
   }
 
   @override
@@ -97,7 +116,7 @@ class _AstrologerProfileScreenState extends State<AstrologerProfileScreen>
       ),
     );
 
-    return BlocListener<ProfileBloc, ProfileState>(
+    return BlocConsumer<ProfileBloc, ProfileState>(
       listener: (context, state) {
         if (state is AstrologerProfileLoadedState) {
           _populateFields(state);
@@ -117,106 +136,109 @@ class _AstrologerProfileScreenState extends State<AstrologerProfileScreen>
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundDark,
-        body: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
-            ),
-            Positioned(
-              top: -100,
-              left: -50,
-              right: -50,
-              child: AnimatedBuilder(
-                animation: _pulseAnimation,
-                builder: (_, __) {
-                  return Container(
-                    height: 350,
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        colors: [
-                          AppColors.primaryPurple.withOpacity(
-                            0.15 * _pulseAnimation.value,
-                          ),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            SafeArea(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: Column(
-                  children: [
-                    ProfileHeader(
-                      onBack: () => Navigator.pop(context),
-                      onSettings: () {
-                        Navigator.of(
-                          context,
-                        ).pushNamed('/change_password_screen');
-                      },
-                    ),
-                    Expanded(
-                      child: BlocBuilder<ProfileBloc, ProfileState>(
-                        builder: (context, state) {
-                          return SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 8),
-                                ProfileAvatar(
-                                  profileImage: profileImage,
-                                  pulseAnimation: _pulseAnimation,
-                                  displayName: nameController.text.isEmpty
-                                      ? 'Astrologer Name'
-                                      : nameController.text,
-                                  displayEmail: emailController.text.isEmpty
-                                      ? 'Astrologer email'
-                                      : emailController.text,
-                                  onTap: () => _showImagePicker(),
-                                ),
-                                const SizedBox(height: 24),
-                                _buildPersonalInfoSection(),
-                                const SizedBox(height: 24),
-                                _buildProfessionalSection(),
-                                const SizedBox(height: 24),
-                                _buildAboutSection(),
-                                const SizedBox(height: 24),
-                                _buildConsultationSection(),
-                                const SizedBox(height: 24),
-                                _buildContactSection(),
-                                const SizedBox(height: 24),
-                                GenderSelector(
-                                  selectedGender: selectedGender,
-                                  onGenderChanged: (value) {
-                                    setState(() => selectedGender = value);
-                                  },
-                                  options: const ['male', 'female'],
-                                ),
-                                const SizedBox(height: 32),
-                                ProfileSaveButton(
-                                  isLoading: state is ProfileLoadingState,
-                                  onTap: _saveProfile,
-                                ),
-                                const SizedBox(height: 40),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: AppColors.backgroundDark,
+          body: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: AppColors.backgroundGradient,
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+              Positioned(
+                top: -100,
+                left: -50,
+                right: -50,
+                child: AnimatedBuilder(
+                  animation: _pulseAnimation,
+                  builder: (context, child) {
+                    return Container(
+                      height: 350,
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.primaryPurple.withOpacity(
+                              0.15 * _pulseAnimation.value,
+                            ),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              SafeArea(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Column(
+                    children: [
+                      ProfileHeader(
+                        onBack: () => Navigator.pushReplacementNamed(
+                          context,
+                          '/home_screen_astrologer',
+                        ),
+                        onSettings: () {
+                          Navigator.of(
+                            context,
+                          ).pushNamed('/change_password_screen');
+                        },
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 8),
+                              ProfileAvatar(
+                                profileImage: profileImage,
+                                pulseAnimation: _pulseAnimation,
+                                displayName: nameController.text.isEmpty
+                                    ? 'Astrologer Name'
+                                    : nameController.text,
+                                displayEmail: emailController.text.isEmpty
+                                    ? 'Astrologer email'
+                                    : emailController.text,
+                                onTap: () => _showImagePicker(),
+                              ),
+                              const SizedBox(height: 24),
+                              _buildPersonalInfoSection(),
+                              const SizedBox(height: 24),
+                              _buildProfessionalSection(),
+                              const SizedBox(height: 24),
+                              _buildAboutSection(),
+                              const SizedBox(height: 24),
+                              _buildConsultationSection(),
+                              const SizedBox(height: 24),
+                              _buildContactSection(),
+                              const SizedBox(height: 24),
+                              GenderSelector(
+                                selectedGender: selectedGender,
+                                onGenderChanged: (value) {
+                                  setState(() => selectedGender = value);
+                                },
+                                options: const ['male', 'female'],
+                              ),
+                              const SizedBox(height: 32),
+                              ProfileSaveButton(
+                                isLoading: state is ProfileLoadingState,
+                                onTap: _saveProfile,
+                              ),
+                              const SizedBox(height: 40),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -375,22 +397,22 @@ class _AstrologerProfileScreenState extends State<AstrologerProfileScreen>
   }
 
   void _saveProfile() {
-    // Dispatch BLoC event for astrologer
-    context.read<ProfileBloc>().add(
-      SaveAstrologerProfile(
-        name: nameController.text,
-        email: emailController.text,
-        phone: phoneController.text,
-        address: addressController.text,
-        experienceYears: int.tryParse(experienceController.text),
-        expertise: expertiseController.text,
-        languages: languagesController.text,
-        bio: bioController.text,
-        pricePerMinute: double.tryParse(priceController.text),
-        gender: selectedGender,
-        isAvailable: isAvailable,
-        profileImage: profileImage,
-      ),
-    );
+    // Use the bloc instance directly
+    // _profileBloc.add(
+    //   SaveAstrologerProfile(
+    //     name: nameController.text,
+    //     email: emailController.text,
+    //     phone: phoneController.text,
+    //     address: addressController.text,
+    //     experienceYears: int.tryParse(experienceController.text),
+    //     expertise: expertiseController.text,
+    //     languages: languagesController.text,
+    //     bio: bioController.text,
+    //     pricePerMinute: double.tryParse(priceController.text),
+    //     gender: selectedGender,
+    //     isAvailable: isAvailable,
+    //     profileImage: profileImage,
+    //   ),
+    // );
   }
 }

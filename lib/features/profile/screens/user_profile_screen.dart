@@ -6,14 +6,14 @@ import 'package:chat_jyotishi/features/profile/bloc/profile_states.dart';
 import 'package:chat_jyotishi/features/profile/repository/profile_repository.dart';
 import 'package:chat_jyotishi/features/profile/service/profile_service.dart';
 import 'package:chat_jyotishi/features/profile/widgets/profile_widgets.dart';
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart' hide TextField;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nepali_date_picker/nepali_date_picker.dart'
     hide CalendarDatePicker;
-import 'package:nepali_date_picker/nepali_date_picker.dart' as picker;
+
 
 import '../../app_widgets/show_top_snackBar.dart';
 
