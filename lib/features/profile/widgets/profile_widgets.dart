@@ -22,7 +22,10 @@ class ProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
         children: [
-          GlassIconButton(icon: Icons.arrow_back_ios_new_rounded, onTap: onBack),
+          GlassIconButton(
+            icon: Icons.arrow_back_ios_new_rounded,
+            onTap: onBack,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: ShaderMask(

@@ -1,5 +1,3 @@
-// lib/features/about/screens/about_us_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:chat_jyotishi/constants/constant.dart';
@@ -62,7 +60,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
                     child: ListView(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       children: [
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 18),
                         _buildAppLogo(),
                         const SizedBox(height: 32),
                         _buildMissionCard(),
@@ -112,63 +110,51 @@ class _AboutUsScreenState extends State<AboutUsScreen>
   }
 
   Widget _buildAppLogo() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.08),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryPurple.withOpacity(0.3),
-                  blurRadius: 20,
-                  spreadRadius: 5,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.auto_awesome,
-              size: 48,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [Colors.white, AppColors.lightPurple],
-            ).createShader(bounds),
-            child: const Text(
-              'ChatJyotishi',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: 1.2,
+    return Column(
+      children: [
+        Container(
+          height: 150,
+          width: 150,
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryGradient,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryPurple.withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 2,
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Your Cosmic Guide to Life',
+          child: ClipOval(
+            child: Image.asset('assets/logo/logo.png', fit: BoxFit.cover),
+          ),
+        ),
+        const SizedBox(height: 20),
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Colors.white, AppColors.lightPurple],
+          ).createShader(bounds),
+          child: const Text(
+            'ChatJyotishi',
             style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 14,
-              letterSpacing: 0.5,
+              fontSize: 32,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: 1.2,
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Your Cosmic Guide to Life',
+          style: TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 14,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
     );
   }
 
@@ -279,11 +265,13 @@ class _AboutUsScreenState extends State<AboutUsScreen>
             ),
           ),
         ),
-        ...features.map((feature) => _buildFeatureCard(
-          icon: feature['icon'] as IconData,
-          title: feature['title'] as String,
-          description: feature['description'] as String,
-        )),
+        ...features.map(
+          (feature) => _buildFeatureCard(
+            icon: feature['icon'] as IconData,
+            title: feature['title'] as String,
+            description: feature['description'] as String,
+          ),
+        ),
       ],
     );
   }
@@ -297,12 +285,16 @@ class _AboutUsScreenState extends State<AboutUsScreen>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.08),
-          width: 1,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.deepPurple.withOpacity(0.1),
+          ],
         ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
       ),
       child: Row(
         children: [
@@ -349,10 +341,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
       decoration: BoxDecoration(
         gradient: AppColors.cardGradient,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.08),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +440,8 @@ class _AboutUsScreenState extends State<AboutUsScreen>
     return Column(
       children: [
         ShaderMask(
-          shaderCallback: (bounds) => AppColors.primaryGradient.createShader(bounds),
+          shaderCallback: (bounds) =>
+              AppColors.primaryGradient.createShader(bounds),
           child: Text(
             number,
             style: const TextStyle(
@@ -464,10 +454,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 13,
-          ),
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
         ),
       ],
     );
@@ -479,10 +466,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
       decoration: BoxDecoration(
         gradient: AppColors.cardGradient,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.08),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,11 +486,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
             'support@chatjyotishi.com',
           ),
           const SizedBox(height: 16),
-          _buildContactRow(
-            Icons.phone_rounded,
-            'Phone',
-            '+977 01-XXXXXXX',
-          ),
+          _buildContactRow(Icons.phone_rounded, 'Phone', '+977 01-XXXXXXX'),
           const SizedBox(height: 16),
           _buildContactRow(
             Icons.location_on_rounded,

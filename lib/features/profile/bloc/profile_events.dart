@@ -9,92 +9,102 @@ abstract class ProfileEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadUserProfile extends ProfileEvent {}
+/// Load current user profile event
+class LoadCurrentUserProfileEvent extends ProfileEvent {}
 
-class SaveUserProfile extends ProfileEvent {
-  final String? name;
-  final String? email;
-  final String? phone;
-  final String? address;
-  final String? dateOfBirth;
-  final String? timeOfBirth;
-  final String? placeOfBirth;
-  final String? zodiacSign;
-  final String? gender;
-  final File? profileImage;
+/// Complete profile setup event
+class CompleteProfileSetupEvent extends ProfileEvent {
+  final String name;
+  final String email;
+  final String dateOfBirth;
+  final String timeOfBirth;
+  final String placeOfBirth;
+  final String currentAddress;
+  final String permanentAddress;
+  final String zoadicSign;
+  final String gender;
 
-  const SaveUserProfile({
-    this.name,
-    this.email,
-    this.phone,
-    this.address,
-    this.dateOfBirth,
-    this.timeOfBirth,
-    this.placeOfBirth,
-    this.zodiacSign,
-    this.gender,
-    this.profileImage,
+  final File? profilePhoto;
+
+  const CompleteProfileSetupEvent({
+    required this.zoadicSign,
+    required this.gender,
+    required this.name,
+    required this.email,
+    required this.dateOfBirth,
+    required this.timeOfBirth,
+    required this.placeOfBirth,
+    required this.currentAddress,
+    required this.permanentAddress,
+    this.profilePhoto,
   });
 
   @override
   List<Object?> get props => [
     name,
     email,
-    phone,
-    address,
     dateOfBirth,
     timeOfBirth,
     placeOfBirth,
-    zodiacSign,
-    gender,
-    profileImage,
+    currentAddress,
+    permanentAddress,
+    profilePhoto,
   ];
 }
 
-class LoadAstrologerProfile extends ProfileEvent {}
-
-class SaveAstrologerProfile extends ProfileEvent {
+/// Update user profile event (name, email)
+class UpdateUserProfileEvent extends ProfileEvent {
   final String? name;
   final String? email;
-  final String? phone;
-  final String? address;
-  final int? experienceYears;
-  final String? expertise;
-  final String? languages;
-  final String? bio;
-  final double? pricePerMinute;
-  final String? gender;
-  final bool? isAvailable;
-  final File? profileImage;
 
-  const SaveAstrologerProfile({
-    this.name,
-    this.email,
-    this.phone,
-    this.address,
-    this.experienceYears,
-    this.expertise,
-    this.languages,
-    this.bio,
-    this.pricePerMinute,
+  const UpdateUserProfileEvent({this.name, this.email});
+
+  @override
+  List<Object?> get props => [name, email];
+}
+
+/// Update birth details event
+class UpdateBirthDetailsEvent extends ProfileEvent {
+  final String? dateOfBirth;
+  final String? timeOfBirth;
+  final String? placeOfBirth;
+  final String? currentAddress;
+  final String? permanentAddress;
+  final String? zoadicSign;
+  final String? gender;
+
+  const UpdateBirthDetailsEvent({
+    this.zoadicSign,
     this.gender,
-    this.isAvailable,
-    this.profileImage,
+    this.dateOfBirth,
+    this.timeOfBirth,
+    this.placeOfBirth,
+    this.currentAddress,
+    this.permanentAddress,
   });
 
   @override
   List<Object?> get props => [
-    name,
-    email,
-    phone,
-    address,
-    experienceYears,
-    expertise,
-    languages,
-    bio,
-    pricePerMinute,
-    gender,
-    isAvailable,
-    profileImage,
+    dateOfBirth,
+    timeOfBirth,
+    placeOfBirth,
+    currentAddress,
+    permanentAddress,
   ];
 }
+
+/// Upload profile photo event
+class UploadProfilePhotoEvent extends ProfileEvent {
+  final File photo;
+
+  const UploadProfilePhotoEvent(this.photo);
+
+  @override
+  List<Object?> get props => [photo];
+}
+
+class RemoveProfilePhotoEvent extends ProfileEvent {}
+
+class RefreshUserProfileEvent extends ProfileEvent {}
+
+// class LoadChatableUsersEvent extends ProfileEvent {}

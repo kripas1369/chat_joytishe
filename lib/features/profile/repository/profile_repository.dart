@@ -1,101 +1,114 @@
-// lib/features/profile/repository/profile_repository.dart
-
 import 'dart:io';
+
 import 'package:chat_jyotishi/features/profile/service/profile_service.dart';
 
-import '../models/user_profile_model.dart';
-import '../models/astrologer_profile_model.dart';
+import '../models/profile_model.dart';
 
 class ProfileRepository {
   final ProfileService profileService;
 
   ProfileRepository(this.profileService);
 
-  /// Get User Profile
-  Future<UserProfileModel> getUserProfile() async {
+  /// Get current user profile
+  Future<ProfileModel> getCurrentUserProfile() async {
     try {
-      final data = await profileService.getUserProfile();
-      return UserProfileModel.fromJson(data);
+      final data = await profileService.getCurrentUserProfile();
+      return ProfileModel.fromJson(data['data']);
     } catch (e) {
       throw Exception('Failed to get user profile: $e');
     }
   }
 
-  /// Update User Profile
-  Future<UserProfileModel> updateUserProfile({
-    String? name,
-    String? email,
-    String? phone,
-    String? address,
-    String? dateOfBirth,
-    String? timeOfBirth,
-    String? placeOfBirth,
-    String? zodiacSign,
-    String? gender,
-    File? profileImage,
+  /// Complete profile setup
+  Future<ProfileModel> completeProfileSetup({
+    required String name,
+    required String email,
+    required String dateOfBirth,
+    required String timeOfBirth,
+    required String placeOfBirth,
+    required String currentAddress,
+    required String permanentAddress,
+    File? profilePhoto,
   }) async {
+    try {
+      final data = await profileService.completeUserProfileSetup(
+        name: name,
+        email: email,
+        dateOfBirth: dateOfBirth,
+        timeOfBirth: timeOfBirth,
+        placeOfBirth: placeOfBirth,
+        currentAddress: currentAddress,
+        permanentAddress: permanentAddress,
+        profilePhoto: profilePhoto,
+      );
+      return ProfileModel.fromJson(data['data']['user']);
+    } catch (e) {
+      throw Exception('Failed to complete profile setup: $e');
+    }
+  }
+
+  /// Update user profile (name, email)
+  Future<ProfileModel> updateUserProfile({String? name, String? email}) async {
     try {
       final data = await profileService.updateUserProfile(
         name: name,
         email: email,
-        phone: phone,
-        address: address,
+      );
+      return ProfileModel.fromJson(data['data']);
+    } catch (e) {
+      throw Exception('Failed to update profile: $e');
+    }
+  }
+
+  /// Update birth details
+  Future<Map<String, dynamic>> updateBirthDetails({
+    String? dateOfBirth,
+    String? timeOfBirth,
+    String? placeOfBirth,
+    String? currentAddress,
+    String? permanentAddress,
+  }) async {
+    try {
+      final data = await profileService.updateBirthDetails(
         dateOfBirth: dateOfBirth,
         timeOfBirth: timeOfBirth,
         placeOfBirth: placeOfBirth,
-        zodiacSign: zodiacSign,
-        gender: gender,
-        profileImage: profileImage,
+        currentAddress: currentAddress,
+        permanentAddress: permanentAddress,
       );
-      return UserProfileModel.fromJson(data);
+      return data['data'];
     } catch (e) {
-      throw Exception('Failed to update user profile: $e');
+      throw Exception('Failed to update birth details: $e');
     }
   }
 
-  /// Get Astrologer Profile
-  Future<AstrologerProfileModel> getAstrologerProfile() async {
+  /// Upload profile photo
+  Future<String> uploadProfilePhoto(File photo) async {
     try {
-      final data = await profileService.getAstrologerProfile();
-      return AstrologerProfileModel.fromJson(data);
+      final data = await profileService.uploadProfilePhoto(photo);
+      return data['data']['profilePhoto'];
     } catch (e) {
-      throw Exception('Failed to get astrologer profile: $e');
+      throw Exception('Failed to upload profile photo: $e');
     }
   }
 
-  /// Update Astrologer Profile
-  Future<AstrologerProfileModel> updateAstrologerProfile({
-    String? name,
-    String? email,
-    String? phone,
-    String? address,
-    int? experienceYears,
-    String? expertise,
-    String? languages,
-    String? bio,
-    double? pricePerMinute,
-    String? gender,
-    bool? isAvailable,
-    File? profileImage,
-  }) async {
+  /// Remove profile photo
+  Future<void> removeProfilePhoto() async {
     try {
-      final data = await profileService.updateAstrologerProfile(
-        name: name,
-        email: email,
-        phone: phone,
-        address: address,
-        experienceYears: experienceYears,
-        expertise: expertise,
-        languages: languages,
-        bio: bio,
-        pricePerMinute: pricePerMinute,
-        gender: gender,
-        isAvailable: isAvailable,
-        profileImage: profileImage,
-      );
-      return AstrologerProfileModel.fromJson(data);
+      await profileService.removeProfilePhoto();
     } catch (e) {
-      throw Exception('Failed to update astrologer profile: $e');
+      throw Exception('Failed to remove profile photo: $e');
     }
   }
+
+  // /// Get chatable users
+  // Future<List<UserModel>> getChatableUsers() async {
+  //   try {
+  //     final data = await _profileService.getChatableUsers();
+  //     final List<dynamic> usersData = data['data'];
+  //     return usersData.map((json) => UserModel.fromJson(json)).toList();
+  //   } catch (e) {
+  //     throw Exception('Failed to get chatable users: $e');
+  //   }
+  // }
 }

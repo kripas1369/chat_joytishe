@@ -14,7 +14,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:nepali_date_picker/nepali_date_picker.dart'
     hide CalendarDatePicker;
 
-
 import '../../app_widgets/show_top_snackBar.dart';
 
 class UserProfileScreen extends StatelessWidget {
@@ -24,8 +23,8 @@ class UserProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
-          ProfileBloc(repository: ProfileRepository(ProfileService()))
-            ..add(LoadUserProfile()), // Load profile immediately
+          ProfileBloc(profileRepository: ProfileRepository(ProfileService()))
+            ..add(LoadCurrentUserProfileEvent()),
       child: const UserProfileScreenContent(),
     );
   }
@@ -51,7 +50,12 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController horoscopeController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
+  final TextEditingController currentAddressController =
+      TextEditingController();
+  final TextEditingController permanentAddressController =
+      TextEditingController();
+  final TextEditingController zoadicSignController = TextEditingController();
+  final TextEditingController genderController = TextEditingController();
 
   String? selectedGender;
 
@@ -59,7 +63,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
   late AnimationController _pulseController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _pulseAnimation;
-  late ProfileBloc _profileBloc; // Will be initialized in initState
+  late ProfileBloc _profileBloc;
 
   @override
   void initState() {
@@ -67,7 +71,6 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
 
     _profileBloc = context.read<ProfileBloc>();
 
-    // Initialize animations
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -99,7 +102,10 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
     emailController.dispose();
     phoneController.dispose();
     horoscopeController.dispose();
-    addressController.dispose();
+    currentAddressController.dispose();
+    permanentAddressController.dispose();
+    zoadicSignController.dispose();
+    genderController.dispose();
     super.dispose();
   }
 
@@ -114,15 +120,49 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
 
     return BlocConsumer<ProfileBloc, ProfileState>(
       listener: (context, state) {
-        if (state is UserProfileLoadedState) {
-          _populateFields(state);
-        } else if (state is UserProfileSavedState) {
+        if (state is ProfileLoadedState) {
+          populateFields(state);
+        } else if (state is ProfileUpdatedState) {
           showTopSnackBar(
             context: context,
-            message: 'Profile saved successfully!',
+            message: 'Profile updated successfully!',
             backgroundColor: AppColors.success,
             icon: Icons.check_circle,
           );
+          populateFields(state);
+        } else if (state is BirthDetailsUpdatedState) {
+          showTopSnackBar(
+            context: context,
+            message: 'Birth details updated successfully!',
+            backgroundColor: AppColors.success,
+            icon: Icons.check_circle,
+          );
+        } else if (state is ProfilePhotoUploadedState) {
+          showTopSnackBar(
+            context: context,
+            message: 'Photo uploaded successfully!',
+            backgroundColor: AppColors.success,
+            icon: Icons.check_circle,
+          );
+          // Reload profile to get updated data
+          _profileBloc.add(RefreshUserProfileEvent());
+        } else if (state is ProfilePhotoRemovedState) {
+          showTopSnackBar(
+            context: context,
+            message: 'Photo removed successfully!',
+            backgroundColor: AppColors.success,
+            icon: Icons.check_circle,
+          );
+          setState(() => profileImage = null);
+          _profileBloc.add(RefreshUserProfileEvent());
+        } else if (state is ProfileSetupSuccessState) {
+          showTopSnackBar(
+            context: context,
+            message: state.message,
+            backgroundColor: AppColors.success,
+            icon: Icons.check_circle,
+          );
+          populateFields(state);
         } else if (state is ProfileErrorState) {
           showTopSnackBar(
             context: context,
@@ -216,7 +256,9 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                               ),
                               const SizedBox(height: 32),
                               ProfileSaveButton(
-                                isLoading: state is ProfileLoadingState,
+                                isLoading:
+                                    state is ProfileLoadingState ||
+                                    state is ProfileOperationInProgressState,
                                 onTap: _saveProfile,
                               ),
                               const SizedBox(height: 40),
@@ -320,8 +362,16 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
         ),
         const SizedBox(height: 16),
         AppTextField(
-          controller: addressController,
-          label: 'Address',
+          controller: currentAddressController,
+          label: 'Current-Address',
+          hint: 'Your current address',
+          icon: Icons.home_rounded,
+          maxLines: 2,
+          onChanged: (_) => setState(() {}),
+        ),
+        AppTextField(
+          controller: permanentAddressController,
+          label: 'Permanent-Address',
           hint: 'Your current address',
           icon: Icons.home_rounded,
           maxLines: 2,
@@ -337,7 +387,9 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
       onCameraTap: () => _pickImage(ImageSource.camera),
       onGalleryTap: () => _pickImage(ImageSource.gallery),
       onRemoveTap: profileImage != null
-          ? () => setState(() => profileImage = null)
+          ? () {
+              _profileBloc.add(RemoveProfilePhotoEvent());
+            }
           : null,
     );
   }
@@ -352,11 +404,14 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
       setState(() {
         profileImage = File(image.path);
       });
+
+      // Upload the photo
+      _profileBloc.add(UploadProfilePhotoEvent(File(image.path)));
     }
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    int selectedOption = 0; // 0 = B.S., 1 = A.D.
+    int selectedOption = 0;
 
     await showDialog(
       context: context,
@@ -394,8 +449,6 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Calendar Type Selection
                     Row(
                       children: [
                         Expanded(
@@ -461,9 +514,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 30),
-
                     Row(
                       children: [
                         Expanded(
@@ -571,22 +622,22 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                     AppColors.primaryPurple.withOpacity(0.15),
                     AppColors.deepPurple.withOpacity(0.08),
                   ],
-                ), // your gradient
+                ),
                 borderRadius: BorderRadius.circular(24),
               ),
               padding: EdgeInsets.all(16),
               child: Theme(
                 data: Theme.of(context).copyWith(
                   colorScheme: ColorScheme.dark(
-                    primary: Colors.white, // selected date circle
-                    onPrimary: AppColors.primaryPurple, // selected date text
-                    surface: Colors.transparent, // calendar background
-                    onSurface: Colors.white, // unselected date text
+                    primary: Colors.white,
+                    onPrimary: AppColors.primaryPurple,
+                    surface: Colors.transparent,
+                    onSurface: Colors.white,
                   ),
                   textTheme: TextTheme(
-                    bodyLarge: TextStyle(color: Colors.white), // dates
-                    bodyMedium: TextStyle(color: Colors.white70), // weekdays
-                    titleMedium: TextStyle(color: Colors.white), // month & year
+                    bodyLarge: TextStyle(color: Colors.white),
+                    bodyMedium: TextStyle(color: Colors.white70),
+                    titleMedium: TextStyle(color: Colors.white),
                   ),
                 ),
                 child: CalendarDatePicker(
@@ -620,43 +671,145 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
     if (emailController.text.isNotEmpty) count++;
     if (phoneController.text.isNotEmpty) count++;
     if (horoscopeController.text.isNotEmpty) count++;
-    if (addressController.text.isNotEmpty) count++;
+    if (currentAddressController.text.isNotEmpty) count++;
+    if (permanentAddressController.text.isNotEmpty) count++;
     if (selectedGender != null) count++;
     return count;
   }
 
-  void _populateFields(UserProfileLoadedState state) {
-    nameController.text = state.profile.name ?? '';
-    dobController.text = state.profile.dateOfBirth ?? '';
-    tobController.text = state.profile.timeOfBirth ?? '';
-    pobController.text = state.profile.placeOfBirth ?? '';
-    emailController.text = state.profile.email ?? '';
-    phoneController.text = state.profile.phone ?? '';
-    horoscopeController.text = state.profile.zodiacSign ?? '';
-    addressController.text = state.profile.address ?? '';
-    selectedGender = state.profile.gender;
+  void populateFields(dynamic state) {
+    final user = state.user;
 
-    if (state.profile.profileImagePath != null) {
-      profileImage = File(state.profile.profileImagePath!);
+    nameController.text = user.name ?? '';
+    emailController.text = user.email ?? '';
+
+    if (user.dateOfBirth != null) {
+      dobController.text =
+          "${user.dateOfBirth!.year}/${user.dateOfBirth!.month.toString().padLeft(2, '0')}/${user.dateOfBirth!.day.toString().padLeft(2, '0')}";
+    } else {
+      dobController.clear();
+    }
+
+    tobController.text = user.timeOfBirth ?? '';
+    pobController.text = user.placeOfBirth ?? '';
+    phoneController.text = user.phone ?? '';
+    horoscopeController.text = user.zodiacSign ?? '';
+    currentAddressController.text = state.user.currentAddress ?? '';
+    permanentAddressController.text = state.user.currentAddress ?? '';
+    selectedGender = user.gender;
+
+    if (user.profilePhoto != null && user.profilePhoto!.isNotEmpty) {
+      profileImage = File(user.profilePhoto!);
+    } else {
+      profileImage = null;
+    }
+
+    setState(() {});
+  }
+
+  void _populateFields(ProfileLoadedState state) {
+    nameController.text = state.user.name ?? '';
+    emailController.text = state.user.email ?? '';
+
+    // Handle date formatting - assuming dateOfBirth is DateTime
+    if (state.user.dateOfBirth != null) {
+      dobController.text =
+          "${state.user.dateOfBirth!.year}/${state.user.dateOfBirth!.month.toString().padLeft(2, '0')}/${state.user.dateOfBirth!.day.toString().padLeft(2, '0')}";
+    }
+
+    tobController.text = state.user.timeOfBirth ?? '';
+    pobController.text = state.user.placeOfBirth ?? '';
+
+    // These fields might not exist in ProfileModel, adjust based on your model
+    phoneController.text = state.user.phoneNumber ?? '';
+    horoscopeController.text = state.user.zodiacSign ?? '';
+    currentAddressController.text = state.user.currentAddress ?? '';
+    permanentAddressController.text = state.user.currentAddress ?? '';
+    selectedGender = state.user.gender;
+
+    if (state.user.profilePhoto != null &&
+        state.user.profilePhoto!.isNotEmpty) {
+      // If profilePhoto is a URL, you might need to handle it differently
+      // For now, assuming it's a local path
+      profileImage = File(state.user.profilePhoto!);
+    }
+
+    setState(() {});
+  }
+
+  void _populateFieldsFromUpdated(ProfileUpdatedState state) {
+    nameController.text = state.user.name ?? '';
+    emailController.text = state.user.email ?? '';
+    setState(() {});
+  }
+
+  void _populateFieldsFromSetup(ProfileSetupSuccessState state) {
+    nameController.text = state.user.name ?? '';
+    emailController.text = state.user.email ?? '';
+
+    if (state.user.dateOfBirth != null) {
+      dobController.text =
+          "${state.user.dateOfBirth!.year}/${state.user.dateOfBirth!.month.toString().padLeft(2, '0')}/${state.user.dateOfBirth!.day.toString().padLeft(2, '0')}";
+    }
+
+    tobController.text = state.user.timeOfBirth ?? '';
+    pobController.text = state.user.placeOfBirth ?? '';
+    phoneController.text = state.user.phoneNumber ?? '';
+    horoscopeController.text = state.user.zodiacSign ?? '';
+    currentAddressController.text = state.user.currentAddress ?? '';
+    permanentAddressController.text = state.user.permanentAddress ?? '';
+    selectedGender = state.user.gender;
+
+    if (state.user.profilePhoto != null &&
+        state.user.profilePhoto!.isNotEmpty) {
+      profileImage = File(state.user.profilePhoto!);
     }
 
     setState(() {});
   }
 
   void _saveProfile() {
-    _profileBloc.add(
-      SaveUserProfile(
-        name: nameController.text,
-        email: emailController.text,
-        phone: phoneController.text,
-        address: addressController.text,
-        dateOfBirth: dobController.text,
-        timeOfBirth: tobController.text,
-        placeOfBirth: pobController.text,
-        zodiacSign: horoscopeController.text,
-        gender: selectedGender,
-        profileImage: profileImage,
-      ),
-    );
+    // Check if this is initial setup or update
+    final currentState = _profileBloc.state;
+
+    if (currentState is ProfileInitialState ||
+        currentState is ProfileErrorState) {
+      // Complete profile setup
+      _profileBloc.add(
+        CompleteProfileSetupEvent(
+          name: nameController.text,
+          email: emailController.text,
+          dateOfBirth: dobController.text,
+          timeOfBirth: tobController.text,
+          placeOfBirth: pobController.text,
+          currentAddress: currentAddressController.text,
+          permanentAddress: permanentAddressController.text,
+          profilePhoto: profileImage,
+          zoadicSign: zoadicSignController.text,
+          gender: genderController.text,
+        ),
+      );
+    } else {
+      // Update existing profile - update basic info
+      _profileBloc.add(
+        UpdateUserProfileEvent(
+          name: nameController.text,
+          email: emailController.text,
+        ),
+      );
+
+      // Update birth details separately
+      _profileBloc.add(
+        UpdateBirthDetailsEvent(
+          zoadicSign: zoadicSignController.text,
+          gender: genderController.text,
+          dateOfBirth: dobController.text,
+          timeOfBirth: tobController.text,
+          placeOfBirth: pobController.text,
+          currentAddress: currentAddressController.text,
+          permanentAddress: permanentAddressController.text,
+        ),
+      );
+    }
   }
 }

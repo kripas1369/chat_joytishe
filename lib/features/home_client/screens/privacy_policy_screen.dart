@@ -194,10 +194,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               children: [
                 Text(
                   'Last Updated',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -220,12 +217,16 @@ class PrivacyPolicyScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.08),
-          width: 1,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.deepPurple.withOpacity(0.1),
+          ],
         ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,11 +320,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   Widget _buildContactItem(IconData icon, String text) {
     return Row(
       children: [
-        Icon(
-          icon,
-          color: AppColors.primaryPurple,
-          size: 18,
-        ),
+        Icon(icon, color: AppColors.primaryPurple, size: 18),
         const SizedBox(width: 12),
         Text(
           text,

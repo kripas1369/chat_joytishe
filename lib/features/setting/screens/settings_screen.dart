@@ -1,5 +1,3 @@
-// lib/features/settings/screens/settings_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:chat_jyotishi/constants/constant.dart';
@@ -43,150 +41,131 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     children: [
                       const SizedBox(height: 24),
-                      _buildSection(
-                        'Account',
-                        [
-                          _buildSettingItem(
-                            icon: Icons.person_rounded,
-                            title: 'Edit Profile',
-                            onTap: () => Navigator.pushNamed(context, '/user_profile_screen'),
+                      _buildSection('Account', [
+                        _buildSettingItem(
+                          icon: Icons.person_rounded,
+                          title: 'Edit Profile',
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/user_profile_screen',
                           ),
-                          _buildSettingItem(
-                            icon: Icons.lock_rounded,
-                            title: 'Change Password',
-                            onTap: () => Navigator.pushNamed(context, '/set_password_screen'),
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.lock_rounded,
+                          title: 'Change Password',
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/set_password_screen',
                           ),
-                          _buildSettingItem(
-                            icon: Icons.phone_rounded,
-                            title: 'Phone Number',
-                            trailing: const Text(
-                              '+977 98XXXXXXXX',
-                              style: TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 14,
-                              ),
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.phone_rounded,
+                          title: 'Phone Number',
+                          trailing: const Text(
+                            '+977 98XXXXXXXX',
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 14,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ]),
                       const SizedBox(height: 24),
-                      _buildSection(
-                        'Notifications',
-                        [
-                          _buildSwitchItem(
-                            icon: Icons.notifications_rounded,
-                            title: 'Push Notifications',
-                            value: _notificationsEnabled,
-                            onChanged: (val) => setState(() => _notificationsEnabled = val),
-                          ),
-                          _buildSwitchItem(
-                            icon: Icons.volume_up_rounded,
-                            title: 'Sound',
-                            value: _soundEnabled,
-                            onChanged: (val) => setState(() => _soundEnabled = val),
-                          ),
-                          _buildSwitchItem(
-                            icon: Icons.vibration_rounded,
-                            title: 'Vibration',
-                            value: _vibrationEnabled,
-                            onChanged: (val) => setState(() => _vibrationEnabled = val),
-                          ),
-                        ],
-                      ),
+                      _buildSection('Notifications', [
+                        _buildSwitchItem(
+                          icon: Icons.notifications_rounded,
+                          title: 'Push Notifications',
+                          value: _notificationsEnabled,
+                          onChanged: (val) =>
+                              setState(() => _notificationsEnabled = val),
+                        ),
+                        _buildSwitchItem(
+                          icon: Icons.volume_up_rounded,
+                          title: 'Sound',
+                          value: _soundEnabled,
+                          onChanged: (val) =>
+                              setState(() => _soundEnabled = val),
+                        ),
+                        _buildSwitchItem(
+                          icon: Icons.vibration_rounded,
+                          title: 'Vibration',
+                          value: _vibrationEnabled,
+                          onChanged: (val) =>
+                              setState(() => _vibrationEnabled = val),
+                        ),
+                      ]),
                       const SizedBox(height: 24),
-                      _buildSection(
-                        'Appearance',
-                        [
-                          _buildSwitchItem(
-                            icon: Icons.dark_mode_rounded,
-                            title: 'Dark Mode',
-                            value: _darkModeEnabled,
-                            onChanged: (val) => setState(() => _darkModeEnabled = val),
-                          ),
-                          _buildSettingItem(
-                            icon: Icons.language_rounded,
-                            title: 'Language',
-                            trailing: Text(
-                              _language,
-                              style: const TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 14,
-                              ),
-                            ),
-                            onTap: () => _showLanguageDialog(),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSection(
-                        'Privacy & Security',
-                        [
-                          _buildSettingItem(
-                            icon: Icons.privacy_tip_rounded,
-                            title: 'Privacy Policy',
-                            onTap: () => Navigator.pushNamed(context, '/privacy'),
-                          ),
-                          _buildSettingItem(
-                            icon: Icons.security_rounded,
-                            title: 'Terms & Conditions',
-                            onTap: () {},
-                          ),
-                          _buildSettingItem(
-                            icon: Icons.shield_rounded,
-                            title: 'Data & Storage',
-                            onTap: () {},
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSection(
-                        'Support',
-                        [
-                          _buildSettingItem(
-                            icon: Icons.help_rounded,
-                            title: 'Help & Support',
-                            onTap: () => Navigator.pushNamed(context, '/support'),
-                          ),
-                          _buildSettingItem(
-                            icon: Icons.feedback_rounded,
-                            title: 'Send Feedback',
-                            onTap: () => _showFeedbackDialog(),
-                          ),
-                          _buildSettingItem(
-                            icon: Icons.star_rounded,
-                            title: 'Rate Us',
-                            onTap: () {},
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSection(
-                        'About',
-                        [
-                          _buildSettingItem(
-                            icon: Icons.info_rounded,
-                            title: 'App Version',
-                            trailing: const Text(
-                              'v1.0.0',
-                              style: TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 14,
-                              ),
+                      _buildSection('Appearance', [
+                        _buildSwitchItem(
+                          icon: Icons.dark_mode_rounded,
+                          title: 'Dark Mode',
+                          value: _darkModeEnabled,
+                          onChanged: (val) =>
+                              setState(() => _darkModeEnabled = val),
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.language_rounded,
+                          title: 'Language',
+                          trailing: Text(
+                            _language,
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 14,
                             ),
                           ),
-                          _buildSettingItem(
-                            icon: Icons.code_rounded,
-                            title: 'Build Number',
-                            trailing: const Text(
-                              '100',
-                              style: TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 14,
-                              ),
+                          onTap: () => _showLanguageDialog(),
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
+                      _buildSection('Privacy & Security', [
+                        _buildSettingItem(
+                          icon: Icons.privacy_tip_rounded,
+                          title: 'Privacy Policy',
+                          onTap: () => Navigator.pushNamed(context, '/privacy'),
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.security_rounded,
+                          title: 'Terms & Conditions',
+                          onTap: () {},
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.shield_rounded,
+                          title: 'Data & Storage',
+                          onTap: () {},
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
+                      _buildSection('Support', [
+                        _buildSettingItem(
+                          icon: Icons.help_rounded,
+                          title: 'Help & Support',
+                          onTap: () => Navigator.pushNamed(context, '/support'),
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.feedback_rounded,
+                          title: 'Send Feedback',
+                          onTap: () => _showFeedbackDialog(),
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.star_rounded,
+                          title: 'Rate Us',
+                          onTap: () {},
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
+                      _buildSection('About', [
+                        _buildSettingItem(
+                          icon: Icons.info_rounded,
+                          title: 'App Version',
+                          trailing: const Text(
+                            'v1.0.0',
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 14,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ]),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -241,12 +220,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         Container(
           decoration: BoxDecoration(
-            gradient: AppColors.cardGradient,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.08),
-              width: 1,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryPurple.withOpacity(0.15),
+                AppColors.deepPurple.withOpacity(0.08),
+              ],
             ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
           ),
           child: Column(children: children),
         ),
@@ -286,7 +269,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
-            if (trailing != null) trailing
+            if (trailing != null)
+              trailing
             else if (onTap != null)
               const Icon(
                 Icons.arrow_forward_ios_rounded,
@@ -387,7 +371,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Text(
               language,
               style: TextStyle(
-                color: isSelected ? AppColors.primaryPurple : AppColors.textPrimary,
+                color: isSelected
+                    ? AppColors.primaryPurple
+                    : AppColors.textPrimary,
                 fontSize: 15,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
@@ -443,9 +429,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () {
               // Send feedback
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Feedback sent!')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Feedback sent!')));
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryPurple,

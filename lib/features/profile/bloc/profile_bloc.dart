@@ -1,93 +1,134 @@
+import 'package:chat_jyotishi/features/chat/models/chat_model.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_events.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_states.dart';
 import 'package:chat_jyotishi/features/profile/repository/profile_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  final ProfileRepository repository;
+  final ProfileRepository profileRepository;
 
-  ProfileBloc({required this.repository}) : super(ProfileInitialState()) {
-    on<LoadUserProfile>(_onLoadUserProfile);
-    on<SaveUserProfile>(_onSaveUserProfile);
-    on<LoadAstrologerProfile>(_onLoadAstrologerProfile);
-    on<SaveAstrologerProfile>(_onSaveAstrologerProfile);
+  ProfileBloc({required this.profileRepository})
+    : super(ProfileInitialState()) {
+    on<LoadCurrentUserProfileEvent>(_onLoadCurrentUserProfile);
+    on<CompleteProfileSetupEvent>(_onCompleteProfileSetup);
+    on<UpdateUserProfileEvent>(_onUpdateUserProfile);
+    on<UpdateBirthDetailsEvent>(_onUpdateBirthDetails);
+    on<UploadProfilePhotoEvent>(_onUploadProfilePhoto);
+    on<RemoveProfilePhotoEvent>(_onRemoveProfilePhoto);
+    on<RefreshUserProfileEvent>(_onRefreshUserProfile);
   }
 
-  Future<void> _onLoadUserProfile(
-    LoadUserProfile event,
+  Future<void> _onLoadCurrentUserProfile(
+    LoadCurrentUserProfileEvent event,
     Emitter<ProfileState> emit,
   ) async {
     emit(ProfileLoadingState());
+
     try {
-      final profile = await repository.getUserProfile();
-      emit(UserProfileLoadedState(profile));
+      final user = await profileRepository.getCurrentUserProfile();
+      emit(ProfileLoadedState(user));
     } catch (e) {
       emit(ProfileErrorState(e.toString()));
     }
   }
 
-  Future<void> _onSaveUserProfile(
-    SaveUserProfile event,
+  Future<void> _onCompleteProfileSetup(
+    CompleteProfileSetupEvent event,
     Emitter<ProfileState> emit,
   ) async {
     emit(ProfileLoadingState());
+
     try {
-      await repository.updateUserProfile(
+      final user = await profileRepository.completeProfileSetup(
         name: event.name,
         email: event.email,
-        phone: event.phone,
-        address: event.address,
         dateOfBirth: event.dateOfBirth,
         timeOfBirth: event.timeOfBirth,
         placeOfBirth: event.placeOfBirth,
-        zodiacSign: event.zodiacSign,
-        gender: event.gender,
-        profileImage: event.profileImage,
+        currentAddress: event.currentAddress,
+        permanentAddress: event.permanentAddress,
+        profilePhoto: event.profilePhoto,
       );
-      emit(UserProfileSavedState());
-      // Reload the profile
-      add(LoadUserProfile());
+      emit(
+        ProfileSetupSuccessState(user, 'Profile setup completed successfully'),
+      );
     } catch (e) {
       emit(ProfileErrorState(e.toString()));
     }
   }
 
-  Future<void> _onLoadAstrologerProfile(
-    LoadAstrologerProfile event,
+  Future<void> _onUpdateUserProfile(
+    UpdateUserProfileEvent event,
     Emitter<ProfileState> emit,
   ) async {
     emit(ProfileLoadingState());
-    try {
-      final profile = await repository.getAstrologerProfile();
-      emit(AstrologerProfileLoadedState(profile));
-    } catch (e) {
-      emit(ProfileErrorState(e.toString()));
-    }
-  }
 
-  Future<void> _onSaveAstrologerProfile(
-    SaveAstrologerProfile event,
-    Emitter<ProfileState> emit,
-  ) async {
-    emit(ProfileLoadingState());
     try {
-      await repository.updateAstrologerProfile(
+      final user = await profileRepository.updateUserProfile(
         name: event.name,
         email: event.email,
-        phone: event.phone,
-        address: event.address,
-        experienceYears: event.experienceYears,
-        expertise: event.expertise,
-        languages: event.languages,
-        bio: event.bio,
-        pricePerMinute: event.pricePerMinute,
-        gender: event.gender,
-        isAvailable: event.isAvailable,
-        profileImage: event.profileImage,
       );
-      emit(AstrologerProfileSavedState());
-      // Reload the profile
-      add(LoadAstrologerProfile());
+      emit(ProfileUpdatedState(user));
+    } catch (e) {
+      emit(ProfileErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateBirthDetails(
+    UpdateBirthDetailsEvent event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(ProfileLoadingState());
+
+    try {
+      final birthDetails = await profileRepository.updateBirthDetails(
+        dateOfBirth: event.dateOfBirth,
+        timeOfBirth: event.timeOfBirth,
+        placeOfBirth: event.placeOfBirth,
+        currentAddress: event.currentAddress,
+        permanentAddress: event.permanentAddress,
+      );
+      emit(BirthDetailsUpdatedState(birthDetails));
+    } catch (e) {
+      emit(ProfileErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onUploadProfilePhoto(
+    UploadProfilePhotoEvent event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(const ProfileOperationInProgressState('Uploading photo...'));
+
+    try {
+      final photoUrl = await profileRepository.uploadProfilePhoto(event.photo);
+      emit(ProfilePhotoUploadedState(photoUrl));
+    } catch (e) {
+      emit(ProfileErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onRemoveProfilePhoto(
+    RemoveProfilePhotoEvent event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(const ProfileOperationInProgressState('Removing photo...'));
+
+    try {
+      await profileRepository.removeProfilePhoto();
+      emit(ProfilePhotoRemovedState());
+    } catch (e) {
+      emit(ProfileErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onRefreshUserProfile(
+    RefreshUserProfileEvent event,
+    Emitter<ProfileState> emit,
+  ) async {
+    try {
+      final user = await profileRepository.getCurrentUserProfile();
+      emit(ProfileLoadedState(user));
     } catch (e) {
       emit(ProfileErrorState(e.toString()));
     }

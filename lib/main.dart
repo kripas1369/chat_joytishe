@@ -66,7 +66,7 @@ class MyApp extends StatelessWidget {
         '/privacy_policy_screen': (context) => PrivacyPolicyScreen(),
         '/home_screen_astrologer': (context) => HomeScreenAstrologer(),
         '/user_profile_screen': (context) => UserProfileScreen(),
-        '/astrologer_profile_screen': (context) => AstrologerProfileScreen(),
+        // '/astrologer_profile_screen': (context) => AstrologerProfileScreen(),
         '/horoscope_screen': (context) => HoroscopeScreen(),
         // '/chat_screen': (context) => ChatScreen(),
         '/set_password_screen': (context) => SetPasswordScreen(),

@@ -104,14 +104,14 @@ enum ChatStatus {
 }
 
 /// User Model
-class UserModel {
+class ProfileModel {
   final String id;
   final String? name;
   final String? email;
   final String? phone;
   final String? profilePhoto;
 
-  UserModel({
+  ProfileModel({
     required this.id,
     this.name,
     this.email,
@@ -119,8 +119,8 @@ class UserModel {
     this.profilePhoto,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
+  factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    return ProfileModel(
       id: json['id'] ?? '',
       name: json['name'],
       email: json['email'],
@@ -151,7 +151,7 @@ class MessageModel {
   final Map<String, dynamic>? metadata;
   final bool isRead;
   final DateTime createdAt;
-  final UserModel? sender;
+  final ProfileModel? sender;
 
   MessageModel({
     required this.id,
@@ -180,7 +180,7 @@ class MessageModel {
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
       sender: json['sender'] != null
-          ? UserModel.fromJson(json['sender'])
+          ? ProfileModel.fromJson(json['sender'])
           : null,
     );
   }
@@ -210,8 +210,8 @@ class ChatModel {
   final bool participant1HasUnread;
   final bool participant2HasUnread;
   final DateTime createdAt;
-  final UserModel? participant1;
-  final UserModel? participant2;
+  final ProfileModel? participant1;
+  final ProfileModel? participant2;
   final MessageModel? lastMessage;
 
   ChatModel({
@@ -241,10 +241,10 @@ class ChatModel {
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
       participant1: json['participant1'] != null
-          ? UserModel.fromJson(json['participant1'])
+          ? ProfileModel.fromJson(json['participant1'])
           : null,
       participant2: json['participant2'] != null
-          ? UserModel.fromJson(json['participant2'])
+          ? ProfileModel.fromJson(json['participant2'])
           : null,
       lastMessage: json['lastMessage'] != null
           ? MessageModel.fromJson(json['lastMessage'])
@@ -311,8 +311,8 @@ class InstantChatRequest {
   final RequestStatus status;
   final DateTime createdAt;
   final DateTime? expiresAt;
-  final UserModel? client;
-  final UserModel? acceptedAstrologer;
+  final ProfileModel? client;
+  final ProfileModel? acceptedAstrologer;
 
   InstantChatRequest({
     required this.id,
@@ -340,10 +340,10 @@ class InstantChatRequest {
           ? DateTime.parse(json['expiresAt'])
           : null,
       client: json['client'] != null
-          ? UserModel.fromJson(json['client'])
+          ? ProfileModel.fromJson(json['client'])
           : null,
       acceptedAstrologer: json['acceptedAstrologer'] != null
-          ? UserModel.fromJson(json['acceptedAstrologer'])
+          ? ProfileModel.fromJson(json['acceptedAstrologer'])
           : null,
     );
   }
@@ -359,8 +359,8 @@ class BroadcastMessage {
   final String? acceptedBy;
   final DateTime? acceptedAt;
   final DateTime createdAt;
-  final UserModel? client;
-  final UserModel? acceptedAstrologer;
+  final ProfileModel? client;
+  final ProfileModel? acceptedAstrologer;
 
   BroadcastMessage({
     required this.id,
@@ -390,10 +390,10 @@ class BroadcastMessage {
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
       client: json['client'] != null
-          ? UserModel.fromJson(json['client'])
+          ? ProfileModel.fromJson(json['client'])
           : null,
       acceptedAstrologer: json['acceptedAstrologer'] != null
-          ? UserModel.fromJson(json['acceptedAstrologer'])
+          ? ProfileModel.fromJson(json['acceptedAstrologer'])
           : null,
     );
   }
@@ -409,8 +409,8 @@ class ConsultationRequest {
   final String? message;
   final DateTime createdAt;
   final DateTime? expiresAt;
-  final UserModel? client;
-  final UserModel? acceptedAstrologer;
+  final ProfileModel? client;
+  final ProfileModel? acceptedAstrologer;
 
   ConsultationRequest({
     required this.id,
@@ -440,10 +440,10 @@ class ConsultationRequest {
           ? DateTime.parse(json['expiresAt'])
           : null,
       client: json['client'] != null
-          ? UserModel.fromJson(json['client'])
+          ? ProfileModel.fromJson(json['client'])
           : null,
       acceptedAstrologer: json['acceptedAstrologer'] != null
-          ? UserModel.fromJson(json['acceptedAstrologer'])
+          ? ProfileModel.fromJson(json['acceptedAstrologer'])
           : null,
     );
   }
@@ -493,8 +493,8 @@ class AppointmentModel {
   final String? chatId;
   final DateTime createdAt;
   final DateTime? updatedAt;
-  final UserModel? astrologer;
-  final UserModel? client;
+  final ProfileModel? astrologer;
+  final ProfileModel? client;
 
   AppointmentModel({
     required this.id,
@@ -528,10 +528,10 @@ class AppointmentModel {
           ? DateTime.parse(json['updatedAt'])
           : null,
       astrologer: json['astrologer'] != null
-          ? UserModel.fromJson(json['astrologer'])
+          ? ProfileModel.fromJson(json['astrologer'])
           : null,
       client: json['client'] != null
-          ? UserModel.fromJson(json['client'])
+          ? ProfileModel.fromJson(json['client'])
           : null,
     );
   }
@@ -564,8 +564,8 @@ class ChatResponseModel {
   final String? endedBy;
   final DateTime? endedAt;
   final DateTime createdAt;
-  final UserModel? participant1;
-  final UserModel? participant2;
+  final ProfileModel? participant1;
+  final ProfileModel? participant2;
 
   ChatResponseModel({
     required this.id,
@@ -595,10 +595,10 @@ class ChatResponseModel {
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
       participant1: json['participant1'] != null
-          ? UserModel.fromJson(json['participant1'])
+          ? ProfileModel.fromJson(json['participant1'])
           : null,
       participant2: json['participant2'] != null
-          ? UserModel.fromJson(json['participant2'])
+          ? ProfileModel.fromJson(json['participant2'])
           : null,
     );
   }

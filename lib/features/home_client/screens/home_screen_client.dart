@@ -584,13 +584,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     return Drawer(
       backgroundColor: AppColors.backgroundDark,
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.cardDark, AppColors.backgroundDark],
-          ),
-        ),
+        decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
         child: SafeArea(
           child: Column(
             children: [

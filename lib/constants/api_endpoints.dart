@@ -15,7 +15,13 @@ class ApiEndpoints {
   static const String changePassword = '$baseUrl/auth/change-password';
   static const String getActiveAstrologers = '$baseUrl/users/chatable';
   static const String getAstrologerProfile = '$baseUrl/astrologers/:id';
-  static const String getUserProfile = '';
+  static const String getCurrentUserProfile = '$baseUrl/users/me';
+  static const String completeUserProfileSetup = '$baseUrl/users/profile-setup';
+  static const String updateUserProfile = '$baseUrl/users/me';
+  static const String updateUserBirthDetails =
+      '$baseUrl/users/me/birth-details';
+  static const String uploadProfilePhoto = '$baseUrl/users/upload-photo';
+  static const String removeProfilePhoto = '$baseUrl/users/remove-photo';
 
   ///production api socket
   // static const String socketUrl = 'wss://jotishapi.autonomoustechnology.net';
