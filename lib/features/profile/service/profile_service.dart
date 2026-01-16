@@ -42,35 +42,34 @@ class ProfileService {
     required String placeOfBirth,
     required String currentAddress,
     required String permanentAddress,
-    File? profilePhoto,
+    required String zoadicSign,
+    required String gender,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final accessToken = prefs.getString('accessToken');
 
     final url = Uri.parse(ApiEndpoints.completeUserProfileSetup);
 
-    var request = http.MultipartRequest('POST', url);
+    final body = {
+      'name': name,
+      'email': email,
+      'dateOfBirth': dateOfBirth,
+      'timeOfBirth': timeOfBirth,
+      'placeOfBirth': placeOfBirth,
+      'currentAddress': currentAddress,
+      'permanentAddress': permanentAddress,
+      'zoadicSign': zoadicSign,
+      'gender': gender,
+    };
 
-    request.headers.addAll({'Cookie': 'accessToken=$accessToken'});
-
-    // Add fields
-    request.fields['name'] = name;
-    request.fields['email'] = email;
-    request.fields['dateOfBirth'] = dateOfBirth;
-    request.fields['timeOfBirth'] = timeOfBirth;
-    request.fields['placeOfBirth'] = placeOfBirth;
-    request.fields['currentAddress'] = currentAddress;
-    request.fields['permanentAddress'] = permanentAddress;
-
-    // Add profile photo if provided
-    if (profilePhoto != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath('profilePhoto', profilePhoto.path),
-      );
-    }
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': 'accessToken=$accessToken',
+      },
+      body: jsonEncode(body),
+    );
 
     debugPrint(
       'Complete Profile Setup Response Status: ${response.statusCode}',

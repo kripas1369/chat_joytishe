@@ -28,7 +28,8 @@ class ProfileRepository {
     required String placeOfBirth,
     required String currentAddress,
     required String permanentAddress,
-    File? profilePhoto,
+    required String zoadicSign,
+    required String gender,
   }) async {
     try {
       final data = await profileService.completeUserProfileSetup(
@@ -39,7 +40,8 @@ class ProfileRepository {
         placeOfBirth: placeOfBirth,
         currentAddress: currentAddress,
         permanentAddress: permanentAddress,
-        profilePhoto: profilePhoto,
+        zoadicSign: zoadicSign,
+        gender: gender,
       );
       return ProfileModel.fromJson(data['data']['user']);
     } catch (e) {

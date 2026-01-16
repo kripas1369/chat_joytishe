@@ -2,6 +2,7 @@ import 'package:chat_jyotishi/features/chat/models/chat_model.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_events.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_states.dart';
 import 'package:chat_jyotishi/features/profile/repository/profile_repository.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
@@ -39,7 +40,23 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     emit(ProfileLoadingState());
 
     try {
-      final user = await profileRepository.completeProfileSetup(
+      String? profilePhotoUrl;
+
+      if (event.profilePhoto != null) {
+        emit(
+          const ProfileOperationInProgressState('Uploading profile photo...'),
+        );
+
+        try {
+          profilePhotoUrl = await profileRepository.uploadProfilePhoto(
+            event.profilePhoto!,
+          );
+        } catch (e) {
+          debugPrint('Profile photo upload failed: $e');
+        }
+      }
+
+      final profileData = await profileRepository.completeProfileSetup(
         name: event.name,
         email: event.email,
         dateOfBirth: event.dateOfBirth,
@@ -47,13 +64,23 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         placeOfBirth: event.placeOfBirth,
         currentAddress: event.currentAddress,
         permanentAddress: event.permanentAddress,
-        profilePhoto: event.profilePhoto,
+        zoadicSign: event.zoadicSign,
+        gender: event.gender,
       );
+
+      // 3. Create a copy of the profile with the photo URL if we have it
+      final mergedProfile = profileData.copyWith(profilePhoto: profilePhotoUrl);
+
       emit(
-        ProfileSetupSuccessState(user, 'Profile setup completed successfully'),
+        ProfileSetupSuccessState(
+          mergedProfile,
+          profilePhotoUrl != null
+              ? 'Profile setup completed with photo'
+              : 'Profile setup completed successfully',
+        ),
       );
     } catch (e) {
-      emit(ProfileErrorState(e.toString()));
+      emit(ProfileErrorState('Profile setup failed: ${e.toString()}'));
     }
   }
 

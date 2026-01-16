@@ -354,6 +354,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
         const SizedBox(height: 16),
         AppTextField(
           controller: phoneController,
+          readOnly: true,
           label: 'Phone Number',
           hint: '+977 98XXXXXXXX',
           icon: Icons.phone_rounded,
@@ -369,10 +370,11 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
           maxLines: 2,
           onChanged: (_) => setState(() {}),
         ),
+        const SizedBox(height: 16),
         AppTextField(
           controller: permanentAddressController,
           label: 'Permanent-Address',
-          hint: 'Your current address',
+          hint: 'Your Permanent address',
           icon: Icons.home_rounded,
           maxLines: 2,
           onChanged: (_) => setState(() {}),

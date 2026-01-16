@@ -263,6 +263,7 @@ class AppTextField extends StatefulWidget {
   final String label;
   final String hint;
   final IconData icon;
+  final bool? readOnly;
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
   final int maxLines;
@@ -280,6 +281,7 @@ class AppTextField extends StatefulWidget {
     this.maxLines = 1,
     this.onTap,
     this.onChanged,
+    this.readOnly,
   });
 
   @override
@@ -324,7 +326,7 @@ class _AppTextFieldState extends State<AppTextField> {
           keyboardType: widget.keyboardType,
           textCapitalization: widget.textCapitalization,
           maxLines: widget.maxLines,
-          readOnly: widget.onTap != null,
+          readOnly: widget.readOnly ?? false,
           onTap: widget.onTap,
           style: const TextStyle(
             color: AppColors.textPrimary,
