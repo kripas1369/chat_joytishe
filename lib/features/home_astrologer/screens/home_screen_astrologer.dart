@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
-import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/astrologer_chat_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
-import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
-import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
+import 'package:chat_jyotishi/features/home_client/widgets/drawer_item.dart';
+import 'package:chat_jyotishi/features/home_client/widgets/notification_button.dart';
 import 'package:chat_jyotishi/features/notification/services/notification_service.dart';
 import 'package:http/http.dart' as http;
 

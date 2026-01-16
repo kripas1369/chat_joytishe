@@ -1,5 +1,5 @@
 import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
-import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart';
+import 'package:chat_jyotishi/features/home_client/screens/home_screen_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../constants/constant.dart';

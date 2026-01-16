@@ -1,13 +1,13 @@
 import 'package:chat_jyotishi/features/app_widgets/app_background_gradient.dart';
 import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
-import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
-import 'package:chat_jyotishi/features/home/widgets/feature_card.dart';
-import 'package:chat_jyotishi/features/home/widgets/gradient_button.dart';
-import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
-import 'package:chat_jyotishi/features/home/widgets/quick_action_chip.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_options_screen.dart';
+import 'package:chat_jyotishi/features/home_client/widgets/drawer_item.dart';
+import 'package:chat_jyotishi/features/home_client/widgets/feature_card.dart';
+import 'package:chat_jyotishi/features/home_client/widgets/gradient_button.dart';
+import 'package:chat_jyotishi/features/home_client/widgets/notification_button.dart';
+import 'package:chat_jyotishi/features/home_client/widgets/quick_action_chip.dart';
 import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
 import 'package:flutter/material.dart';
@@ -666,26 +666,30 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         'title': 'Profile',
         'route': '/user_profile_screen',
       },
-      {'icon': Icons.history_rounded, 'title': 'History', 'route': '/history'},
+      {
+        'icon': Icons.history_rounded,
+        'title': 'History',
+        'route': '/history_screen_client',
+      },
       {
         'icon': Icons.settings_rounded,
         'title': 'Settings',
-        'route': '/set_password_screen',
+        'route': '/settings_screen',
       },
       {
         'icon': Icons.help_outline_rounded,
         'title': 'Help & Support',
-        'route': '/support',
+        'route': '/help_support_screen',
       },
       {
         'icon': Icons.info_outline_rounded,
         'title': 'About Us',
-        'route': '/about',
+        'route': '/about_us_screen',
       },
       {
         'icon': Icons.privacy_tip_outlined,
         'title': 'Privacy Policy',
-        'route': '/privacy',
+        'route': '/privacy_policy_screen',
       },
     ];
 

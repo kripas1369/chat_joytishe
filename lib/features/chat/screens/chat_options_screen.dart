@@ -1,11 +1,9 @@
 import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/app_background_gradient.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
-import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/chat/screens/broadcast_chat_screen.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
-import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart';
-import 'package:chat_jyotishi/features/home_astrologer/screens/home_screen_astrologer.dart';
+import 'package:chat_jyotishi/features/home_client/screens/home_screen_client.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
 import 'package:flutter/material.dart';
 

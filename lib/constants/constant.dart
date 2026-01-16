@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const bool isStaging = true; // set false for production
+
 const Color gold = Color(0xFFFFD700);
 const Color cardColor = Color(0xFF0A1025);
 

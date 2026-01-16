@@ -38,7 +38,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
             ),
           ),
           Positioned(
-            top: 78,
+            top: 60,
             left: 24,
             child: GlassIconButton(
               icon: Icons.arrow_back_ios_new_rounded,

@@ -1,4 +1,8 @@
 class ApiEndpoints {
+  ///production api
+  // static const String baseUrl =
+  //     'https://jotishapi.autonomoustechnology.net/api/v1';
+
   static const String baseUrl = 'http://192.168.0.206:4000/api/v1';
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
@@ -12,6 +16,9 @@ class ApiEndpoints {
   static const String getActiveAstrologers = '$baseUrl/users/chatable';
   static const String getAstrologerProfile = '$baseUrl/astrologers/:id';
   static const String getUserProfile = '';
+
+  ///production api socket
+  // static const String socketUrl = 'wss://jotishapi.autonomoustechnology.net';
 
   static const String socketUrl = 'http://192.168.0.206:4000';
 

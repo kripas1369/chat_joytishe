@@ -1,6 +1,7 @@
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_screen.dart';
 import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
+import 'package:chat_jyotishi/features/chat_astrologer/screens/astrologer_chat_screen.dart';
 import 'package:flutter/material.dart';
 import '../../../constants/constant.dart';
 
