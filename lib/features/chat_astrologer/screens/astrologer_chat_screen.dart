@@ -79,7 +79,8 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
     _dio = Dio(BaseOptions(
       baseUrl: ApiEndpoints.baseUrl,
       headers: {
-        'Cookie': 'accessToken=${widget.accessToken}',
+        'Content-Type': 'application/json',
+        'Cookie': 'accessToken=${widget.accessToken}; refreshToken=${widget.refreshToken}',
       },
     ));
   }
@@ -115,6 +116,8 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
             _messages.add(message);
           });
           _scrollToBottom();
+          // Mark new messages as read
+          _markMessagesAsRead();
         }
       }
     });
@@ -152,13 +155,25 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
 
   Future<void> _loadChatHistory() async {
     try {
+      // API: GET /chat/history/:otherUserId - uses clientId for astrologer
       final response = await _dio.get(
-        '${ApiEndpoints.chatHistory}/$_actualChatId',
+        '${ApiEndpoints.chatHistory}/${widget.clientId}',
       );
+
+      debugPrint('Load chat history response: ${response.statusCode}');
 
       if (response.statusCode == 200 && mounted) {
         final data = response.data;
+        // Response: { "messages": [ { "id": "...", "content": "...", ... } ] }
         final messages = data['messages'] ?? data['data'] ?? [];
+
+        // Update actual chat ID from response if available
+        if (data['chatId'] != null) {
+          _actualChatId = data['chatId'];
+          // Mark messages as read
+          _markMessagesAsRead();
+        }
+
         setState(() {
           _messages = List<Map<String, dynamic>>.from(messages);
           _isLoading = false;
@@ -174,6 +189,19 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
           _messages = [];
         });
       }
+    }
+  }
+
+  /// Mark all messages in the chat as read
+  Future<void> _markMessagesAsRead() async {
+    if (_actualChatId.isEmpty) return;
+
+    try {
+      // API: PUT /chat/chats/:chatId/read
+      await _dio.put('${ApiEndpoints.chatMarkRead}/$_actualChatId/read');
+      debugPrint('Messages marked as read for chat: $_actualChatId');
+    } catch (e) {
+      debugPrint('Error marking messages as read: $e');
     }
   }
 
@@ -337,12 +365,18 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
             onPressed: () async {
               Navigator.pop(context);
               try {
-                await _dio.put('${ApiEndpoints.chatEnd}/${widget.chatId}/end');
+                // Use actualChatId which may have been updated
+                await _dio.put('${ApiEndpoints.chatEnd}/$_actualChatId/end');
                 if (mounted) {
                   Navigator.pop(context);
                 }
               } catch (e) {
                 debugPrint('Error ending chat: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to end chat'), backgroundColor: Colors.red),
+                  );
+                }
               }
             },
             child: Text('End', style: TextStyle(color: Colors.red)),

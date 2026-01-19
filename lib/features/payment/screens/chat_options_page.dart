@@ -58,9 +58,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.cardDark,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
@@ -78,10 +76,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: Colors.white54),
-            ),
+            child: Text('Cancel', style: TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -94,10 +89,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: Text(
-              'Add Coins',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: Text('Add Coins', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -209,11 +201,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              Icons.monetization_on_rounded,
-              color: gold,
-              size: 32,
-            ),
+            child: Icon(Icons.monetization_on_rounded, color: gold, size: 32),
           ),
           SizedBox(width: 16),
           Column(
@@ -221,10 +209,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
             children: [
               Text(
                 'Your Balance',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
               SizedBox(height: 4),
               Row(
@@ -242,10 +227,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
                   SizedBox(width: 4),
                   Text(
                     'coins',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                 ],
               ),
@@ -295,10 +277,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
         SizedBox(height: 4),
         Text(
           'Select how you want to connect with astrologers',
-          style: TextStyle(
-            color: Colors.white54,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.white54, fontSize: 14),
         ),
       ],
     );
@@ -323,16 +302,10 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              color.withOpacity(0.2),
-              color.withOpacity(0.1),
-            ],
+            colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: color.withOpacity(0.4),
-            width: 1,
-          ),
+          border: Border.all(color: color.withOpacity(0.4), width: 1),
         ),
         child: Row(
           children: [
@@ -396,10 +369,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
                   SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      color: Colors.white60,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.white60, fontSize: 13),
                   ),
                   SizedBox(height: 8),
                   Row(
@@ -457,10 +427,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
       decoration: BoxDecoration(
         color: Colors.blue.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.blue.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.blue.withOpacity(0.2), width: 1),
       ),
       child: Row(
         children: [
@@ -469,10 +436,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
           Expanded(
             child: Text(
               'Single chat connects you with one astrologer. Broadcast sends your query to all available astrologers.',
-              style: TextStyle(
-                color: Colors.white60,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.white60, fontSize: 12),
             ),
           ),
         ],

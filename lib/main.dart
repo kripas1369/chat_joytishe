@@ -2,6 +2,7 @@ import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart
 import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/chat_list_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
+import 'package:chat_jyotishi/features/chat_astrologer/screens/broadcast_messages_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart'
     show HomeScreenClient;
 import 'package:chat_jyotishi/features/home/screens/horroscope_screen.dart';
@@ -60,8 +61,9 @@ class MyApp extends StatelessWidget {
         '/change_password_screen': (context) => ChangePasswordScreen(),
         '/chat_list_screen': (context) => ChatListScreen(),
         '/astrologer_chat_list_screen': (context) => AstrologerChatListScreen(),
-        // Astrologer incoming requests
+        // Astrologer incoming requests and broadcasts
         '/incoming_requests': (context) => IncomingRequestsScreen(),
+        '/broadcast_messages': (context) => BroadcastMessagesScreen(),
         // Payment and broadcast routes
         '/payment_page': (context) => PaymentPage(),
         '/chat_options_page': (context) => ChatOptionsPage(),
