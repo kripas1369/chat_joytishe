@@ -72,4 +72,22 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // Purple-Indigo Button Gradient
+  static const Color purple600 = Color(0xFF9333EA);
+  static const Color indigo600 = Color(0xFF4F46E5);
+  static const Color purple700 = Color(0xFF7E22CE);
+  static const Color indigo700 = Color(0xFF4338CA);
+
+  static const LinearGradient buttonGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [purple600, indigo600],
+  );
+
+  static const LinearGradient buttonGradientHover = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [purple700, indigo700],
+  );
 }

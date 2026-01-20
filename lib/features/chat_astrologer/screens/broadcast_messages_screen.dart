@@ -236,82 +236,87 @@ class _BroadcastMessagesScreenState extends State<BroadcastMessagesScreen>
   }
 
   Future<void> _acceptBroadcast(BroadcastMessageModel broadcast) async {
-    // Try socket first for real-time
-    if (_socketService.connected) {
-      _socketService.acceptBroadcastMessage(broadcast.id);
+    // Show loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              ),
+              SizedBox(width: 12),
+              Text('Accepting broadcast...'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 30),
+        ),
+      );
+    }
 
-      // Listen for success
-      _socketService.socket?.once('broadcast:accepted', (data) {
-        final chat = data['chat'];
-        final client = data['client'];
+    // Always use HTTP API for reliability - it returns the chat ID directly
+    try {
+      final response = await _chatService.acceptBroadcast(broadcast.id);
 
-        if (chat != null && mounted) {
-          // Remove from pending
-          setState(() {
-            _pendingBroadcasts.removeWhere((b) => b.id == broadcast.id);
-          });
+      // Hide loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
 
-          // Navigate to chat
+      if (mounted) {
+        setState(() {
+          _pendingBroadcasts.removeWhere((b) => b.id == broadcast.id);
+        });
+
+        // Get chat ID from response
+        final chatId = response.chatId ?? response.chat?['id'];
+
+        if (chatId != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Broadcast accepted! Opening chat...'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 1),
+            ),
+          );
+
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => AstrologerChatScreen(
-                chatId: chat['id'],
-                clientId: client?['id'] ?? broadcast.clientId,
-                clientName: client?['name'] ?? broadcast.client?.name ?? 'Client',
-                clientPhoto: client?['profilePhoto'] ?? broadcast.client?.profilePhoto,
+                chatId: chatId,
+                clientId: response.client?.id ?? broadcast.clientId,
+                clientName: response.client?.name ?? broadcast.client?.name ?? 'Client',
+                clientPhoto: response.client?.profilePhoto ?? broadcast.client?.profilePhoto,
                 astrologerId: _currentUserId ?? '',
                 accessToken: _accessToken,
                 refreshToken: _refreshToken,
+                initialMessage: broadcast.content,
               ),
             ),
           );
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Accepting broadcast...'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 1),
-        ),
-      );
-    } else {
-      // Fallback to HTTP
-      try {
-        final response = await _chatService.acceptBroadcast(broadcast.id);
-
-        if (mounted) {
-          setState(() {
-            _pendingBroadcasts.removeWhere((b) => b.id == broadcast.id);
-          });
-
-          if (response.chatId != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => AstrologerChatScreen(
-                  chatId: response.chatId!,
-                  clientId: response.client?.id ?? broadcast.clientId,
-                  clientName: response.client?.name ?? broadcast.client?.name ?? 'Client',
-                  clientPhoto: response.client?.profilePhoto ?? broadcast.client?.profilePhoto,
-                  astrologerId: _currentUserId ?? '',
-                  accessToken: _accessToken,
-                  refreshToken: _refreshToken,
-                ),
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
-              backgroundColor: Colors.red,
+              content: Text('Broadcast accepted but no chat ID returned'),
+              backgroundColor: Colors.orange,
             ),
           );
         }
+      }
+    } catch (e) {
+      // Hide loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

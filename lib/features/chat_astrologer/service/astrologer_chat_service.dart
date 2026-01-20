@@ -53,17 +53,36 @@ class AstrologerChatService {
   Future<List<ConversationModel>> getConversations() async {
     _checkInitialized();
     try {
+      debugPrint('🔍 Fetching conversations from: ${ApiEndpoints.chatConversations}');
       final response = await _dio!.get(ApiEndpoints.chatConversations);
+      debugPrint('📥 Conversations response status: ${response.statusCode}');
+      debugPrint('📥 Conversations response data: ${response.data}');
+
       if (response.statusCode == 200) {
         final data = response.data;
-        final conversations = data['conversations'] ?? data['data'] ?? data['chats'] ?? [];
-        return (conversations as List)
+        // Try different response formats
+        List<dynamic> conversations = [];
+        if (data is List) {
+          conversations = data;
+        } else if (data is Map) {
+          conversations = data['conversations'] ?? data['data'] ?? data['chats'] ?? [];
+        }
+
+        debugPrint('📊 Found ${conversations.length} conversations');
+
+        // Debug: print first conversation structure
+        if (conversations.isNotEmpty) {
+          debugPrint('📋 First conversation structure: ${conversations.first}');
+        }
+
+        return conversations
             .map((c) => ConversationModel.fromJson(c))
             .toList();
       }
       throw Exception('Failed to get conversations');
     } on DioException catch (e) {
-      debugPrint('DioError getting conversations: ${e.message}');
+      debugPrint('❌ DioError getting conversations: ${e.message}');
+      debugPrint('❌ Response: ${e.response?.data}');
       throw Exception(_handleDioError(e));
     }
   }
@@ -243,19 +262,29 @@ class AstrologerChatService {
     }
   }
 
-  /// Toggle online/offline status
-  Future<OnlineStatusResponse> toggleOnlineStatus() async {
+  /// Set online/offline status
+  Future<OnlineStatusResponse> setOnlineStatus(bool isOnline) async {
     _checkInitialized();
     try {
-      final response = await _dio!.post(ApiEndpoints.astrologerToggleOnline);
+      final response = await _dio!.post(
+        ApiEndpoints.astrologerToggleOnline,
+        data: {'isOnline': isOnline},
+      );
       if (response.statusCode == 200) {
         return OnlineStatusResponse.fromJson(response.data);
       }
-      throw Exception('Failed to toggle online status');
+      throw Exception('Failed to set online status');
     } on DioException catch (e) {
-      debugPrint('DioError toggling online status: ${e.message}');
+      debugPrint('DioError setting online status: ${e.message}');
       throw Exception(_handleDioError(e));
     }
+  }
+
+  /// Toggle online/offline status (legacy - toggles current status)
+  Future<OnlineStatusResponse> toggleOnlineStatus() async {
+    // First get current status, then set the opposite
+    final currentStatus = await getOnlineStatus();
+    return setOnlineStatus(!currentStatus.isOnline);
   }
 
   // ============================================================

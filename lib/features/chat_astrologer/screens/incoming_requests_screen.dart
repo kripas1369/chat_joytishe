@@ -157,6 +157,9 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
   String? _accessToken;
   String? _refreshToken;
 
+  // Track the request being accepted to pass initial message on success
+  IncomingRequest? _currentAcceptingRequest;
+
   Timer? _expiryTimer;
 
   @override
@@ -348,6 +351,10 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
     final chat = data['chat'];
     final client = data['client'];
 
+    // Get the initial message from the stored request
+    final initialMessage = _currentAcceptingRequest?.message;
+    _currentAcceptingRequest = null; // Clear after use
+
     if (chat != null && mounted) {
       // Remove the request from list
       setState(() {
@@ -367,6 +374,7 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
             astrologerId: _currentUserId!,
             accessToken: _accessToken,
             refreshToken: _refreshToken,
+            initialMessage: initialMessage,
           ),
         ),
       );
@@ -374,6 +382,9 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
   }
 
   Future<void> _acceptRequest(IncomingRequest request) async {
+    // Store the request being accepted for use in socket success handler
+    _currentAcceptingRequest = request;
+
     // Try socket first for real-time
     if (_socketService.connected) {
       if (request.type == 'broadcast') {
@@ -409,6 +420,7 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
                   astrologerId: _currentUserId!,
                   accessToken: _accessToken,
                   refreshToken: _refreshToken,
+                  initialMessage: request.message,
                 ),
               ),
             );
@@ -432,6 +444,7 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
                   astrologerId: _currentUserId!,
                   accessToken: _accessToken,
                   refreshToken: _refreshToken,
+                  initialMessage: request.message,
                 ),
               ),
             );

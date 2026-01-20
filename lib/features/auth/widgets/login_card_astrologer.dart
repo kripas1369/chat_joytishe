@@ -29,7 +29,7 @@ class _LoginCardAstrologerState extends State<LoginCardAstrologer> {
     text: "sulav@jyotish.com",
   );
   TextEditingController passwordController = TextEditingController(
-    text: "Admin@123",
+    text: "Admin@1234",
   );
   bool isLoading = false;
 

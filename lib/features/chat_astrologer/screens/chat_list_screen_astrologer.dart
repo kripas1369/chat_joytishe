@@ -58,7 +58,7 @@ class _AstrologerChatListScreenState extends State<AstrologerChatListScreen> {
   String? _currentUserId;
   String? _accessToken;
   String? _refreshToken;
-  bool _isOnline = true;
+  bool _isOnline = false;
 
   // Stats
   int _activeCount = 0;
@@ -96,6 +96,15 @@ class _AstrologerChatListScreenState extends State<AstrologerChatListScreen> {
       final decoded = decodeJwt(_accessToken!);
       _currentUserId = decoded?['id'] ?? decoded?['userId'];
     }
+
+    // Load saved online status from SharedPreferences only
+    // The home screen is responsible for syncing with the API
+    final savedOnlineStatus = prefs.getBool('astrologerOnlineStatus') ?? false;
+    if (mounted) {
+      setState(() {
+        _isOnline = savedOnlineStatus;
+      });
+    }
   }
 
   Future<void> _initializeService() async {
@@ -115,7 +124,9 @@ class _AstrologerChatListScreenState extends State<AstrologerChatListScreen> {
     });
 
     try {
+      debugPrint('🔄 Loading conversations...');
       final conversations = await _chatService.getConversations();
+      debugPrint('✅ Loaded ${conversations.length} conversations');
 
       if (mounted) {
         setState(() {
@@ -124,9 +135,10 @@ class _AstrologerChatListScreenState extends State<AstrologerChatListScreen> {
           _isLoading = false;
           _updateStats();
         });
+        debugPrint('📊 Stats - Active: $_activeCount, Unread: $_pendingCount, Completed: $_completedCount');
       }
     } catch (e) {
-      debugPrint('Error loading conversations: $e');
+      debugPrint('❌ Error loading conversations: $e');
       if (mounted) {
         setState(() {
           _error = e.toString().replaceAll('Exception: ', '');
@@ -296,10 +308,7 @@ class _AstrologerChatListScreenState extends State<AstrologerChatListScreen> {
     return Row(
       children: [
         GlassIconButton(
-          onTap: () => Navigator.pushReplacementNamed(
-            context,
-            '/home_screen_astrologer',
-          ),
+          onTap: () => Navigator.pop(context),
           icon: Icons.arrow_back,
         ),
         SizedBox(width: 16),
@@ -377,8 +386,17 @@ class _AstrologerChatListScreenState extends State<AstrologerChatListScreen> {
   }
 
   Future<void> _toggleOnlineStatus() async {
+    // Calculate the desired new status (opposite of current)
+    final newStatus = !_isOnline;
+
     try {
-      final response = await _chatService.toggleOnlineStatus();
+      // Use setOnlineStatus with explicit status value
+      final response = await _chatService.setOnlineStatus(newStatus);
+
+      // Save to SharedPreferences for persistence across navigation
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('astrologerOnlineStatus', response.isOnline);
+
       if (mounted) {
         setState(() {
           _isOnline = response.isOnline;
@@ -395,6 +413,14 @@ class _AstrologerChatListScreenState extends State<AstrologerChatListScreen> {
       }
     } catch (e) {
       debugPrint('Error toggling online status: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to toggle online status'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

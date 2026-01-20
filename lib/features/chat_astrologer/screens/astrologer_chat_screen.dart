@@ -19,6 +19,7 @@ class AstrologerChatScreen extends StatefulWidget {
   final String astrologerId;
   final String? accessToken;
   final String? refreshToken;
+  final String? initialMessage; // Initial message from instant chat/broadcast request
 
   const AstrologerChatScreen({
     super.key,
@@ -29,6 +30,7 @@ class AstrologerChatScreen extends StatefulWidget {
     required this.astrologerId,
     this.accessToken,
     this.refreshToken,
+    this.initialMessage,
   });
 
   @override
@@ -176,6 +178,16 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
 
         setState(() {
           _messages = List<Map<String, dynamic>>.from(messages);
+          // If no messages but we have an initial message, add it
+          if (_messages.isEmpty && widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
+            _messages.add({
+              'id': 'initial_${DateTime.now().millisecondsSinceEpoch}',
+              'content': widget.initialMessage,
+              'type': 'TEXT',
+              'senderId': widget.clientId,
+              'createdAt': DateTime.now().toIso8601String(),
+            });
+          }
           _isLoading = false;
         });
         _scrollToBottom();
@@ -186,7 +198,20 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _messages = [];
+          // If we have an initial message, show it even if chat history failed to load
+          if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
+            _messages = [
+              {
+                'id': 'initial_${DateTime.now().millisecondsSinceEpoch}',
+                'content': widget.initialMessage,
+                'type': 'TEXT',
+                'senderId': widget.clientId,
+                'createdAt': DateTime.now().toIso8601String(),
+              }
+            ];
+          } else {
+            _messages = [];
+          }
         });
       }
     }

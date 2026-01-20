@@ -266,26 +266,82 @@ class ConversationModel {
   });
 
   factory ConversationModel.fromJson(Map<String, dynamic> json) {
+    // Handle different API response formats
+
+    // Format 1: participant1, participant2 structure
+    ChatUserModel? p1 = json['participant1'] != null
+        ? ChatUserModel.fromJson(json['participant1'])
+        : null;
+    ChatUserModel? p2 = json['participant2'] != null
+        ? ChatUserModel.fromJson(json['participant2'])
+        : null;
+
+    // Format 2: clientParticipant / astrologerParticipant structure
+    if (p1 == null && json['clientParticipant'] != null) {
+      p1 = ChatUserModel.fromJson(json['clientParticipant']);
+    }
+    if (p2 == null && json['astrologerParticipant'] != null) {
+      p2 = ChatUserModel.fromJson(json['astrologerParticipant']);
+    }
+
+    // Format 3: client / astrologer structure
+    if (p1 == null && json['client'] != null) {
+      p1 = ChatUserModel.fromJson(json['client']);
+    }
+    if (p2 == null && json['astrologer'] != null) {
+      p2 = ChatUserModel.fromJson(json['astrologer']);
+    }
+
+    // Format 4: user / otherUser structure
+    if (p1 == null && json['user'] != null) {
+      p1 = ChatUserModel.fromJson(json['user']);
+    }
+    if (p2 == null && json['otherUser'] != null) {
+      p2 = ChatUserModel.fromJson(json['otherUser']);
+    }
+
+    // Handle lastMessage in different formats
+    MessagePreviewModel? lastMsg;
+    if (json['lastMessage'] != null) {
+      if (json['lastMessage'] is Map) {
+        lastMsg = MessagePreviewModel.fromJson(json['lastMessage']);
+      } else if (json['lastMessage'] is String) {
+        // lastMessage is just the text
+        lastMsg = MessagePreviewModel(
+          id: '',
+          content: json['lastMessage'],
+          type: 'TEXT',
+          senderId: '',
+          isRead: false,
+          createdAt: DateTime.now(),
+        );
+      }
+    } else if (json['lastMessageText'] != null) {
+      // Alternative format: lastMessageText
+      lastMsg = MessagePreviewModel(
+        id: '',
+        content: json['lastMessageText'],
+        type: 'TEXT',
+        senderId: '',
+        isRead: false,
+        createdAt: DateTime.now(),
+      );
+    }
+
     return ConversationModel(
-      id: json['id'] ?? json['_id'] ?? '',
-      participant1Id: json['participant1Id'] ?? '',
-      participant2Id: json['participant2Id'] ?? '',
-      participant1: json['participant1'] != null
-          ? ChatUserModel.fromJson(json['participant1'])
-          : null,
-      participant2: json['participant2'] != null
-          ? ChatUserModel.fromJson(json['participant2'])
-          : null,
-      lastMessage: json['lastMessage'] != null
-          ? MessagePreviewModel.fromJson(json['lastMessage'])
-          : null,
+      id: json['id'] ?? json['_id'] ?? json['chatId'] ?? '',
+      participant1Id: json['participant1Id'] ?? json['clientId'] ?? p1?.id ?? '',
+      participant2Id: json['participant2Id'] ?? json['astrologerId'] ?? p2?.id ?? '',
+      participant1: p1,
+      participant2: p2,
+      lastMessage: lastMsg,
       lastMessageAt: json['lastMessageAt'] != null
           ? DateTime.tryParse(json['lastMessageAt'])
-          : null,
-      participant1HasUnread: json['participant1HasUnread'] ?? false,
+          : (json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null),
+      participant1HasUnread: json['participant1HasUnread'] ?? json['hasUnread'] ?? false,
       participant2HasUnread: json['participant2HasUnread'] ?? false,
-      unreadCount: json['unreadCount'],
-      status: json['status'],
+      unreadCount: json['unreadCount'] ?? json['unread'] ?? 0,
+      status: json['status'] ?? 'ACTIVE',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
@@ -294,10 +350,23 @@ class ConversationModel {
 
   /// Get the other participant (client) for the astrologer
   ChatUserModel? getOtherParticipant(String currentUserId) {
+    // If current user is participant1, return participant2
     if (participant1?.id == currentUserId) {
       return participant2;
     }
-    return participant1;
+    // If current user is participant2, return participant1
+    if (participant2?.id == currentUserId) {
+      return participant1;
+    }
+    // If we can't match by ID, check roles
+    if (participant1?.role == 'ASTROLOGER' || participant1?.role == 'astrologer') {
+      return participant2; // Return the client
+    }
+    if (participant2?.role == 'ASTROLOGER' || participant2?.role == 'astrologer') {
+      return participant1; // Return the client
+    }
+    // Default: return participant1 (usually the client)
+    return participant1 ?? participant2;
   }
 
   /// Check if the current user has unread messages

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
+import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/astrologer_chat_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
@@ -46,6 +47,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   // Count of pending broadcast requests for badge
   int _pendingBroadcastCount = 0;
 
+  // Track shown instant chat request IDs to prevent duplicate dialogs
+  final Set<String> _shownInstantChatRequestIds = {};
+  bool _isInstantChatDialogShowing = false;
+
   // Real-time chat/notification badge count (from `notification:new`)
   int _realtimeNotificationCount = 0;
 
@@ -62,7 +67,6 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   final String todayEarnings = 'NRs 8000';
   final String monthlyEarnings = 'NRs 87,340';
   final int pendingRequests = 5;
-  final int activeChats = 3;
   final int todayConsultations = 12;
 
   @override
@@ -370,15 +374,19 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         final senderId = metaMap['senderId']?.toString();
         final notifId = map['id']?.toString();
 
-        // Show accept/reject dialog on homepage
-        if (notifId != null && chatId != null && senderId != null) {
+        // Only show accept/reject dialog for the FIRST message (new chat)
+        // If count > 1, it's an ongoing conversation - just show snackbar
+        final messageCount = incomingCount is int ? incomingCount : (int.tryParse(incomingCount?.toString() ?? '') ?? 0);
+
+        if (messageCount == 1 && notifId != null && chatId != null && senderId != null) {
+          // First message - new chat request, show accept/reject dialog
           _showChatMessageDialog(
             notificationId: notifId,
             chatId: chatId,
             clientId: senderId,
           );
         } else {
-          // Fallback: show snackbar if metadata missing
+          // Ongoing conversation or missing metadata - show snackbar
           final text = notificationMessage?.isNotEmpty == true
               ? notificationMessage!
               : 'New message received';
@@ -530,6 +538,16 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     final message = requestData['message'] ?? request['message'] ?? '';
     final requestId = requestData['id'] ?? request['id'] ?? '';
 
+    // Prevent showing duplicate dialogs for the same request
+    if (requestId.isEmpty || _shownInstantChatRequestIds.contains(requestId)) {
+      debugPrint('Skipping duplicate instant chat dialog for request: $requestId');
+      return;
+    }
+
+    // Mark this request as shown
+    _shownInstantChatRequestIds.add(requestId);
+    _isInstantChatDialogShowing = true;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -541,13 +559,19 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           'clientId': client?['id'] ?? requestData['clientId'] ?? '',
           'message': message,
         },
-        onAccept: () => _handleAcceptInstantChat(requestId, client, clientName),
-        onReject: () => _handleRejectInstantChat(requestId),
+        onAccept: () {
+          _isInstantChatDialogShowing = false;
+          _handleAcceptInstantChat(requestId, client, clientName, message);
+        },
+        onReject: () {
+          _isInstantChatDialogShowing = false;
+          _handleRejectInstantChat(requestId);
+        },
       ),
     );
   }
 
-  void _handleAcceptInstantChat(String requestId, dynamic client, String clientName) async {
+  void _handleAcceptInstantChat(String requestId, dynamic client, String clientName, String initialMessage) async {
     Navigator.pop(context); // Close dialog
 
     setState(() {
@@ -622,19 +646,25 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                 astrologerId: astrologerId,
                 accessToken: accessToken,
                 refreshToken: refreshToken,
+                initialMessage: initialMessage,
               ),
             ),
           );
         }
       } else {
         final errorData = jsonDecode(response.body);
-        final errorMessage = errorData['message'] ?? 'Failed to accept request';
+        // Handle both error formats: {"error":{"message":"..."}} and {"message":"..."}
+        final errorMessage = errorData['error']?['message'] ??
+                             errorData['message'] ??
+                             'Failed to accept request';
+
+        // Show error dialog for better UX
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-            ),
+          _showAcceptErrorDialog(
+            title: 'Cannot Accept Request',
+            message: errorMessage,
+            isAppointmentRequired: errorMessage.toLowerCase().contains('appointment') ||
+                                   errorMessage.toLowerCase().contains('professional'),
           );
         }
       }
@@ -642,14 +672,137 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       debugPrint('Error accepting instant chat: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Network error. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
+        _showAcceptErrorDialog(
+          title: 'Connection Error',
+          message: 'Unable to connect to the server. Please check your internet connection and try again.',
+          isAppointmentRequired: false,
         );
       }
     }
+  }
+
+  /// Show error dialog when accepting a chat request fails
+  void _showAcceptErrorDialog({
+    required String title,
+    required String message,
+    required bool isAppointmentRequired,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.cardDark, AppColors.backgroundDark],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.red.withAlpha(100),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Error icon
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withAlpha(30),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isAppointmentRequired ? Icons.calendar_today_rounded : Icons.error_outline_rounded,
+                  color: Colors.red,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Title
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+
+              // Message
+              Text(
+                message,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              // Additional info for appointment-required errors
+              if (isAppointmentRequired) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withAlpha(20),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.withAlpha(50)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'As a Professional astrologer, clients need to book appointments to chat with you.',
+                          style: TextStyle(
+                            color: Colors.orange,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 24),
+
+              // Close button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Got it',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _handleRejectInstantChat(String requestId) {
@@ -760,6 +913,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       debugPrint('Toggle online status response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // Save status locally for persistence across navigation
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('astrologerOnlineStatus', newStatus);
+
         setState(() {
           isOnline = newStatus;
         });
@@ -778,6 +935,8 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
             _pendingBroadcastCount = 0;
             _realtimeNotificationCount = 0; // Reset real-time count when going offline
           });
+          // Clear shown request IDs when going offline
+          _shownInstantChatRequestIds.clear();
           // Remove listeners when going offline
           _removeRealtimeNotificationListeners();
           // Disable local notifications when offline
@@ -846,6 +1005,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     final clientId = broadcast['clientId'] ?? '';
     final clientName = broadcast['clientName'] ?? 'Client';
     final clientPhoto = broadcast['clientPhoto'];
+    final initialMessage = broadcast['content'] ?? '';
 
     debugPrint('Accepting broadcast: messageId=$messageId, clientId=$clientId');
 
@@ -921,6 +1081,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                 astrologerId: astrologerId,
                 accessToken: accessToken,
                 refreshToken: refreshToken,
+                initialMessage: initialMessage,
               ),
             ),
           );
@@ -928,13 +1089,18 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       } else {
         // API error
         final errorData = jsonDecode(response.body);
-        final errorMessage = errorData['message'] ?? 'Failed to accept broadcast';
+        // Handle both error formats: {"error":{"message":"..."}} and {"message":"..."}
+        final errorMessage = errorData['error']?['message'] ??
+                             errorData['message'] ??
+                             'Failed to accept broadcast';
+
+        // Show error dialog for better UX
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-            ),
+          _showAcceptErrorDialog(
+            title: 'Cannot Accept Broadcast',
+            message: errorMessage,
+            isAppointmentRequired: errorMessage.toLowerCase().contains('appointment') ||
+                                   errorMessage.toLowerCase().contains('professional'),
           );
         }
       }
@@ -942,11 +1108,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       debugPrint('Error accepting broadcast: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Network error. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
+        _showAcceptErrorDialog(
+          title: 'Connection Error',
+          message: 'Unable to connect to the server. Please check your internet connection and try again.',
+          isAppointmentRequired: false,
         );
       }
     }
@@ -1473,14 +1638,14 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           onTap: () {},
         ),
         _buildStatCard(
-          icon: Icons.chat_bubble_rounded,
-          title: 'Active Chats',
-          value: activeChats.toString(),
-          subtitle: 'Ongoing conversations',
+          icon: Icons.history_rounded,
+          title: 'Chat History',
+          value: 'View',
+          subtitle: 'Previous conversations',
           color: AppColors.primaryPurple,
           onTap: () => Navigator.of(
             context,
-          ).pushReplacementNamed('/astrologer_chat_list_screen'),
+          ).pushNamed('/astrologer_chat_list_screen'),
         ),
       ],
     );
@@ -2060,6 +2225,11 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   Widget _buildDrawerItems() {
     final items = [
       {'icon': Icons.home_rounded, 'title': 'Home', 'selected': true},
+      {
+        'icon': Icons.chat_bubble_rounded,
+        'title': 'Messages',
+        'route': '/astrologer_chat_list_screen',
+      },
       {'icon': Icons.person_rounded, 'title': 'Profile', 'route': '/profile'},
       {
         'icon': Icons.account_balance_wallet_rounded,
@@ -2131,13 +2301,25 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   Future<void> _loadAuthData() async {
     final prefs = await SharedPreferences.getInstance();
 
+    // Load saved online status first (for immediate UI feedback)
+    final savedOnlineStatus = prefs.getBool('astrologerOnlineStatus') ?? false;
+
     setState(() {
       astrologerId = prefs.getString('astrologerId') ?? '';
       accessToken = prefs.getString('astrologerAccessToken') ?? '';
       refreshToken = prefs.getString('astrologerRefreshToken') ?? '';
+      isOnline = savedOnlineStatus; // Use saved status immediately
     });
 
-    // Fetch current online status from server
+    // If we have a saved online status, connect socket and setup listeners
+    if (savedOnlineStatus && accessToken.isNotEmpty) {
+      await _connectSocket();
+      _setupBroadcastListener();
+      await _fetchPendingBroadcasts();
+      await _fetchPendingInstantChats();
+    }
+
+    // Then verify with server (but don't override if server fails)
     await _fetchOnlineStatus();
   }
 
@@ -2160,6 +2342,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         // Response: { "isOnline": true, "astrologerId": "..." }
         final serverOnlineStatus = data['isOnline'] ?? false;
 
+        // Sync local storage with server status
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('astrologerOnlineStatus', serverOnlineStatus);
+
         setState(() {
           isOnline = serverOnlineStatus;
         });
@@ -2173,8 +2359,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           await _fetchPendingInstantChats();
         }
       }
+      // If server request fails, keep using the locally saved status (already loaded)
     } catch (e) {
       debugPrint('Error fetching online status: $e');
+      // On error, keep using the locally saved status
     }
   }
 
@@ -2255,8 +2443,44 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     }
   }
 
-  void _handleLogout() {
+  Future<void> _handleLogout() async {
     debugPrint('Logout tapped');
+
+    // Clear online status before logout
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('astrologerOnlineStatus', false);
+
+    // Try to set offline on server
+    if (accessToken.isNotEmpty) {
+      try {
+        await http.post(
+          Uri.parse('${ApiEndpoints.baseUrl}/astrologer/toggle-online'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+          },
+          body: jsonEncode({'isOnline': false}),
+        );
+      } catch (e) {
+        debugPrint('Error setting offline on logout: $e');
+      }
+    }
+
+    // Clear all astrologer data
+    await prefs.remove('astrologerId');
+    await prefs.remove('astrologerAccessToken');
+    await prefs.remove('astrologerRefreshToken');
+
+    // Disconnect socket
+    _socketService.disconnect();
+
+    if (!mounted) return;
+
+    // Navigate to login screen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreenAstrologer()),
+    );
   }
 }
 
