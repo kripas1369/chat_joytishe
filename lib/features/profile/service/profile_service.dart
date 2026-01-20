@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
+import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
 
@@ -61,6 +63,26 @@ class ProfileService {
       'zoadicSign': zoadicSign,
       'gender': gender,
     };
+    debugPrint('^^^^^^^^^^^^^^^^^^^');
+    debugPrint('^^^^^^^^^^^^^^^^^^^');
+    debugPrint('^^^^^^^^^^^^^^^^^^^');
+    debugPrint('^^^^^^^^^^^^^^^^^^^');
+    debugPrint('^^^^^^^^^^^^^^^^^^^');
+    debugPrint('^^^^^^^^^^^^^^^^^^^');
+    print(zoadicSign);
+    print(zoadicSign);
+    print(zoadicSign);
+    print(zoadicSign);
+    print(zoadicSign);
+    print(zoadicSign);
+    debugPrint('^^^^^^^^^^^^^^^^^^^');
+    debugPrint('^^^^^^^^^^^^^^^^^^^');
+    debugPrint('Complete Profile Setup Request URL: $url');
+    debugPrint(
+      'Complete Profile Setup Request Headers: '
+      '{Content-Type: application/json, Cookie: accessToken=$accessToken}',
+    );
+    debugPrint('Complete Profile Setup Request Body: ${jsonEncode(body)}');
 
     final response = await http.post(
       url,
@@ -123,6 +145,8 @@ class ProfileService {
     String? placeOfBirth,
     String? currentAddress,
     String? permanentAddress,
+    String? zoadicSign,
+    String? gender,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final accessToken = prefs.getString('accessToken');
@@ -135,6 +159,8 @@ class ProfileService {
     if (placeOfBirth != null) body['placeOfBirth'] = placeOfBirth;
     if (currentAddress != null) body['currentAddress'] = currentAddress;
     if (permanentAddress != null) body['permanentAddress'] = permanentAddress;
+    if (zoadicSign != null) body['zodiacSign'] = zoadicSign;
+    if (gender != null) body['gender'] = gender;
 
     final response = await http.patch(
       url,
@@ -162,11 +188,23 @@ class ProfileService {
 
     final url = Uri.parse(ApiEndpoints.uploadProfilePhoto);
 
-    var request = http.MultipartRequest('POST', url);
+    final request = http.MultipartRequest('POST', url);
 
     request.headers.addAll({'Cookie': 'accessToken=$accessToken'});
 
-    request.files.add(await http.MultipartFile.fromPath('photo', photo.path));
+    // 🔍 DEBUG: print file details
+    debugPrint('Uploading file path: ${photo.path}');
+    debugPrint('Uploading file name: ${path.basename(photo.path)}');
+    debugPrint('Uploading file size: ${await photo.length()} bytes');
+
+    final multipartFile = await http.MultipartFile.fromPath(
+      'photo',
+      photo.path,
+      filename: path.basename(photo.path),
+      contentType: MediaType('image', 'JPEG'),
+    );
+
+    request.files.add(multipartFile);
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);

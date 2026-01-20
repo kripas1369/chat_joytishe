@@ -110,7 +110,7 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
 
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => HomeScreenClient()),
+                      MaterialPageRoute(builder: (_) => HomeScreenClientContent()),
                     );
                   } else if (state is AuthOtpLoadedState) {
                     setState(() {

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:flutter/material.dart';
@@ -52,7 +53,8 @@ class ProfileHeader extends StatelessWidget {
 
 /// Profile Avatar with image picker
 class ProfileAvatar extends StatelessWidget {
-  final File? profileImage;
+  final File? localImage; // picked image
+  final String? networkImage; // API image path
   final Animation<double> pulseAnimation;
   final String displayName;
   final String displayEmail;
@@ -60,7 +62,8 @@ class ProfileAvatar extends StatelessWidget {
 
   const ProfileAvatar({
     super.key,
-    required this.profileImage,
+    required this.localImage,
+    required this.networkImage,
     required this.pulseAnimation,
     required this.displayName,
     required this.displayEmail,
@@ -111,16 +114,7 @@ class ProfileAvatar extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 52,
                     backgroundColor: AppColors.cardMedium,
-                    backgroundImage: profileImage != null
-                        ? FileImage(profileImage!)
-                        : null,
-                    child: profileImage == null
-                        ? const Icon(
-                            Icons.person_rounded,
-                            size: 52,
-                            color: AppColors.textMuted,
-                          )
-                        : null,
+                    child: _buildAvatarImage(),
                   ),
                 ),
               ),
@@ -166,6 +160,43 @@ class ProfileAvatar extends StatelessWidget {
           style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
         ),
       ],
+    );
+  }
+
+  Widget _buildAvatarImage() {
+    if (localImage != null) {
+      return ClipOval(
+        child: Image.file(
+          localImage!,
+          width: 104,
+          height: 104,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    if (networkImage != null && networkImage!.isNotEmpty) {
+      return ClipOval(
+        child: Image.network(
+          "${ApiEndpoints.serverUrl}$networkImage",
+          width: 104,
+          height: 104,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) {
+            return const Icon(
+              Icons.person_rounded,
+              size: 52,
+              color: AppColors.textMuted,
+            );
+          },
+        ),
+      );
+    }
+
+    return const Icon(
+      Icons.person_rounded,
+      size: 52,
+      color: AppColors.textMuted,
     );
   }
 }
@@ -376,7 +407,7 @@ class GenderSelector extends StatelessWidget {
     super.key,
     required this.selectedGender,
     required this.onGenderChanged,
-    this.options = const ['male', 'female', 'other'],
+    this.options = const ['MALE', 'FEMALE', 'OTHER'],
   });
 
   @override
@@ -393,7 +424,7 @@ class GenderSelector extends StatelessWidget {
                   right: option != options.last ? 16 : 0,
                 ),
                 child: _GenderOption(
-                  label: _getLabel(option),
+                  label: option,
                   icon: _getIcon(option),
                   value: option,
                   isSelected: selectedGender == option,
@@ -405,19 +436,6 @@ class GenderSelector extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _getLabel(String value) {
-    switch (value) {
-      case 'male':
-        return 'Male';
-      case 'female':
-        return 'Female';
-      case 'other':
-        return 'Other';
-      default:
-        return value;
-    }
   }
 
   IconData _getIcon(String value) {
@@ -747,7 +765,7 @@ class ProfileCompletionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double percentage = filledFields / totalFields;
+    double percentage = (filledFields / totalFields).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(20),

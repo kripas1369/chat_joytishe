@@ -161,7 +161,7 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
         GlassIconButton(
           onTap: () => Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreenClient()),
+            MaterialPageRoute(builder: (context) => HomeScreenClientContent()),
           ),
           icon: Icons.arrow_back_ios_new_rounded,
         ),

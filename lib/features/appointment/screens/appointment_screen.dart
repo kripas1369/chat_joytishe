@@ -92,7 +92,7 @@ class _AppointmentScreenState extends State<AppointmentScreen>
             icon: Icons.arrow_back_rounded,
             onTap: () => Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => HomeScreenClient()),
+              MaterialPageRoute(builder: (context) => HomeScreenClientContent()),
             ),
           ),
           const SizedBox(width: 16),

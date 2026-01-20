@@ -114,6 +114,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         placeOfBirth: event.placeOfBirth,
         currentAddress: event.currentAddress,
         permanentAddress: event.permanentAddress,
+        zoadicSign: event.zoadicSign,
+        gender: event.gender,
       );
       emit(BirthDetailsUpdatedState(birthDetails));
     } catch (e) {

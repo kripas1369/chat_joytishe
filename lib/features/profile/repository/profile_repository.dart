@@ -69,6 +69,8 @@ class ProfileRepository {
     String? placeOfBirth,
     String? currentAddress,
     String? permanentAddress,
+    String? zoadicSign,
+    String? gender,
   }) async {
     try {
       final data = await profileService.updateBirthDetails(
@@ -77,6 +79,8 @@ class ProfileRepository {
         placeOfBirth: placeOfBirth,
         currentAddress: currentAddress,
         permanentAddress: permanentAddress,
+        zoadicSign: zoadicSign,
+        gender: gender,
       );
       return data['data'];
     } catch (e) {

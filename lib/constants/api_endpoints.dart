@@ -2,7 +2,7 @@ class ApiEndpoints {
   ///production api
   // static const String baseUrl =
   //     'https://jotishapi.autonomoustechnology.net/api/v1';
-
+  static const String serverUrl = 'http://192.168.0.206:4000';
   static const String baseUrl = 'http://192.168.0.206:4000/api/v1';
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';

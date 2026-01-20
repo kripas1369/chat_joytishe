@@ -1,31 +1,53 @@
+import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/app_background_gradient.dart';
 import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_options_screen.dart';
+import 'package:chat_jyotishi/features/home_client/bloc/home_client_bloc.dart';
+import 'package:chat_jyotishi/features/home_client/bloc/home_client_events.dart';
+import 'package:chat_jyotishi/features/home_client/repository/home_client_repository.dart';
+import 'package:chat_jyotishi/features/home_client/service/home_client_service.dart';
 import 'package:chat_jyotishi/features/home_client/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/home_client/widgets/feature_card.dart';
 import 'package:chat_jyotishi/features/home_client/widgets/gradient_button.dart';
 import 'package:chat_jyotishi/features/home_client/widgets/notification_button.dart';
 import 'package:chat_jyotishi/features/home_client/widgets/quick_action_chip.dart';
+import 'package:chat_jyotishi/features/home_client/widgets/rotating_question_widget.dart';
 import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../constants/constant.dart';
-
-class HomeScreenClient extends StatefulWidget {
+class HomeScreenClient extends StatelessWidget {
   const HomeScreenClient({super.key});
 
   @override
-  State<HomeScreenClient> createState() => _HomeScreenClientState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) =>
+          HomeClientBloc(repository: HomeClientRepository(HomeClientService()))
+            ..add(LoadRotatingQuestionsEvent()),
+      child: const HomeScreenClientContent(),
+    );
+  }
 }
 
-class _HomeScreenClientState extends State<HomeScreenClient>
+class HomeScreenClientContent extends StatefulWidget {
+  const HomeScreenClientContent({super.key});
+
+  @override
+  State<HomeScreenClientContent> createState() =>
+      _HomeScreenClientContentState();
+}
+
+class _HomeScreenClientContentState extends State<HomeScreenClientContent>
     with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final CoinService _coinService = CoinService();
+  final ScrollController _scrollController = ScrollController();
+  bool _welcomeVisible = true;
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
@@ -64,6 +86,42 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     _fadeController.forward();
   }
 
+  double _welcomeOpacity = 1.0;
+  double _welcomeTranslateX = 0.0;
+
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _welcomeTranslateX += details.delta.dx;
+      _welcomeOpacity = (200 - _welcomeTranslateX.abs()).clamp(0, 200) / 200;
+    });
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (_welcomeOpacity < 0.3) {
+      // Remove the welcome section
+      setState(() {
+        _welcomeVisible = false;
+      });
+
+      // Scroll the remaining content to top
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    } else {
+      // Snap back if swipe was not enough
+      setState(() {
+        _welcomeOpacity = 1.0;
+        _welcomeTranslateX = 0.0;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _fadeController.dispose();
@@ -88,6 +146,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: CustomScrollView(
+                controller: _scrollController,
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   SliverToBoxAdapter(
@@ -98,8 +157,25 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                         children: [
                           const SizedBox(height: 16),
                           _buildHeader(),
-                          const SizedBox(height: 32),
-                          _buildWelcomeSection(),
+                          const SizedBox(height: 16),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeInOut,
+                            child: _welcomeVisible
+                                ? GestureDetector(
+                                    onHorizontalDragUpdate:
+                                        _onHorizontalDragUpdate,
+                                    onHorizontalDragEnd: _onHorizontalDragEnd,
+                                    child: _buildWelcomeSection(
+                                      opacity: _welcomeOpacity,
+                                      translateX: _welcomeTranslateX,
+                                    ),
+                                  )
+                                : const SizedBox.shrink(), // collapses to 0 height when removed
+                          ),
+
+                          const SizedBox(height: 24),
+                          const RotatingQuestionsWidget(),
                           const SizedBox(height: 32),
                           _buildQuickActions(),
                           const SizedBox(height: 32),
@@ -225,54 +301,61 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     );
   }
 
-  Widget _buildWelcomeSection() {
-    return Container(
-      padding: EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
-            AppColors.deepPurple.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.primaryPurple.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildGreetingBadge(),
-          const SizedBox(height: 16),
-          Text(
-            'Namaste, $userName',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
+  Widget _buildWelcomeSection({double opacity = 1.0, double translateX = 0.0}) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 300),
+      opacity: opacity,
+      child: Transform.translate(
+        offset: Offset(translateX, 0),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryPurple.withOpacity(0.2),
+                AppColors.deepPurple.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.primaryPurple.withOpacity(0.3),
+              width: 1,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'The stars align in your favor today.\nDiscover what the cosmos has in store for you.',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              height: 1.5,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildGreetingBadge(),
+              const SizedBox(height: 16),
+              Text(
+                'Namaste, $userName',
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'The stars align in your favor today.\nDiscover what the cosmos has in store for you.',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              GradientButton(
+                text: 'View Today\'s Horoscope',
+                icon: Icons.auto_awesome,
+                onTap: () => _navigateTo('/horoscope_screen'),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          GradientButton(
-            text: 'View Today\'s Horoscope',
-            icon: Icons.auto_awesome,
-            onTap: () => _navigateTo('/horoscope_screen'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -738,11 +821,14 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       // User has coins, go to chat options
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ChatOptionsScreen()),
+        MaterialPageRoute(builder: (_) => const ChatOptionsScreen()),
       );
     } else {
       // No coins, go to payment page
-      Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentPage()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PaymentPage()),
+      );
     }
   }
 

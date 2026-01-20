@@ -10,9 +10,12 @@ import 'package:chat_jyotishi/features/profile/widgets/profile_widgets.dart';
 import 'package:flutter/material.dart' hide TextField;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:nepali_date_picker/nepali_date_picker.dart'
     hide CalendarDatePicker;
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 import '../../app_widgets/show_top_snackBar.dart';
 
@@ -41,6 +44,7 @@ class UserProfileScreenContent extends StatefulWidget {
 class _UserProfileScreenContentState extends State<UserProfileScreenContent>
     with TickerProviderStateMixin {
   File? profileImage;
+  String? networkProfileImage;
   final ImagePicker picker = ImagePicker();
 
   final TextEditingController nameController = TextEditingController();
@@ -129,7 +133,8 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
             backgroundColor: AppColors.success,
             icon: Icons.check_circle,
           );
-          populateFields(state);
+          // Reload profile to get fresh data from server
+          _profileBloc.add(LoadCurrentUserProfileEvent());
         } else if (state is BirthDetailsUpdatedState) {
           showTopSnackBar(
             context: context,
@@ -137,6 +142,8 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
             backgroundColor: AppColors.success,
             icon: Icons.check_circle,
           );
+          // Reload profile to get fresh data from server
+          _profileBloc.add(LoadCurrentUserProfileEvent());
         } else if (state is ProfilePhotoUploadedState) {
           showTopSnackBar(
             context: context,
@@ -145,7 +152,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
             icon: Icons.check_circle,
           );
           // Reload profile to get updated data
-          _profileBloc.add(RefreshUserProfileEvent());
+          _profileBloc.add(LoadCurrentUserProfileEvent());
         } else if (state is ProfilePhotoRemovedState) {
           showTopSnackBar(
             context: context,
@@ -154,7 +161,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
             icon: Icons.check_circle,
           );
           setState(() => profileImage = null);
-          _profileBloc.add(RefreshUserProfileEvent());
+          _profileBloc.add(LoadCurrentUserProfileEvent());
         } else if (state is ProfileSetupSuccessState) {
           showTopSnackBar(
             context: context,
@@ -162,7 +169,8 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
             backgroundColor: AppColors.success,
             icon: Icons.check_circle,
           );
-          populateFields(state);
+          // Reload profile to get fresh data from server
+          _profileBloc.add(LoadCurrentUserProfileEvent());
         } else if (state is ProfileErrorState) {
           showTopSnackBar(
             context: context,
@@ -226,7 +234,10 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                             children: [
                               const SizedBox(height: 8),
                               ProfileAvatar(
-                                profileImage: profileImage,
+                                localImage: profileImage,
+                                // File?
+                                networkImage: networkProfileImage,
+                                // String?
                                 pulseAnimation: _pulseAnimation,
                                 displayName: nameController.text.isEmpty
                                     ? 'Your Name'
@@ -234,8 +245,9 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                                 displayEmail: emailController.text.isEmpty
                                     ? 'Add your email'
                                     : emailController.text,
-                                onTap: () => _showImagePicker(),
+                                onTap: _showImagePicker,
                               ),
+
                               const SizedBox(height: 32),
                               ProfileCompletionCard(
                                 filledFields: _calculateFilledFields(),
@@ -321,11 +333,12 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
         AppTextField(
           controller: tobController,
           label: 'Time of Birth',
-          hint: 'HH:mm:ss',
+          hint: 'HH:MM',
           icon: Icons.schedule_rounded,
-          keyboardType: TextInputType.datetime,
-          onChanged: (_) => setState(() {}),
+          readOnly: true,
+          onTap: () => _selectTime(context),
         ),
+
         const SizedBox(height: 16),
         AppTextField(
           controller: pobController,
@@ -399,17 +412,64 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await picker.pickImage(
       source: source,
-      imageQuality: 80,
+      imageQuality: 100,
     );
 
-    if (image != null) {
-      setState(() {
-        profileImage = File(image.path);
-      });
+    if (image == null) return;
 
-      // Upload the photo
-      _profileBloc.add(UploadProfilePhotoEvent(File(image.path)));
+    debugPrint('--- PICKED IMAGE ---');
+    debugPrint('XFile path: ${image.path}');
+    debugPrint('XFile name: ${image.name}');
+    debugPrint('XFile mimeType: ${image.mimeType}');
+    debugPrint('XFile length: ${await image.length()} bytes');
+
+    File original = File(image.path);
+
+    debugPrint('Original file extension: ${path.extension(original.path)}');
+
+    File jpegImage = await _convertToJpeg(original);
+
+    debugPrint('--- AFTER JPEG CONVERSION ---');
+    debugPrint('JPEG path: ${jpegImage.path}');
+    debugPrint('JPEG extension: ${path.extension(jpegImage.path)}');
+    debugPrint('JPEG size: ${await jpegImage.length()} bytes');
+
+    setState(() {
+      profileImage = jpegImage;
+    });
+
+    _profileBloc.add(UploadProfilePhotoEvent(jpegImage));
+  }
+
+  Future<File> _convertToJpeg(File file) async {
+    final bytes = await file.readAsBytes();
+
+    debugPrint('Converting image...');
+    debugPrint('Input bytes length: ${bytes.length}');
+
+    final decodedImage = img.decodeImage(bytes);
+
+    if (decodedImage == null) {
+      debugPrint('❌ Failed to decode image');
+      throw Exception('Invalid image');
     }
+
+    debugPrint(
+      'Decoded image → width: ${decodedImage.width}, height: ${decodedImage.height}',
+    );
+
+    final dir = await getTemporaryDirectory();
+    final newPath = path.join(
+      dir.path,
+      '${DateTime.now().millisecondsSinceEpoch}.JPEG',
+    );
+
+    final jpegFile = File(newPath);
+    await jpegFile.writeAsBytes(img.encodeJpg(decodedImage, quality: 85));
+
+    debugPrint('JPEG written at: $newPath');
+
+    return jpegFile;
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -664,6 +724,35 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
     }
   }
 
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.primaryPurple,
+              onPrimary: Colors.white,
+              surface: AppColors.backgroundDark,
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final hour = picked.hour.toString().padLeft(2, '0');
+      final minute = picked.minute.toString().padLeft(2, '0');
+
+      setState(() {
+        tobController.text = '$hour:$minute'; // ✅ HH:MM
+      });
+    }
+  }
+
   int _calculateFilledFields() {
     int count = 0;
     if (nameController.text.isNotEmpty) count++;
@@ -694,89 +783,50 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
 
     tobController.text = user.timeOfBirth ?? '';
     pobController.text = user.placeOfBirth ?? '';
-    phoneController.text = user.phone ?? '';
+    phoneController.text = user.phoneNumber ?? '';
     horoscopeController.text = user.zodiacSign ?? '';
     currentAddressController.text = state.user.currentAddress ?? '';
     permanentAddressController.text = state.user.currentAddress ?? '';
     selectedGender = user.gender;
 
+    profileImage = null; // ALWAYS reset local file
+
     if (user.profilePhoto != null && user.profilePhoto!.isNotEmpty) {
-      profileImage = File(user.profilePhoto!);
+      networkProfileImage = user.profilePhoto;
     } else {
-      profileImage = null;
+      networkProfileImage = null;
     }
-
-    setState(() {});
-  }
-
-  void _populateFields(ProfileLoadedState state) {
-    nameController.text = state.user.name ?? '';
-    emailController.text = state.user.email ?? '';
-
-    // Handle date formatting - assuming dateOfBirth is DateTime
-    if (state.user.dateOfBirth != null) {
-      dobController.text =
-          "${state.user.dateOfBirth!.year}/${state.user.dateOfBirth!.month.toString().padLeft(2, '0')}/${state.user.dateOfBirth!.day.toString().padLeft(2, '0')}";
-    }
-
-    tobController.text = state.user.timeOfBirth ?? '';
-    pobController.text = state.user.placeOfBirth ?? '';
-
-    // These fields might not exist in ProfileModel, adjust based on your model
-    phoneController.text = state.user.phoneNumber ?? '';
-    horoscopeController.text = state.user.zodiacSign ?? '';
-    currentAddressController.text = state.user.currentAddress ?? '';
-    permanentAddressController.text = state.user.currentAddress ?? '';
-    selectedGender = state.user.gender;
-
-    if (state.user.profilePhoto != null &&
-        state.user.profilePhoto!.isNotEmpty) {
-      // If profilePhoto is a URL, you might need to handle it differently
-      // For now, assuming it's a local path
-      profileImage = File(state.user.profilePhoto!);
-    }
-
-    setState(() {});
-  }
-
-  void _populateFieldsFromUpdated(ProfileUpdatedState state) {
-    nameController.text = state.user.name ?? '';
-    emailController.text = state.user.email ?? '';
-    setState(() {});
-  }
-
-  void _populateFieldsFromSetup(ProfileSetupSuccessState state) {
-    nameController.text = state.user.name ?? '';
-    emailController.text = state.user.email ?? '';
-
-    if (state.user.dateOfBirth != null) {
-      dobController.text =
-          "${state.user.dateOfBirth!.year}/${state.user.dateOfBirth!.month.toString().padLeft(2, '0')}/${state.user.dateOfBirth!.day.toString().padLeft(2, '0')}";
-    }
-
-    tobController.text = state.user.timeOfBirth ?? '';
-    pobController.text = state.user.placeOfBirth ?? '';
-    phoneController.text = state.user.phoneNumber ?? '';
-    horoscopeController.text = state.user.zodiacSign ?? '';
-    currentAddressController.text = state.user.currentAddress ?? '';
-    permanentAddressController.text = state.user.permanentAddress ?? '';
-    selectedGender = state.user.gender;
-
-    if (state.user.profilePhoto != null &&
-        state.user.profilePhoto!.isNotEmpty) {
-      profileImage = File(state.user.profilePhoto!);
-    }
-
     setState(() {});
   }
 
   void _saveProfile() {
-    // Check if this is initial setup or update
     final currentState = _profileBloc.state;
 
-    if (currentState is ProfileInitialState ||
-        currentState is ProfileErrorState) {
-      // Complete profile setup
+    if (nameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        dobController.text.isEmpty ||
+        tobController.text.isEmpty ||
+        pobController.text.isEmpty ||
+        currentAddressController.text.isEmpty ||
+        permanentAddressController.text.isEmpty ||
+        selectedGender == null ||
+        selectedGender!.isEmpty) {
+      showTopSnackBar(
+        context: context,
+        message: 'Please fill all required fields.',
+        backgroundColor: AppColors.error,
+        icon: Icons.error,
+      );
+      return; // Stop if validation fails
+    }
+
+    final genderForApi = selectedGender!;
+
+    final isFirstTimeSetup =
+        currentState is ProfileLoadedState &&
+        !currentState.user.profileCompleted;
+
+    if (isFirstTimeSetup) {
       _profileBloc.add(
         CompleteProfileSetupEvent(
           name: nameController.text,
@@ -787,31 +837,30 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
           currentAddress: currentAddressController.text,
           permanentAddress: permanentAddressController.text,
           profilePhoto: profileImage,
-          zoadicSign: zoadicSignController.text,
-          gender: genderController.text,
+          zoadicSign: horoscopeController.text,
+          gender: genderForApi,
         ),
       );
-    } else {
-      // Update existing profile - update basic info
-      _profileBloc.add(
-        UpdateUserProfileEvent(
-          name: nameController.text,
-          email: emailController.text,
-        ),
-      );
-
-      // Update birth details separately
-      _profileBloc.add(
-        UpdateBirthDetailsEvent(
-          zoadicSign: zoadicSignController.text,
-          gender: genderController.text,
-          dateOfBirth: dobController.text,
-          timeOfBirth: tobController.text,
-          placeOfBirth: pobController.text,
-          currentAddress: currentAddressController.text,
-          permanentAddress: permanentAddressController.text,
-        ),
-      );
+      return;
     }
+
+    _profileBloc.add(
+      UpdateUserProfileEvent(
+        name: nameController.text,
+        email: emailController.text,
+      ),
+    );
+
+    _profileBloc.add(
+      UpdateBirthDetailsEvent(
+        zoadicSign: horoscopeController.text,
+        gender: genderForApi,
+        dateOfBirth: dobController.text,
+        timeOfBirth: tobController.text,
+        placeOfBirth: pobController.text,
+        currentAddress: currentAddressController.text,
+        permanentAddress: permanentAddressController.text,
+      ),
+    );
   }
 }

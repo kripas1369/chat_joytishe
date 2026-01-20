@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
         '/splash_screen': (context) => SplashScreen(),
         '/login_screen': (context) => LoginScreen(),
         '/login_screen_astrologer': (context) => LoginScreenAstrologer(),
-        '/home_screen_client': (context) => HomeScreenClient(),
+        '/home_screen_client': (context) => HomeScreenClientContent(),
         '/history_screen_client': (context) => HistoryScreenClient(),
         '/settings_screen': (context) => SettingsScreen(),
         '/help_support_screen': (context) => HelpSupportScreen(),
