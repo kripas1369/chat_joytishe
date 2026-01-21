@@ -100,21 +100,16 @@ class _HoroscopeGridScreenState extends State<HoroscopeScreen>
       child: Row(
         children: [
           GlassIconButton(
-            icon: Icons.arrow_back,
+            icon: Icons.arrow_back_ios_new_rounded,
             onTap: () => Navigator.pop(context),
           ),
           SizedBox(width: 16),
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [Colors.white, AppColors.lightPurple],
-            ).createShader(bounds),
-            child: Text(
-              'Horoscope',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
+          Text(
+            'Horoscope',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -218,6 +213,7 @@ class HoroscopeDetailPopup extends StatefulWidget {
 
 class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
   DateTime selectedDate = DateTime.now();
+  String selectedPeriod = 'Daily'; // Daily, Weekly, Monthly
 
   String _getZodiacDate(String name) {
     final dates = {
@@ -255,6 +251,30 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
+  String _getWeekRange(DateTime date) {
+    final startOfWeek = date.subtract(Duration(days: date.weekday - 1));
+    final endOfWeek = startOfWeek.add(Duration(days: 6));
+    return '${_getFormattedDate(startOfWeek)} - ${_getFormattedDate(endOfWeek)}';
+  }
+
+  String _getMonthYear(DateTime date) {
+    final months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
   String _getDayLabel(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -266,18 +286,35 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
     return '';
   }
 
-  String _getHoroscopeForDate(DateTime date) {
-    final horoscopes = [
-      "Today is a favorable day for personal growth. Focus on communication and avoid unnecessary conflicts. A surprise opportunity may arise in the evening. Trust your intuition when making important decisions.",
-      "Your creative energy is at its peak today. Express yourself freely and don't hold back your ideas. Romantic prospects look promising. Financial matters require careful attention.",
-      "A day of reflection and inner peace awaits you. Take time to meditate and connect with your spiritual side. Family relationships strengthen. Avoid making hasty decisions.",
-      "Opportunities for advancement present themselves today. Stay alert and be ready to act quickly. Your leadership qualities shine through. Evening brings pleasant social interactions.",
-      "Focus on building strong foundations in your personal and professional life. Patience is your greatest asset today. Someone from your past may reach out with important news.",
-      "Your analytical skills are heightened. Use them to solve pending problems. Health and wellness should be prioritized. A financial windfall may surprise you.",
-      "Balance is the key theme for today. Harmonize work and personal life for best results. Collaborative efforts yield excellent outcomes. Evening favors relaxation and entertainment.",
-    ];
-
-    return horoscopes[date.day % horoscopes.length];
+  String _getHoroscopeForPeriod() {
+    if (selectedPeriod == 'Daily') {
+      final horoscopes = [
+        "Today is a favorable day for personal growth. Focus on communication and avoid unnecessary conflicts. A surprise opportunity may arise in the evening. Trust your intuition when making important decisions.",
+        "Your creative energy is at its peak today. Express yourself freely and don't hold back your ideas. Romantic prospects look promising. Financial matters require careful attention.",
+        "A day of reflection and inner peace awaits you. Take time to meditate and connect with your spiritual side. Family relationships strengthen. Avoid making hasty decisions.",
+        "Opportunities for advancement present themselves today. Stay alert and be ready to act quickly. Your leadership qualities shine through. Evening brings pleasant social interactions.",
+        "Focus on building strong foundations in your personal and professional life. Patience is your greatest asset today. Someone from your past may reach out with important news.",
+        "Your analytical skills are heightened. Use them to solve pending problems. Health and wellness should be prioritized. A financial windfall may surprise you.",
+        "Balance is the key theme for today. Harmonize work and personal life for best results. Collaborative efforts yield excellent outcomes. Evening favors relaxation and entertainment.",
+      ];
+      return horoscopes[selectedDate.day % horoscopes.length];
+    } else if (selectedPeriod == 'Weekly') {
+      final weeklyHoroscopes = [
+        "This week brings new opportunities for growth and self-discovery. The beginning of the week favors professional matters, while the latter half is perfect for personal relationships. Mid-week may present some challenges that test your patience, but perseverance will lead to success. Focus on maintaining balance between work and leisure.",
+        "A transformative week lies ahead. You'll find yourself drawn to creative pursuits and spiritual exploration. Financial opportunities emerge around Wednesday. The weekend brings joyful social gatherings. Trust your instincts when making important decisions, especially regarding long-term commitments.",
+        "Energy levels fluctuate this week, so pace yourself accordingly. Monday and Tuesday are ideal for tackling complex projects. Midweek brings unexpected news that could shift your perspective. The weekend favors romance and artistic expression. Keep an open mind to new possibilities.",
+        "This week emphasizes communication and collaboration. Networking opportunities abound, particularly in the first half of the week. A mentor or guide may offer valuable advice. By Friday, you'll see tangible results from recent efforts. The weekend is perfect for rest and rejuvenation.",
+        "Focus on building stronger foundations this week. Career matters take center stage early on, while personal relationships require attention later. An old issue may resurface for final resolution. The weekend brings clarity and a sense of accomplishment. Avoid overcommitting your time.",
+      ];
+      return weeklyHoroscopes[selectedDate.weekday % weeklyHoroscopes.length];
+    } else {
+      final monthlyHoroscopes = [
+        "This month marks a significant period of transformation and growth. The first two weeks focus on career advancement and professional development. Opportunities for recognition and promotion are highly likely. The latter half of the month shifts focus to personal relationships and emotional wellbeing. New connections formed now have long-term potential. Financial stability improves, but avoid impulsive spending. Health and fitness routines started this month will yield excellent results.",
+        "A month of balance and harmony awaits you. Early weeks bring clarity to confusing situations from the past. Creative projects flourish, and your artistic talents receive appreciation. Mid-month presents opportunities for travel or learning. Relationships deepen, and communication improves significantly. Financial matters require careful planning. The month ends on a high note with celebrations and achievements. Trust the process and remain patient.",
+        "This month encourages introspection and spiritual growth. You'll feel drawn to explore deeper meanings and philosophical questions. Professional life remains stable, allowing you to focus on personal development. Relationships benefit from honest communication. A significant decision around mid-month shapes your path forward. Health improves through mindful practices. The month concludes with renewed energy and optimism about the future.",
+      ];
+      return monthlyHoroscopes[selectedDate.month % monthlyHoroscopes.length];
+    }
   }
 
   Map<String, String> _getLuckyElements(DateTime date) {
@@ -308,10 +345,30 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
     };
   }
 
-  void _changeDate(int days) {
+  void _changeDate(int amount) {
     setState(() {
-      selectedDate = selectedDate.add(Duration(days: days));
+      if (selectedPeriod == 'Daily') {
+        selectedDate = selectedDate.add(Duration(days: amount));
+      } else if (selectedPeriod == 'Weekly') {
+        selectedDate = selectedDate.add(Duration(days: amount * 7));
+      } else {
+        selectedDate = DateTime(
+          selectedDate.year,
+          selectedDate.month + amount,
+          1,
+        );
+      }
     });
+  }
+
+  String _getDateRangeText() {
+    if (selectedPeriod == 'Daily') {
+      return _getFormattedDate(selectedDate);
+    } else if (selectedPeriod == 'Weekly') {
+      return _getWeekRange(selectedDate);
+    } else {
+      return _getMonthYear(selectedDate);
+    }
   }
 
   @override
@@ -324,7 +381,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 24),
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.8,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         decoration: BoxDecoration(
           gradient: AppColors.backgroundGradient,
@@ -353,6 +410,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Zodiac Icon
                   Text(
                     widget.icon,
                     style: TextStyle(
@@ -368,6 +426,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
 
                   SizedBox(height: 16),
 
+                  // Zodiac Name
                   Text(
                     widget.zodiacName,
                     style: TextStyle(
@@ -380,6 +439,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
 
                   SizedBox(height: 6),
 
+                  // Zodiac Date Range
                   Text(
                     _getZodiacDate(widget.zodiacName),
                     style: TextStyle(
@@ -390,11 +450,36 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
                   ),
 
                   SizedBox(height: 20),
-
                   Divider(color: Colors.white.withOpacity(0.2), thickness: 1),
+                  SizedBox(height: 12),
+                  Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryPurple.withOpacity(0.2),
+                          AppColors.deepPurple.withOpacity(0.1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primaryPurple.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildPeriodTab('Daily'),
+                        _buildPeriodTab('Weekly'),
+                        _buildPeriodTab('Monthly'),
+                      ],
+                    ),
+                  ),
 
+                  SizedBox(height: 12),
+                  Divider(color: Colors.white.withOpacity(0.2), thickness: 1),
                   SizedBox(height: 20),
 
+                  // Date Navigation
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -421,47 +506,56 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
                           ),
                         ),
                       ),
-                      Column(
-                        children: [
-                          if (dayLabel.isNotEmpty)
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppColors.primaryPurple.withOpacity(0.4),
-                                    AppColors.primaryPurple.withOpacity(0.2),
-                                  ],
+                      Expanded(
+                        child: Column(
+                          children: [
+                            if (dayLabel.isNotEmpty &&
+                                selectedPeriod == 'Daily')
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.primaryPurple.withOpacity(
-                                    0.5,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColors.primaryPurple.withOpacity(0.4),
+                                      AppColors.primaryPurple.withOpacity(0.2),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.primaryPurple.withOpacity(
+                                      0.5,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  dayLabel,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
+                            if (dayLabel.isNotEmpty &&
+                                selectedPeriod == 'Daily')
+                              SizedBox(height: 8),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8),
                               child: Text(
-                                dayLabel,
+                                _getDateRangeText(),
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 12,
+                                  fontSize: selectedPeriod == 'Daily' ? 16 : 13,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
-                          SizedBox(height: 8),
-                          Text(
-                            _getFormattedDate(selectedDate),
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       GestureDetector(
                         onTap: () => _changeDate(1),
@@ -491,8 +585,9 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
 
                   SizedBox(height: 20),
 
+                  // Horoscope Text
                   Text(
-                    _getHoroscopeForDate(selectedDate),
+                    _getHoroscopeForPeriod(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.95),
@@ -504,52 +599,88 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
 
                   SizedBox(height: 24),
 
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primaryPurple.withOpacity(0.2),
-                          AppColors.deepPurple.withOpacity(0.1),
+                  // Lucky Elements (only show for Daily)
+                  if (selectedPeriod == 'Daily')
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primaryPurple.withOpacity(0.2),
+                            AppColors.deepPurple.withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.primaryPurple.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          _luckyItem(
+                            Icons.palette,
+                            'Lucky Color',
+                            luckyElements['color']!,
+                          ),
+                          SizedBox(height: 12),
+                          _luckyItem(
+                            Icons.filter_7,
+                            'Lucky Number',
+                            luckyElements['number']!,
+                          ),
+                          SizedBox(height: 12),
+                          _luckyItem(
+                            Icons.access_time,
+                            'Lucky Time',
+                            luckyElements['time']!,
+                          ),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.primaryPurple.withOpacity(0.3),
-                      ),
                     ),
-                    child: Column(
-                      children: [
-                        _luckyItem(
-                          Icons.palette,
-                          'Lucky Color',
-                          luckyElements['color']!,
-                        ),
-                        SizedBox(height: 12),
-                        _luckyItem(
-                          Icons.filter_7,
-                          'Lucky Number',
-                          luckyElements['number']!,
-                        ),
-                        SizedBox(height: 12),
-                        _luckyItem(
-                          Icons.access_time,
-                          'Lucky Time',
-                          luckyElements['time']!,
-                        ),
-                      ],
-                    ),
-                  ),
 
                   SizedBox(height: 28),
 
+                  // Close Button
                   AppButton(
                     title: 'Close',
                     onTap: () => Navigator.pop(context),
-                    icon: Icons.dangerous,
+                    icon: Icons.close,
                   ),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPeriodTab(String period) {
+    final isSelected = selectedPeriod == period;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            selectedPeriod = period;
+          });
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: [AppColors.primaryPurple, AppColors.deepPurple],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            period,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.white60,
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             ),
           ),
         ),

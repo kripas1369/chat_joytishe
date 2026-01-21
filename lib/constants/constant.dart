@@ -84,10 +84,21 @@ class AppColors {
     end: Alignment.centerRight,
     colors: [purple600, indigo600],
   );
-
+  static const LinearGradient splashReverseGradient = LinearGradient(
+    colors: [Color(0xFF8309CC), Color(0xFF61198C)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
   static const LinearGradient buttonGradientHover = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
     colors: [purple700, indigo700],
+  );
+  static const LinearGradient standardGradient = LinearGradient(
+    colors: [Color(0xFFC0C0C0), Color(0xFF808080)],
+  );
+
+  static const LinearGradient premiumGradient = LinearGradient(
+    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
   );
 }
