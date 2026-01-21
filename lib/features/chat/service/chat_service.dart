@@ -289,17 +289,37 @@ class ChatService {
     }
   }
 
-  /// End a chat
+  /// End a chat session
+  /// API: PUT /api/v1/chats/:chatId/end
   Future<Map<String, dynamic>> endChat(String chatId) async {
     _checkInitialized();
     try {
-      final response = await _dio.put('${ApiEndpoints.chatChats}/$chatId/end');
+      final response = await _dio.put('${ApiEndpoints.chatEnd}/$chatId/end');
       if (response.statusCode == 200) {
-        return response.data['data'];
+        return response.data['data'] ?? response.data['chat'] ?? {};
       }
       throw Exception('Failed to end chat');
     } catch (e) {
       throw Exception('Failed to end chat: $e');
+    }
+  }
+
+  /// Get all chats for the current user
+  /// API: GET /api/v1/chats
+  Future<List<Map<String, dynamic>>> getAllChats() async {
+    _checkInitialized();
+    try {
+      final response = await _dio.get(ApiEndpoints.chatEnd);
+      if (response.statusCode == 200) {
+        final chats = response.data['chats'] ?? response.data['data'];
+        if (chats is List) {
+          return List<Map<String, dynamic>>.from(chats);
+        }
+        return [];
+      }
+      throw Exception('Failed to get chats');
+    } catch (e) {
+      throw Exception('Failed to get chats: $e');
     }
   }
 

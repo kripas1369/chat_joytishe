@@ -1,7 +1,9 @@
-import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_logo.dart';
+import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
+import 'package:chat_jyotishi/features/setting/widgets/password_text_field.dart';
 import 'package:flutter/material.dart';
 import '../../../constants/constant.dart';
-import '../../auth/widgets/input_field.dart';
+import '../../app_widgets/app_button.dart';
 import '../../app_widgets/star_field_background.dart';
 
 class SetPasswordScreen extends StatefulWidget {
@@ -19,6 +21,13 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
   final TextEditingController confirmController = TextEditingController();
 
   @override
+  void dispose() {
+    passwordController.dispose();
+    confirmController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
@@ -29,10 +38,24 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
               gradient: AppColors.backgroundGradient.withOpacity(0.9),
             ),
           ),
+          Positioned(
+            top: 60,
+            left: 24,
+            child: GlassIconButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              onTap: () => Navigator.pop(context),
+            ),
+          ),
           Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(20),
-              child: _card(context),
+              child: Column(
+                children: [
+                  buildAppLogo(),
+                  SizedBox(height: 24),
+                  _card(context),
+                ],
+              ),
             ),
           ),
           _footer(),
@@ -58,53 +81,29 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              InputField(
-                label: 'Password',
-                obscure: !passwordVisible,
-                prefixIcon: Icons.lock_outline,
-              ),
-              Positioned(
-                bottom: 5,
-                child: IconButton(
-                  icon: Icon(
-                    passwordVisible ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.white70,
-                  ),
-                  onPressed: () {
-                    setState(() => passwordVisible = !passwordVisible);
-                  },
-                ),
-              ),
-            ],
+          PasswordTextField(
+            controller: passwordController,
+            label: 'Password',
+            hint: 'Enter your password',
+            isVisible: passwordVisible,
+            onVisibilityToggle: () {
+              setState(() => passwordVisible = !passwordVisible);
+            },
           ),
-
           SizedBox(height: 16),
-          Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              InputField(
-                label: 'Confirm Password',
-                obscure: !confirmVisible,
-                prefixIcon: Icons.lock_outline,
-              ),
-              Positioned(
-                bottom: 6,
-                child: IconButton(
-                  icon: Icon(
-                    confirmVisible ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.white70,
-                  ),
-                  onPressed: () {
-                    setState(() => confirmVisible = !confirmVisible);
-                  },
-                ),
-              ),
-            ],
+
+          // Confirm Password Field
+          PasswordTextField(
+            controller: confirmController,
+            label: 'Confirm Password',
+            hint: 'Re-enter your password',
+            isVisible: confirmVisible,
+            onVisibilityToggle: () {
+              setState(() => confirmVisible = !confirmVisible);
+            },
           ),
           SizedBox(height: 28),
+
           SizedBox(
             child: AppButton(title: 'SET PASSWORD', onTap: () {}),
           ),

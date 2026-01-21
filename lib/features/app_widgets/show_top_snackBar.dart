@@ -4,7 +4,7 @@ void showTopSnackBar({
   required BuildContext context,
   required String message,
   IconData icon = Icons.check_circle,
-  Color backgroundColor = Colors.green,
+  Color backgroundColor = const Color(0xFF063E2E),
   Duration duration = const Duration(seconds: 2),
 }) {
   if (!context.mounted) return;

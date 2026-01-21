@@ -8,7 +8,6 @@ import '../bloc/auth_bloc.dart';
 import '../repository/auth_repository.dart';
 import '../service/auth_service.dart';
 import '../widgets/login_card.dart';
-import '../../app_widgets/star_field_background.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1058235243536",
+    "project_id": "jyotishapp-452ad",
+    "storage_bucket": "jyotishapp-452ad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1058235243536:android:986cc5d532a0031acf7e95",
+        "android_client_info": {
+          "package_name": "com.example.chat_jyotishi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAU5qdqk22pW5DNPN-yTWNmclcH5ZrYVs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

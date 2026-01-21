@@ -1,5 +1,14 @@
+import 'dart:convert';
+import 'package:chat_jyotishi/constants/api_endpoints.dart';
+import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
+import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
+import 'package:chat_jyotishi/features/chat_astrologer/screens/astrologer_chat_screen.dart';
+import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
 import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
+import 'package:chat_jyotishi/features/notification/services/notification_service.dart';
+import 'package:chat_jyotishi/features/chat_astrologer/service/astrologer_chat_service.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +26,9 @@ class HomeScreenAstrologer extends StatefulWidget {
 class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final SocketService _socketService = SocketService();
+  final NotificationService _notificationService = NotificationService();
+  final AstrologerChatService _astrologerChatService = AstrologerChatService();
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
@@ -24,9 +36,29 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   late Animation<double> _fadeAnimation;
 
   bool isOnline = false;
+  bool _isTogglingStatus = false;
   String astrologerId = '';
   String accessToken = '';
   String refreshToken = '';
+
+  // Broadcast notification state
+  List<Map<String, dynamic>> _broadcastNotifications = [];
+
+  // Count of pending broadcast requests for badge
+  int _pendingBroadcastCount = 0;
+
+  // Track shown instant chat request IDs to prevent duplicate dialogs
+  final Set<String> _shownInstantChatRequestIds = {};
+  bool _isInstantChatDialogShowing = false;
+
+  // Real-time chat/notification badge count (from `notification:new`)
+  int _realtimeNotificationCount = 0;
+
+  // Keep references so we can remove only our own socket handlers in dispose()
+  dynamic _onNotificationNewHandler;
+  dynamic _onChatReceiveHandler;
+
+  bool _isChatMessageDialogShowing = false;
 
   final String astrologerName = 'Dr. Sharma';
   final String specialization = 'Vedic Astrology';
@@ -35,7 +67,6 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   final String todayEarnings = 'NRs 8000';
   final String monthlyEarnings = 'NRs 87,340';
   final int pendingRequests = 5;
-  final int activeChats = 3;
   final int todayConsultations = 12;
 
   @override
@@ -43,6 +74,1143 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     super.initState();
     _loadAuthData();
     _initAnimations();
+    // Note: _setupBroadcastListener is called in _loadAuthData after socket connects
+    _setupNotificationHandler();
+    _initializeAstrologerChatService();
+  }
+
+  Future<void> _initializeAstrologerChatService() async {
+    try {
+      await _astrologerChatService.initialize();
+    } catch (e) {
+      debugPrint('Error initializing AstrologerChatService: $e');
+    }
+  }
+
+  Future<void> _showChatMessageDialog({
+    required String notificationId,
+    required String chatId,
+    required String clientId,
+  }) async {
+    if (!mounted) return;
+    if (_isChatMessageDialogShowing) return;
+    _isChatMessageDialogShowing = true;
+
+    try {
+      // Fetch client details for nicer UI (name/photo)
+      String clientName = 'Client';
+      String? clientPhoto;
+      try {
+        await _astrologerChatService.initialize();
+        final profile = await _astrologerChatService.getClientProfile(clientId);
+        clientName = profile.name ?? 'Client';
+        clientPhoto = profile.profilePhoto;
+      } catch (e) {
+        debugPrint('Failed to fetch client profile for dialog: $e');
+      }
+
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.cardDark, AppColors.backgroundDark],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppColors.primaryPurple.withOpacity(0.4),
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryPurple.withOpacity(0.35),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.chat_bubble_rounded,
+                      color: Colors.white,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'New Message',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: AppColors.cardMedium,
+                        backgroundImage: clientPhoto != null
+                            ? NetworkImage(
+                                '${ApiEndpoints.socketUrl}$clientPhoto',
+                              )
+                            : null,
+                        child: clientPhoto == null
+                            ? const Icon(
+                                Icons.person_rounded,
+                                color: Colors.white70,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          clientName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.10)),
+                    ),
+                    child: const Text(
+                      'Do you want to open this chat now?',
+                      style: TextStyle(color: Colors.white70, height: 1.4),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            // Reject: mark notification read + close
+                            _socketService.markNotificationAsRead(
+                              notificationId,
+                            );
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.red.withOpacity(0.35),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.close, color: Colors.red, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Reject',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            // Accept: mark read + navigate to chat
+                            _socketService.markNotificationAsRead(
+                              notificationId,
+                            );
+                            Navigator.pop(context);
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AstrologerChatScreen(
+                                  chatId: chatId,
+                                  clientId: clientId,
+                                  clientName: clientName,
+                                  clientPhoto: clientPhoto,
+                                  astrologerId: astrologerId,
+                                  accessToken: accessToken,
+                                  refreshToken: refreshToken,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.green, Colors.green.shade700],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.25),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Accept',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } finally {
+      _isChatMessageDialogShowing = false;
+    }
+  }
+
+  void _setupRealtimeNotificationListeners() {
+    // Avoid registering multiple handlers if this gets called again
+    _removeRealtimeNotificationListeners();
+
+    // Check if socket is connected
+    if (_socketService.socket == null || !_socketService.connected) {
+      debugPrint(
+        '⚠️ Cannot setup notification listeners: socket not connected',
+      );
+      return;
+    }
+
+    debugPrint('✅ Setting up real-time notification listeners...');
+
+    // Listen for new notifications (includes chat message notifications)
+    // Backend sends `count` field which is the authoritative notification count
+    _onNotificationNewHandler = (data) {
+      if (!mounted) {
+        debugPrint('⚠️ notification:new handler called but widget not mounted');
+        return;
+      }
+
+      final map = Map<String, dynamic>.from(data ?? {});
+
+      // Backend payload includes `count` (see your logs: count: 7)
+      // This is the total unread notification count, use it directly
+      final incomingCount = map['count'];
+      final notificationType = map['type'];
+      final notificationMessage = map['message']?.toString();
+
+      debugPrint(
+        '📨 notification:new received - count: $incomingCount, type: $notificationType',
+      );
+      debugPrint(
+        '📊 Current badge count before update: ${_pendingBroadcastCount + _realtimeNotificationCount}',
+      );
+
+      // Update state
+      setState(() {
+        final oldCount = _realtimeNotificationCount;
+
+        if (incomingCount is int && incomingCount >= 0) {
+          // Use backend's authoritative count
+          _realtimeNotificationCount = incomingCount;
+        } else if (incomingCount is String) {
+          final parsed = int.tryParse(incomingCount);
+          if (parsed != null && parsed >= 0) {
+            _realtimeNotificationCount = parsed;
+          } else {
+            // Fallback: increment if count is invalid
+            _realtimeNotificationCount = _realtimeNotificationCount + 1;
+          }
+        } else {
+          // Fallback: increment if no count provided
+          _realtimeNotificationCount = _realtimeNotificationCount + 1;
+        }
+
+        debugPrint(
+          '📊 Updated badge count: ${_pendingBroadcastCount + _realtimeNotificationCount} (was: ${_pendingBroadcastCount + oldCount})',
+        );
+      });
+
+      // Make it visible on the homepage immediately (not just a badge).
+      // This helps confirm real-time updates even if the badge is hard to notice.
+      if (notificationType == 'CHAT_MESSAGE') {
+        final metadata = map['metadata'];
+        final metaMap = metadata is Map
+            ? Map<String, dynamic>.from(metadata)
+            : <String, dynamic>{};
+        final chatId = metaMap['chatId']?.toString();
+        final senderId = metaMap['senderId']?.toString();
+        final notifId = map['id']?.toString();
+
+        // Only show accept/reject dialog for the FIRST message (new chat)
+        // If count > 1, it's an ongoing conversation - just show snackbar
+        final messageCount = incomingCount is int
+            ? incomingCount
+            : (int.tryParse(incomingCount?.toString() ?? '') ?? 0);
+
+        if (messageCount == 1 &&
+            notifId != null &&
+            chatId != null &&
+            senderId != null) {
+          // First message - new chat request, show accept/reject dialog
+          _showChatMessageDialog(
+            notificationId: notifId,
+            chatId: chatId,
+            clientId: senderId,
+          );
+        } else {
+          // Ongoing conversation or missing metadata - show snackbar
+          final text = notificationMessage?.isNotEmpty == true
+              ? notificationMessage!
+              : 'New message received';
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(text),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'Open',
+                onPressed: () {
+                  Navigator.of(
+                    context,
+                  ).pushReplacementNamed('/astrologer_chat_list_screen');
+                },
+              ),
+            ),
+          );
+        }
+      }
+    };
+
+    _socketService.socket!.on('notification:new', _onNotificationNewHandler);
+    debugPrint('✅ notification:new listener registered');
+
+    // Note: We don't listen to chat:receive here because notification:new
+    // already fires when a chat message arrives, and it includes the count.
+    // Listening to both would cause double-counting.
+    // If you need chat:receive for other purposes, handle it separately.
+  }
+
+  void _removeRealtimeNotificationListeners() {
+    if (_onNotificationNewHandler != null) {
+      _socketService.socket?.off('notification:new', _onNotificationNewHandler);
+      _onNotificationNewHandler = null;
+    }
+    // Note: _onChatReceiveHandler is no longer used, but keeping cleanup for safety
+    if (_onChatReceiveHandler != null) {
+      _socketService.socket?.off('chat:receive', _onChatReceiveHandler);
+      _onChatReceiveHandler = null;
+    }
+  }
+
+  /// Setup notification tap handler for handling taps on push notifications
+  void _setupNotificationHandler() {
+    _notificationService.onNotificationTap = (data) {
+      debugPrint('Notification tapped with data: $data');
+      final type = data['type'];
+
+      if (type == 'broadcast') {
+        // Handle broadcast notification tap
+        final messageId = data['messageId'] ?? '';
+        final clientId = data['clientId'] ?? '';
+        final clientName = data['clientName'] ?? 'Client';
+        final clientPhoto = data['clientPhoto'];
+        final message = data['message'] ?? '';
+
+        // Show dialog to accept/reject
+        _showBroadcastDialog({
+          'messageId': messageId,
+          'clientId': clientId,
+          'clientName': clientName,
+          'clientPhoto': clientPhoto,
+          'content': message,
+        });
+      } else if (type == 'instant') {
+        // Handle instant chat notification tap - navigate to incoming requests
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const IncomingRequestsScreen()),
+        );
+      }
+    };
+  }
+
+  void _setupBroadcastListener() {
+    // Listen for new broadcast messages from clients
+    _socketService.socket?.on('broadcast:newMessage', (data) {
+      debugPrint('New broadcast received: $data');
+      if (mounted) {
+        final mapData = Map<String, dynamic>.from(data);
+        // Parse the message structure from backend
+        final message = mapData['message'] ?? mapData;
+        final client = message['client'] ?? mapData['client'] ?? {};
+
+        final broadcastData = {
+          'messageId': message['id'] ?? mapData['id'] ?? '',
+          'content': message['content'] ?? mapData['content'] ?? '',
+          'type': message['type'] ?? 'TEXT',
+          'clientId': client['id'] ?? message['clientId'] ?? '',
+          'clientName': client['name'] ?? 'Client',
+          'clientPhoto': client['profilePhoto'],
+          'expiresAt': message['expiresAt'],
+        };
+
+        setState(() {
+          _broadcastNotifications.add(broadcastData);
+          _pendingBroadcastCount = _broadcastNotifications.length;
+        });
+        _showBroadcastDialog(broadcastData);
+      }
+    });
+
+    // Listen for new instant chat requests
+    _socketService.socket?.on('instantChat:newRequest', (data) {
+      debugPrint('New instant chat request: $data');
+      if (mounted) {
+        setState(() {
+          _pendingBroadcastCount++;
+        });
+        // Show dialog for instant requests too
+        _showInstantChatDialog(Map<String, dynamic>.from(data));
+      }
+    });
+
+    // Listen for instant chat accepted confirmation (to navigate to chat)
+    _socketService.socket?.on('instantChat:accepted', (data) {
+      debugPrint('Instant chat accepted: $data');
+      if (mounted) {
+        final chat = data['chat'];
+        final client = data['client'];
+        if (chat != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AstrologerChatScreen(
+                chatId: chat['id'] ?? '',
+                clientId: client?['id'] ?? '',
+                clientName: client?['name'] ?? 'Client',
+                clientPhoto: client?['profilePhoto'],
+                astrologerId: astrologerId,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+              ),
+            ),
+          );
+        }
+      }
+    });
+  }
+
+  /// Show dialog for instant chat requests
+  void _showInstantChatDialog(Map<String, dynamic> request) {
+    final requestData = request['request'] ?? request;
+    final client = requestData['client'] ?? request['client'];
+    final clientName = client?['name'] ?? requestData['clientName'] ?? 'Client';
+    final message = requestData['message'] ?? request['message'] ?? '';
+    final requestId = requestData['id'] ?? request['id'] ?? '';
+
+    // Prevent showing duplicate dialogs for the same request
+    if (requestId.isEmpty || _shownInstantChatRequestIds.contains(requestId)) {
+      debugPrint(
+        'Skipping duplicate instant chat dialog for request: $requestId',
+      );
+      return;
+    }
+
+    // Mark this request as shown
+    _shownInstantChatRequestIds.add(requestId);
+    _isInstantChatDialogShowing = true;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _InstantChatNotificationDialog(
+        request: {
+          'id': requestId,
+          'clientName': clientName,
+          'clientPhoto': client?['profilePhoto'],
+          'clientId': client?['id'] ?? requestData['clientId'] ?? '',
+          'message': message,
+        },
+        onAccept: () {
+          _isInstantChatDialogShowing = false;
+          _handleAcceptInstantChat(requestId, client, clientName, message);
+        },
+        onReject: () {
+          _isInstantChatDialogShowing = false;
+          _handleRejectInstantChat(requestId);
+        },
+      ),
+    );
+  }
+
+  void _handleAcceptInstantChat(
+    String requestId,
+    dynamic client,
+    String clientName,
+    String initialMessage,
+  ) async {
+    Navigator.pop(context); // Close dialog
+
+    setState(() {
+      _pendingBroadcastCount--;
+    });
+
+    // Show loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Accepting chat request...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+    }
+
+    try {
+      // Accept via HTTP API: POST /instant-chat/accept/:requestId
+      final response = await http.post(
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.instantChatAccept}/$requestId',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      debugPrint(
+        'Accept instant chat response: ${response.statusCode} - ${response.body}',
+      );
+
+      // Hide loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        // Response: { "message": "Request accepted", "chat": { "id": "...", ... } }
+        final chat = data['chat'];
+        final chatId = chat?['id'] ?? requestId;
+        final clientId = client?['id'] ?? chat?['clientId'] ?? '';
+        final clientPhoto =
+            client?['profilePhoto'] ?? chat?['client']?['profilePhoto'];
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Chat request accepted!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+
+        // Navigate to chat
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AstrologerChatScreen(
+                chatId: chatId,
+                clientId: clientId,
+                clientName: clientName,
+                clientPhoto: clientPhoto,
+                astrologerId: astrologerId,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                initialMessage: initialMessage,
+              ),
+            ),
+          );
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        // Handle both error formats: {"error":{"message":"..."}} and {"message":"..."}
+        final errorMessage =
+            errorData['error']?['message'] ??
+            errorData['message'] ??
+            'Failed to accept request';
+
+        // Show error dialog for better UX
+        if (mounted) {
+          _showAcceptErrorDialog(
+            title: 'Cannot Accept Request',
+            message: errorMessage,
+            isAppointmentRequired:
+                errorMessage.toLowerCase().contains('appointment') ||
+                errorMessage.toLowerCase().contains('professional'),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error accepting instant chat: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        _showAcceptErrorDialog(
+          title: 'Connection Error',
+          message:
+              'Unable to connect to the server. Please check your internet connection and try again.',
+          isAppointmentRequired: false,
+        );
+      }
+    }
+  }
+
+  /// Show error dialog when accepting a chat request fails
+  void _showAcceptErrorDialog({
+    required String title,
+    required String message,
+    required bool isAppointmentRequired,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.cardDark, AppColors.backgroundDark],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.red.withAlpha(100), width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Error icon
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withAlpha(30),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isAppointmentRequired
+                      ? Icons.calendar_today_rounded
+                      : Icons.error_outline_rounded,
+                  color: Colors.red,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Title
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+
+              // Message
+              Text(
+                message,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              // Additional info for appointment-required errors
+              if (isAppointmentRequired) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withAlpha(20),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.withAlpha(50)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'As a Professional astrologer, clients need to book appointments to chat with you.',
+                          style: TextStyle(color: Colors.orange, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 24),
+
+              // Close button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Got it',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleRejectInstantChat(String requestId) {
+    Navigator.pop(context); // Close dialog
+
+    setState(() {
+      _pendingBroadcastCount--;
+    });
+
+    // Note: The API doesn't have a reject endpoint for instant chats
+    // Just dismiss locally - the request will expire on server
+    debugPrint('Instant chat request dismissed: $requestId');
+  }
+
+  Future<void> _connectSocket() async {
+    if (accessToken.isNotEmpty && refreshToken.isNotEmpty) {
+      if (!_socketService.connected) {
+        // Enable local notifications for incoming requests
+        _socketService.enableLocalNotifications = true;
+
+        // Set up a one-time listener for when socket connects
+        // This ensures listeners are set up AFTER connection is established
+        bool listenerSetup = false;
+        _socketService.socket?.once('connect', (_) {
+          if (!listenerSetup && mounted) {
+            listenerSetup = true;
+            debugPrint(
+              '✅ Socket connected event received, setting up notification listeners...',
+            );
+            _setupRealtimeNotificationListeners();
+            _fetchUnreadNotificationCount();
+          }
+        });
+
+        await _socketService.connect(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        );
+
+        // Subscribe to astrologer-specific notifications topic
+        if (astrologerId.isNotEmpty) {
+          await _notificationService.subscribeToTopic(
+            'astrologer_$astrologerId',
+          );
+        }
+
+        // If socket connected synchronously (already connected), set up listeners now
+        // Otherwise, the 'connect' event handler above will do it
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (_socketService.connected && !listenerSetup && mounted) {
+          listenerSetup = true;
+          debugPrint(
+            '✅ Socket connected (checked), setting up notification listeners...',
+          );
+          _setupRealtimeNotificationListeners();
+          await _fetchUnreadNotificationCount();
+        }
+      } else {
+        // Socket already connected, set up listeners immediately
+        debugPrint(
+          '✅ Socket already connected, setting up notification listeners...',
+        );
+        _setupRealtimeNotificationListeners();
+        await _fetchUnreadNotificationCount();
+      }
+    }
+  }
+
+  /// Fetch initial unread notification count from API
+  Future<void> _fetchUnreadNotificationCount() async {
+    if (accessToken.isEmpty) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.notificationUnreadCount}',
+        ),
+        headers: {
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      debugPrint(
+        'Fetch unread count response: ${response.statusCode} - ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Response format: { "success": true, "data": { "count": 7 } }
+        final count = data['data']?['count'] ?? data['count'] ?? 0;
+
+        if (mounted) {
+          setState(() {
+            _realtimeNotificationCount = count is int
+                ? count
+                : (int.tryParse(count.toString()) ?? 0);
+            debugPrint(
+              '📊 Initial unread count fetched: $_realtimeNotificationCount',
+            );
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching unread count: $e');
+    }
+  }
+
+  /// Toggle astrologer online/offline status via API
+  Future<void> _toggleOnlineStatus(bool newStatus) async {
+    if (_isTogglingStatus) return;
+
+    setState(() => _isTogglingStatus = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiEndpoints.baseUrl}/astrologer/toggle-online'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+        body: jsonEncode({'isOnline': newStatus}),
+      );
+
+      debugPrint(
+        'Toggle online status response: ${response.statusCode} - ${response.body}',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Save status locally for persistence across navigation
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('astrologerOnlineStatus', newStatus);
+
+        setState(() {
+          isOnline = newStatus;
+        });
+
+        // If going online, connect socket, setup listeners and fetch pending requests
+        if (newStatus) {
+          await _connectSocket();
+          _setupBroadcastListener();
+          // _setupRealtimeNotificationListeners() is called inside _connectSocket()
+          await _fetchPendingBroadcasts();
+          await _fetchPendingInstantChats();
+        } else {
+          // If going offline, clear notifications and disconnect socket
+          setState(() {
+            _broadcastNotifications.clear();
+            _pendingBroadcastCount = 0;
+            _realtimeNotificationCount =
+                0; // Reset real-time count when going offline
+          });
+          // Clear shown request IDs when going offline
+          _shownInstantChatRequestIds.clear();
+          // Remove listeners when going offline
+          _removeRealtimeNotificationListeners();
+          // Disable local notifications when offline
+          _socketService.enableLocalNotifications = false;
+        }
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                newStatus ? 'You are now online' : 'You are now offline',
+              ),
+              backgroundColor: newStatus ? Colors.green : Colors.orange,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        // API error
+        final errorBody = jsonDecode(response.body);
+        final errorMessage = errorBody['message'] ?? 'Failed to update status';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error toggling online status: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Network error. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isTogglingStatus = false);
+      }
+    }
+  }
+
+  void _showBroadcastDialog(Map<String, dynamic> broadcast) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _BroadcastNotificationDialog(
+        broadcast: broadcast,
+        onAccept: () => _handleAcceptBroadcast(broadcast),
+        onReject: () => _handleRejectBroadcast(broadcast),
+      ),
+    );
+  }
+
+  void _handleAcceptBroadcast(Map<String, dynamic> broadcast) async {
+    // Close dialog if showing
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+
+    final messageId = broadcast['messageId'] ?? '';
+    final clientId = broadcast['clientId'] ?? '';
+    final clientName = broadcast['clientName'] ?? 'Client';
+    final clientPhoto = broadcast['clientPhoto'];
+    final initialMessage = broadcast['content'] ?? '';
+
+    debugPrint('Accepting broadcast: messageId=$messageId, clientId=$clientId');
+
+    // Remove from local notifications immediately
+    setState(() {
+      _broadcastNotifications.removeWhere((b) => b['messageId'] == messageId);
+      _pendingBroadcastCount = _broadcastNotifications.length;
+    });
+
+    // Show loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Accepting broadcast...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+    }
+
+    try {
+      // Accept the broadcast via HTTP API: POST /broadcast-messages/:messageId/accept
+      final response = await http.post(
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.broadcastMessagesAccept}/$messageId/accept',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      debugPrint(
+        'Accept broadcast response: ${response.statusCode} - ${response.body}',
+      );
+
+      // Hide loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        // Response: { "message": "Broadcast accepted", "chat": { "id": "...", ... } }
+        final chat = data['chat'];
+        final chatId = chat?['id'] ?? messageId;
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Broadcast accepted! Starting chat...'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+
+        // Navigate to chat with the actual chat ID from response
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AstrologerChatScreen(
+                chatId: chatId,
+                clientId: clientId,
+                clientName: clientName,
+                clientPhoto: clientPhoto,
+                astrologerId: astrologerId,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                initialMessage: initialMessage,
+              ),
+            ),
+          );
+        }
+      } else {
+        // API error
+        final errorData = jsonDecode(response.body);
+        // Handle both error formats: {"error":{"message":"..."}} and {"message":"..."}
+        final errorMessage =
+            errorData['error']?['message'] ??
+            errorData['message'] ??
+            'Failed to accept broadcast';
+
+        // Show error dialog for better UX
+        if (mounted) {
+          _showAcceptErrorDialog(
+            title: 'Cannot Accept Broadcast',
+            message: errorMessage,
+            isAppointmentRequired:
+                errorMessage.toLowerCase().contains('appointment') ||
+                errorMessage.toLowerCase().contains('professional'),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error accepting broadcast: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        _showAcceptErrorDialog(
+          title: 'Connection Error',
+          message:
+              'Unable to connect to the server. Please check your internet connection and try again.',
+          isAppointmentRequired: false,
+        );
+      }
+    }
+  }
+
+  void _handleRejectBroadcast(Map<String, dynamic> broadcast) async {
+    Navigator.pop(context); // Close dialog
+
+    final messageId = broadcast['messageId'] ?? '';
+
+    // Remove from local notifications
+    setState(() {
+      _broadcastNotifications.removeWhere((b) => b['messageId'] == messageId);
+      _pendingBroadcastCount = _broadcastNotifications.length;
+    });
+
+    // Dismiss via HTTP API: POST /broadcast-messages/:messageId/dismiss
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.broadcastMessagesDismiss}/$messageId/dismiss',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      debugPrint('Dismiss broadcast response: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        debugPrint('Broadcast dismissed successfully');
+      }
+    } catch (e) {
+      debugPrint('Error dismissing broadcast: $e');
+    }
   }
 
   void _initAnimations() {
@@ -69,6 +1237,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   void dispose() {
     _fadeController.dispose();
     _pulseController.dispose();
+    _removeRealtimeNotificationListeners();
     super.dispose();
   }
 
@@ -214,6 +1383,14 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   }
 
   Widget _buildHeader() {
+    final totalNotificationCount =
+        _pendingBroadcastCount + _realtimeNotificationCount;
+
+    // Debug: Log badge count on every rebuild
+    debugPrint(
+      '🔔 Building header with badge count: $totalNotificationCount (broadcast: $_pendingBroadcastCount, realtime: $_realtimeNotificationCount)',
+    );
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -228,8 +1405,20 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           ],
         ),
         NotificationButton(
-          notificationCount: 4,
-          onTap: () => _navigateTo('/notifications'),
+          notificationCount: totalNotificationCount,
+          onTap: () {
+            // Navigate to incoming requests if there are pending broadcasts
+            if (_pendingBroadcastCount > 0) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const IncomingRequestsScreen(),
+                ),
+              );
+            } else {
+              _navigateTo('/notifications');
+            }
+          },
         ),
       ],
     );
@@ -426,12 +1615,20 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                   ),
                 ],
               ),
-              Switch(
-                value: isOnline,
-                onChanged: (value) => setState(() => isOnline = value),
-                activeColor: Colors.green,
-                inactiveThumbColor: Colors.orange,
-              ),
+              _isTogglingStatus
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: isOnline ? Colors.green : Colors.orange,
+                      ),
+                    )
+                  : Switch(
+                      value: isOnline,
+                      onChanged: (value) => _toggleOnlineStatus(value),
+                      inactiveThumbColor: Colors.orange,
+                    ),
             ],
           ),
           if (isOnline && pendingRequests > 0) ...[
@@ -508,14 +1705,13 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           onTap: () {},
         ),
         _buildStatCard(
-          icon: Icons.chat_bubble_rounded,
-          title: 'Active Chats',
-          value: activeChats.toString(),
-          subtitle: 'Ongoing conversations',
+          icon: Icons.history_rounded,
+          title: 'Chat History',
+          value: 'View',
+          subtitle: 'Previous conversations',
           color: AppColors.primaryPurple,
-          onTap: () => Navigator.of(
-            context,
-          ).pushReplacementNamed('/astrologer_chat_list_screen'),
+          onTap: () =>
+              Navigator.of(context).pushNamed('/astrologer_chat_list_screen'),
         ),
       ],
     );
@@ -588,24 +1784,82 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   }
 
   Widget _buildPendingRequests() {
-    if (pendingRequests == 0) return const SizedBox.shrink();
+    // Only show requests when online
+    if (!isOnline) {
+      return Container(
+        margin: EdgeInsets.only(top: 8),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.withAlpha(26),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.orange.withAlpha(51)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.orange, size: 24),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Go online to receive broadcast and chat requests from clients.',
+                style: TextStyle(color: Colors.orange, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show broadcast notifications if any
+    if (_broadcastNotifications.isEmpty) {
+      return Container(
+        margin: EdgeInsets.only(top: 8),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.green.withAlpha(26),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.green.withAlpha(51)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.green, size: 24),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'You are online. Waiting for client requests...',
+                style: TextStyle(color: Colors.green, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Pending Requests', '$pendingRequests new'),
+        _buildSectionTitle(
+          'Broadcast Requests',
+          '${_broadcastNotifications.length} pending',
+        ),
         SizedBox(height: 16),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: 1,
-          itemBuilder: (context, index) => _buildRequestCard(index),
+          itemCount: _broadcastNotifications.length,
+          itemBuilder: (context, index) {
+            final broadcast = _broadcastNotifications[index];
+            return _buildBroadcastRequestCard(broadcast);
+          },
         ),
       ],
     );
   }
 
-  Widget _buildRequestCard(int index) {
+  Widget _buildBroadcastRequestCard(Map<String, dynamic> broadcast) {
+    final clientName = broadcast['clientName'] ?? 'Client';
+    final content = broadcast['content'] ?? '';
+    final clientPhoto = broadcast['clientPhoto'];
+
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
@@ -614,24 +1868,51 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
-            AppColors.deepPurple.withOpacity(0.1),
+            Colors.orange.withAlpha(51),
+            Colors.deepOrange.withAlpha(26),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+        border: Border.all(color: Colors.orange.withAlpha(77), width: 1),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Broadcast badge
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.withAlpha(51),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.campaign_rounded, color: Colors.orange, size: 14),
+                SizedBox(width: 4),
+                Text(
+                  'Broadcast',
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12),
           Row(
             children: [
               CircleAvatar(
                 radius: 24,
                 backgroundColor: AppColors.cardMedium,
-                child: Icon(
-                  Icons.person_rounded,
-                  color: AppColors.textSecondary,
-                ),
+                backgroundImage: clientPhoto != null
+                    ? NetworkImage('${ApiEndpoints.socketUrl}$clientPhoto')
+                    : null,
+                child: clientPhoto == null
+                    ? Icon(Icons.person_rounded, color: AppColors.textSecondary)
+                    : null,
               ),
               SizedBox(width: 12),
               Expanded(
@@ -639,7 +1920,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Rahul Kumar',
+                      clientName,
                       style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 16,
@@ -647,48 +1928,26 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                       ),
                     ),
                     SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 14,
-                          color: AppColors.textMuted,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Chat consultation',
-                          style: TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 14,
-                          color: AppColors.textMuted,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          '5 min ago',
-                          style: TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      content,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => _handleAcceptRequest(index),
+                  onPressed: () => _handleAcceptBroadcast(broadcast),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -697,22 +1956,37 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text('Accept'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check, size: 18),
+                      SizedBox(width: 6),
+                      Text('Accept'),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => _handleRejectRequest(index),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
+                  onPressed: () => _handleRejectBroadcast(broadcast),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.withAlpha(51),
+                    foregroundColor: Colors.red,
                     padding: EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.red.withAlpha(102)),
                     ),
                   ),
-                  child: Text('Reject'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.close, size: 18),
+                      SizedBox(width: 6),
+                      Text('Reject'),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1011,6 +2285,11 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   Widget _buildDrawerItems() {
     final items = [
       {'icon': Icons.home_rounded, 'title': 'Home', 'selected': true},
+      {
+        'icon': Icons.chat_bubble_rounded,
+        'title': 'Messages',
+        'route': '/astrologer_chat_list_screen',
+      },
       {'icon': Icons.person_rounded, 'title': 'Profile', 'route': '/profile'},
       {
         'icon': Icons.account_balance_wallet_rounded,
@@ -1082,20 +2361,588 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   Future<void> _loadAuthData() async {
     final prefs = await SharedPreferences.getInstance();
 
+    // Load saved online status first (for immediate UI feedback)
+    final savedOnlineStatus = prefs.getBool('astrologerOnlineStatus') ?? false;
+
     setState(() {
       astrologerId = prefs.getString('astrologerId') ?? '';
       accessToken = prefs.getString('astrologerAccessToken') ?? '';
       refreshToken = prefs.getString('astrologerRefreshToken') ?? '';
+      isOnline = savedOnlineStatus; // Use saved status immediately
     });
+
+    // If we have a saved online status, connect socket and setup listeners
+    if (savedOnlineStatus && accessToken.isNotEmpty) {
+      await _connectSocket();
+      _setupBroadcastListener();
+      await _fetchPendingBroadcasts();
+      await _fetchPendingInstantChats();
+    }
+
+    // Then verify with server (but don't override if server fails)
+    await _fetchOnlineStatus();
   }
 
-  void _handleAcceptRequest(int index) async {}
+  /// Fetch current online status from server using GET /instant-chat/status
+  Future<void> _fetchOnlineStatus() async {
+    if (accessToken.isEmpty) return;
 
-  void _handleRejectRequest(int index) {
-    debugPrint('Rejected request $index');
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.instantChatStatus}'),
+        headers: {
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      debugPrint(
+        'Fetch online status response: ${response.statusCode} - ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Response: { "isOnline": true, "astrologerId": "..." }
+        final serverOnlineStatus = data['isOnline'] ?? false;
+
+        // Sync local storage with server status
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('astrologerOnlineStatus', serverOnlineStatus);
+
+        setState(() {
+          isOnline = serverOnlineStatus;
+        });
+
+        // If already online on server, connect socket and fetch pending requests
+        if (serverOnlineStatus) {
+          await _connectSocket();
+          _setupBroadcastListener();
+          // _setupRealtimeNotificationListeners() is called inside _connectSocket()
+          await _fetchPendingBroadcasts();
+          await _fetchPendingInstantChats();
+        }
+      }
+      // If server request fails, keep using the locally saved status (already loaded)
+    } catch (e) {
+      debugPrint('Error fetching online status: $e');
+      // On error, keep using the locally saved status
+    }
   }
 
-  void _handleLogout() {
+  /// Fetch pending broadcast messages from API GET /broadcast-messages/pending
+  Future<void> _fetchPendingBroadcasts() async {
+    if (accessToken.isEmpty) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.broadcastMessagesPending}',
+        ),
+        headers: {
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      debugPrint('Fetch pending broadcasts response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Response: { "messages": [ { "id": "...", "client": {...}, "content": "...", ... } ] }
+        final messages = data['messages'] ?? data['data'] ?? [];
+
+        final List<Map<String, dynamic>> broadcasts = [];
+        for (var msg in messages) {
+          final client = msg['client'] ?? {};
+          broadcasts.add({
+            'messageId': msg['id'] ?? '',
+            'content': msg['content'] ?? '',
+            'type': msg['type'] ?? 'TEXT',
+            'clientId': client['id'] ?? msg['clientId'] ?? '',
+            'clientName': client['name'] ?? 'Client',
+            'clientPhoto': client['profilePhoto'],
+            'expiresAt': msg['expiresAt'],
+            'createdAt': msg['createdAt'],
+          });
+        }
+
+        if (mounted) {
+          setState(() {
+            _broadcastNotifications = broadcasts;
+            _pendingBroadcastCount = broadcasts.length;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching pending broadcasts: $e');
+    }
+  }
+
+  /// Fetch pending instant chat requests from API GET /instant-chat/pending
+  Future<void> _fetchPendingInstantChats() async {
+    if (accessToken.isEmpty) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.instantChatPending}'),
+        headers: {
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      debugPrint(
+        'Fetch pending instant chats response: ${response.statusCode}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Response: { "requests": [ { "id": "...", "client": {...}, "message": "...", ... } ] }
+        final requests = data['requests'] ?? data['data'] ?? [];
+
+        // Show dialogs for each pending instant chat request
+        for (var req in requests) {
+          if (mounted) {
+            _showInstantChatDialog(Map<String, dynamic>.from(req));
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching pending instant chats: $e');
+    }
+  }
+
+  Future<void> _handleLogout() async {
     debugPrint('Logout tapped');
+
+    // Clear online status before logout
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('astrologerOnlineStatus', false);
+
+    // Try to set offline on server
+    if (accessToken.isNotEmpty) {
+      try {
+        await http.post(
+          Uri.parse('${ApiEndpoints.baseUrl}/astrologer/toggle-online'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+          },
+          body: jsonEncode({'isOnline': false}),
+        );
+      } catch (e) {
+        debugPrint('Error setting offline on logout: $e');
+      }
+    }
+
+    // Clear all astrologer data
+    await prefs.remove('astrologerId');
+    await prefs.remove('astrologerAccessToken');
+    await prefs.remove('astrologerRefreshToken');
+
+    // Disconnect socket
+    _socketService.disconnect();
+
+    if (!mounted) return;
+
+    // Navigate to login screen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreenAstrologer()),
+    );
+  }
+}
+
+/// Dialog widget for broadcast notifications
+class _BroadcastNotificationDialog extends StatelessWidget {
+  final Map<String, dynamic> broadcast;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+
+  const _BroadcastNotificationDialog({
+    required this.broadcast,
+    required this.onAccept,
+    required this.onReject,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final senderName = broadcast['clientName'] ?? 'Client';
+    final message = broadcast['content'] ?? '';
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.cardDark, AppColors.backgroundDark],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.orange.withOpacity(0.4), width: 2),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.orange, Colors.deepOrange],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withOpacity(0.4),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.campaign_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
+            ),
+            SizedBox(height: 20),
+
+            // Title
+            Text(
+              'New Broadcast Message',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+
+            // Sender info
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryPurple.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.person_rounded, color: Colors.white70, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    senderName,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Message
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            SizedBox(height: 24),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onReject,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.red.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.close, color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Reject',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onAccept,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.green, Colors.green.shade700],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Accept',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Dialog widget for instant chat notifications
+class _InstantChatNotificationDialog extends StatelessWidget {
+  final Map<String, dynamic> request;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+
+  const _InstantChatNotificationDialog({
+    required this.request,
+    required this.onAccept,
+    required this.onReject,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final clientName = request['clientName'] ?? 'Client';
+    final message = request['message'] ?? '';
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.cardDark, AppColors.backgroundDark],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.blue.withAlpha(102), width: 2),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue, Colors.blue.shade700],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withAlpha(102),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.chat_bubble_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            const Text(
+              'New Chat Request',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Sender info
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryPurple.withAlpha(51),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.person_rounded,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    clientName,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Message
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(13),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withAlpha(26), width: 1),
+              ),
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onReject,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withAlpha(51),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.red.withAlpha(102),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.close, color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Reject',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onAccept,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.green, Colors.green.shade700],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withAlpha(77),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Accept',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

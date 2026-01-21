@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
+import 'package:chat_jyotishi/features/chat/service/chat_lock_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,7 +70,65 @@ class ChatListScreenContent extends StatefulWidget {
 
 class _ChatListScreenContentState extends State<ChatListScreenContent> {
   final SocketService _socketService = SocketService();
+  final CoinService _coinService = CoinService();
+  final ChatLockService _chatLockService = ChatLockService();
   bool _isConnecting = false;
+  int _coinBalance = 0;
+  bool _isChatsLocked = false;
+  String? _lockedJyotishId;
+  String? _lockedJyotishName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCoinBalance();
+    _loadLockStatus();
+  }
+
+  Future<void> _loadCoinBalance() async {
+    final balance = await _coinService.getBalance();
+    if (mounted) {
+      setState(() => _coinBalance = balance);
+    }
+  }
+
+  Future<void> _loadLockStatus() async {
+    final locked = await _chatLockService.isLocked();
+    final lockedId = await _chatLockService.getLockedJyotishId();
+    final lockedName = await _chatLockService.getLockedJyotishName();
+    if (mounted) {
+      setState(() {
+        _isChatsLocked = locked;
+        _lockedJyotishId = lockedId;
+        _lockedJyotishName = lockedName;
+      });
+    }
+  }
+
+  /// Handle chat entry - go directly to chat (no popup)
+  /// If locked, only allow entry to the locked Jyotish
+  Future<void> _handleChatEntry(ActiveAstrologerModel astrologer) async {
+    // Reload lock status
+    await _loadLockStatus();
+
+    // Check if chats are locked
+    if (_isChatsLocked) {
+      // Can only enter the chat of the Jyotish user is waiting for
+      if (_lockedJyotishId != astrologer.id) {
+        if (mounted) {
+          showTopSnackBar(
+            context: context,
+            message: 'Please wait for ${_lockedJyotishName ?? "Jyotish"} to reply first.',
+            backgroundColor: Colors.orange,
+          );
+        }
+        return;
+      }
+    }
+
+    // Go directly to chat
+    _openChatWithAstrologer(astrologer);
+  }
 
   Future<void> _openChatWithAstrologer(ActiveAstrologerModel astrologer) async {
     if (_isConnecting) return;
@@ -96,6 +156,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
       // Decode JWT to get current user ID
       final decodedToken = decodeJwt(accessToken);
       final currentUserId = decodedToken?['id'] ?? '';
+      final currentUserName = decodedToken?['name'] ?? 'User';
 
       if (currentUserId.isEmpty) {
         if (mounted) {
@@ -120,6 +181,13 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
         await Future.delayed(const Duration(milliseconds: 500));
       }
 
+      // Send chat request notification to astrologer
+      // _socketService.sendChatRequest(
+      //   astrologerId: astrologer.id,
+      //   userName: currentUserName,
+      //   userId: currentUserId,
+      // );
+
       if (!mounted) return;
 
       // Navigate to chat screen with jyotishi id as receiver
@@ -139,7 +207,11 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
             isOnline: astrologer.isOnline,
           ),
         ),
-      );
+      ).then((_) {
+        // Refresh lock status and coin balance when returning from chat
+        _loadLockStatus();
+        _loadCoinBalance();
+      });
     } catch (e) {
       debugPrint('Error opening chat: $e');
       if (mounted) {
@@ -184,6 +256,12 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                     children: [
                       _header(isLoading),
                       SizedBox(height: 16),
+                      _balanceCard(),
+                      if (_isChatsLocked) ...[
+                        SizedBox(height: 12),
+                        _lockStatusBanner(),
+                      ],
+                      SizedBox(height: 16),
                       _searchBar(),
                       SizedBox(height: 20),
                       _activeNowSection(astrologers, isLoading),
@@ -195,6 +273,15 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
               },
             ),
           ),
+          if (_isConnecting)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryPurple,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -233,6 +320,119 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
               : Icon(Icons.refresh, color: Colors.white),
         ),
       ],
+    );
+  }
+
+  Widget _balanceCard() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.monetization_on_rounded, color: gold, size: 28),
+          SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Your Balance',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              Text(
+                '$_coinBalance coins',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          Spacer(),
+          GestureDetector(
+            onTap: () async {
+              await Navigator.pushNamed(context, '/payment_page');
+              _loadCoinBalance();
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.add, color: Colors.white, size: 18),
+                  SizedBox(width: 4),
+                  Text(
+                    'Add',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _lockStatusBanner() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.blue.withAlpha(51),
+            Colors.blueAccent.withAlpha(26),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.withAlpha(77)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.blue,
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Waiting for reply',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'From ${_lockedJyotishName ?? "Jyotish"}',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.lock_rounded, color: Colors.blue, size: 20),
+        ],
+      ),
     );
   }
 
@@ -282,7 +482,23 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
               ),
             ),
             SizedBox(width: 8),
-            if (isLoading)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '1 coin/chat',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (isLoading) ...[
+              SizedBox(width: 8),
               SizedBox(
                 width: 12,
                 height: 12,
@@ -291,6 +507,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                   color: Colors.white54,
                 ),
               ),
+            ],
           ],
         ),
         SizedBox(height: 12),
@@ -310,7 +527,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                   itemBuilder: (context, index) {
                     final astrologer = astrologers[index];
                     return GestureDetector(
-                      onTap: () => _openChatWithAstrologer(astrologer),
+                      onTap: () => _handleChatEntry(astrologer),
                       child: Column(
                         children: [
                           _buildAstrologerAvatar(astrologer),
@@ -339,9 +556,10 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
   }
 
   Widget _buildAstrologerAvatar(ActiveAstrologerModel astrologer) {
+    // Use socketUrl for static files (not baseUrl which has /api/v1)
     final String imageUrl = astrologer.profilePhoto.startsWith('http')
         ? astrologer.profilePhoto
-        : '${ApiEndpoints.baseUrl}${astrologer.profilePhoto}';
+        : '${ApiEndpoints.socketUrl}${astrologer.profilePhoto}';
 
     return profileStatus(
       radius: 34,
