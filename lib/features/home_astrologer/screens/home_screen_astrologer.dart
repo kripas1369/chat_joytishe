@@ -169,10 +169,15 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                         radius: 22,
                         backgroundColor: AppColors.cardMedium,
                         backgroundImage: clientPhoto != null
-                            ? NetworkImage('${ApiEndpoints.socketUrl}$clientPhoto')
+                            ? NetworkImage(
+                                '${ApiEndpoints.socketUrl}$clientPhoto',
+                              )
                             : null,
                         child: clientPhoto == null
-                            ? const Icon(Icons.person_rounded, color: Colors.white70)
+                            ? const Icon(
+                                Icons.person_rounded,
+                                color: Colors.white70,
+                              )
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -209,7 +214,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                         child: GestureDetector(
                           onTap: () {
                             // Reject: mark notification read + close
-                            _socketService.markNotificationAsRead(notificationId);
+                            _socketService.markNotificationAsRead(
+                              notificationId,
+                            );
                             Navigator.pop(context);
                           },
                           child: Container(
@@ -245,7 +252,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                         child: GestureDetector(
                           onTap: () {
                             // Accept: mark read + navigate to chat
-                            _socketService.markNotificationAsRead(notificationId);
+                            _socketService.markNotificationAsRead(
+                              notificationId,
+                            );
                             Navigator.pop(context);
 
                             Navigator.push(
@@ -281,7 +290,11 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.check, color: Colors.white, size: 20),
+                                Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                                 SizedBox(width: 8),
                                 Text(
                                   'Accept',
@@ -315,7 +328,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
     // Check if socket is connected
     if (_socketService.socket == null || !_socketService.connected) {
-      debugPrint('⚠️ Cannot setup notification listeners: socket not connected');
+      debugPrint(
+        '⚠️ Cannot setup notification listeners: socket not connected',
+      );
       return;
     }
 
@@ -328,7 +343,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         debugPrint('⚠️ notification:new handler called but widget not mounted');
         return;
       }
-      
+
       final map = Map<String, dynamic>.from(data ?? {});
 
       // Backend payload includes `count` (see your logs: count: 7)
@@ -336,14 +351,18 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       final incomingCount = map['count'];
       final notificationType = map['type'];
       final notificationMessage = map['message']?.toString();
-      
-      debugPrint('📨 notification:new received - count: $incomingCount, type: $notificationType');
-      debugPrint('📊 Current badge count before update: ${_pendingBroadcastCount + _realtimeNotificationCount}');
+
+      debugPrint(
+        '📨 notification:new received - count: $incomingCount, type: $notificationType',
+      );
+      debugPrint(
+        '📊 Current badge count before update: ${_pendingBroadcastCount + _realtimeNotificationCount}',
+      );
 
       // Update state
       setState(() {
         final oldCount = _realtimeNotificationCount;
-        
+
         if (incomingCount is int && incomingCount >= 0) {
           // Use backend's authoritative count
           _realtimeNotificationCount = incomingCount;
@@ -359,8 +378,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           // Fallback: increment if no count provided
           _realtimeNotificationCount = _realtimeNotificationCount + 1;
         }
-        
-        debugPrint('📊 Updated badge count: ${_pendingBroadcastCount + _realtimeNotificationCount} (was: ${_pendingBroadcastCount + oldCount})');
+
+        debugPrint(
+          '📊 Updated badge count: ${_pendingBroadcastCount + _realtimeNotificationCount} (was: ${_pendingBroadcastCount + oldCount})',
+        );
       });
 
       // Make it visible on the homepage immediately (not just a badge).
@@ -376,9 +397,14 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
         // Only show accept/reject dialog for the FIRST message (new chat)
         // If count > 1, it's an ongoing conversation - just show snackbar
-        final messageCount = incomingCount is int ? incomingCount : (int.tryParse(incomingCount?.toString() ?? '') ?? 0);
+        final messageCount = incomingCount is int
+            ? incomingCount
+            : (int.tryParse(incomingCount?.toString() ?? '') ?? 0);
 
-        if (messageCount == 1 && notifId != null && chatId != null && senderId != null) {
+        if (messageCount == 1 &&
+            notifId != null &&
+            chatId != null &&
+            senderId != null) {
           // First message - new chat request, show accept/reject dialog
           _showChatMessageDialog(
             notificationId: notifId,
@@ -398,9 +424,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
               action: SnackBarAction(
                 label: 'Open',
                 onPressed: () {
-                  Navigator.of(context).pushReplacementNamed(
-                    '/astrologer_chat_list_screen',
-                  );
+                  Navigator.of(
+                    context,
+                  ).pushReplacementNamed('/astrologer_chat_list_screen');
                 },
               ),
             ),
@@ -408,7 +434,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         }
       }
     };
-    
+
     _socketService.socket!.on('notification:new', _onNotificationNewHandler);
     debugPrint('✅ notification:new listener registered');
 
@@ -456,9 +482,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         // Handle instant chat notification tap - navigate to incoming requests
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => const IncomingRequestsScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const IncomingRequestsScreen()),
         );
       }
     };
@@ -540,7 +564,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
     // Prevent showing duplicate dialogs for the same request
     if (requestId.isEmpty || _shownInstantChatRequestIds.contains(requestId)) {
-      debugPrint('Skipping duplicate instant chat dialog for request: $requestId');
+      debugPrint(
+        'Skipping duplicate instant chat dialog for request: $requestId',
+      );
       return;
     }
 
@@ -571,7 +597,12 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     );
   }
 
-  void _handleAcceptInstantChat(String requestId, dynamic client, String clientName, String initialMessage) async {
+  void _handleAcceptInstantChat(
+    String requestId,
+    dynamic client,
+    String clientName,
+    String initialMessage,
+  ) async {
     Navigator.pop(context); // Close dialog
 
     setState(() {
@@ -587,7 +618,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
               SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               ),
               SizedBox(width: 12),
               Text('Accepting chat request...'),
@@ -601,14 +635,18 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     try {
       // Accept via HTTP API: POST /instant-chat/accept/:requestId
       final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.instantChatAccept}/$requestId'),
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.instantChatAccept}/$requestId',
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
         },
       );
 
-      debugPrint('Accept instant chat response: ${response.statusCode} - ${response.body}');
+      debugPrint(
+        'Accept instant chat response: ${response.statusCode} - ${response.body}',
+      );
 
       // Hide loading indicator
       if (mounted) {
@@ -621,7 +659,8 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         final chat = data['chat'];
         final chatId = chat?['id'] ?? requestId;
         final clientId = client?['id'] ?? chat?['clientId'] ?? '';
-        final clientPhoto = client?['profilePhoto'] ?? chat?['client']?['profilePhoto'];
+        final clientPhoto =
+            client?['profilePhoto'] ?? chat?['client']?['profilePhoto'];
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -654,17 +693,19 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       } else {
         final errorData = jsonDecode(response.body);
         // Handle both error formats: {"error":{"message":"..."}} and {"message":"..."}
-        final errorMessage = errorData['error']?['message'] ??
-                             errorData['message'] ??
-                             'Failed to accept request';
+        final errorMessage =
+            errorData['error']?['message'] ??
+            errorData['message'] ??
+            'Failed to accept request';
 
         // Show error dialog for better UX
         if (mounted) {
           _showAcceptErrorDialog(
             title: 'Cannot Accept Request',
             message: errorMessage,
-            isAppointmentRequired: errorMessage.toLowerCase().contains('appointment') ||
-                                   errorMessage.toLowerCase().contains('professional'),
+            isAppointmentRequired:
+                errorMessage.toLowerCase().contains('appointment') ||
+                errorMessage.toLowerCase().contains('professional'),
           );
         }
       }
@@ -674,7 +715,8 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         _showAcceptErrorDialog(
           title: 'Connection Error',
-          message: 'Unable to connect to the server. Please check your internet connection and try again.',
+          message:
+              'Unable to connect to the server. Please check your internet connection and try again.',
           isAppointmentRequired: false,
         );
       }
@@ -700,10 +742,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
               colors: [AppColors.cardDark, AppColors.backgroundDark],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.red.withAlpha(100),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.red.withAlpha(100), width: 1),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -716,7 +755,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  isAppointmentRequired ? Icons.calendar_today_rounded : Icons.error_outline_rounded,
+                  isAppointmentRequired
+                      ? Icons.calendar_today_rounded
+                      : Icons.error_outline_rounded,
                   color: Colors.red,
                   size: 40,
                 ),
@@ -763,10 +804,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                       Expanded(
                         child: Text(
                           'As a Professional astrologer, clients need to book appointments to chat with you.',
-                          style: TextStyle(
-                            color: Colors.orange,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.orange, fontSize: 12),
                         ),
                       ),
                     ],
@@ -791,10 +829,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
                   ),
                   child: const Text(
                     'Got it',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -829,7 +864,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         _socketService.socket?.once('connect', (_) {
           if (!listenerSetup && mounted) {
             listenerSetup = true;
-            debugPrint('✅ Socket connected event received, setting up notification listeners...');
+            debugPrint(
+              '✅ Socket connected event received, setting up notification listeners...',
+            );
             _setupRealtimeNotificationListeners();
             _fetchUnreadNotificationCount();
           }
@@ -842,50 +879,64 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
         // Subscribe to astrologer-specific notifications topic
         if (astrologerId.isNotEmpty) {
-          await _notificationService.subscribeToTopic('astrologer_$astrologerId');
+          await _notificationService.subscribeToTopic(
+            'astrologer_$astrologerId',
+          );
         }
-        
+
         // If socket connected synchronously (already connected), set up listeners now
         // Otherwise, the 'connect' event handler above will do it
         await Future.delayed(const Duration(milliseconds: 300));
         if (_socketService.connected && !listenerSetup && mounted) {
           listenerSetup = true;
-          debugPrint('✅ Socket connected (checked), setting up notification listeners...');
+          debugPrint(
+            '✅ Socket connected (checked), setting up notification listeners...',
+          );
           _setupRealtimeNotificationListeners();
           await _fetchUnreadNotificationCount();
         }
       } else {
         // Socket already connected, set up listeners immediately
-        debugPrint('✅ Socket already connected, setting up notification listeners...');
+        debugPrint(
+          '✅ Socket already connected, setting up notification listeners...',
+        );
         _setupRealtimeNotificationListeners();
         await _fetchUnreadNotificationCount();
       }
     }
   }
-  
+
   /// Fetch initial unread notification count from API
   Future<void> _fetchUnreadNotificationCount() async {
     if (accessToken.isEmpty) return;
-    
+
     try {
       final response = await http.get(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.notificationUnreadCount}'),
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.notificationUnreadCount}',
+        ),
         headers: {
           'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
         },
       );
-      
-      debugPrint('Fetch unread count response: ${response.statusCode} - ${response.body}');
-      
+
+      debugPrint(
+        'Fetch unread count response: ${response.statusCode} - ${response.body}',
+      );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         // Response format: { "success": true, "data": { "count": 7 } }
         final count = data['data']?['count'] ?? data['count'] ?? 0;
-        
+
         if (mounted) {
           setState(() {
-            _realtimeNotificationCount = count is int ? count : (int.tryParse(count.toString()) ?? 0);
-            debugPrint('📊 Initial unread count fetched: $_realtimeNotificationCount');
+            _realtimeNotificationCount = count is int
+                ? count
+                : (int.tryParse(count.toString()) ?? 0);
+            debugPrint(
+              '📊 Initial unread count fetched: $_realtimeNotificationCount',
+            );
           });
         }
       }
@@ -910,7 +961,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         body: jsonEncode({'isOnline': newStatus}),
       );
 
-      debugPrint('Toggle online status response: ${response.statusCode} - ${response.body}');
+      debugPrint(
+        'Toggle online status response: ${response.statusCode} - ${response.body}',
+      );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Save status locally for persistence across navigation
@@ -933,7 +986,8 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           setState(() {
             _broadcastNotifications.clear();
             _pendingBroadcastCount = 0;
-            _realtimeNotificationCount = 0; // Reset real-time count when going offline
+            _realtimeNotificationCount =
+                0; // Reset real-time count when going offline
           });
           // Clear shown request IDs when going offline
           _shownInstantChatRequestIds.clear();
@@ -947,7 +1001,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(newStatus ? 'You are now online' : 'You are now offline'),
+              content: Text(
+                newStatus ? 'You are now online' : 'You are now offline',
+              ),
               backgroundColor: newStatus ? Colors.green : Colors.orange,
               duration: const Duration(seconds: 2),
             ),
@@ -959,10 +1015,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         final errorMessage = errorBody['message'] ?? 'Failed to update status';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
           );
         }
       }
@@ -1024,7 +1077,10 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
               SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               ),
               SizedBox(width: 12),
               Text('Accepting broadcast...'),
@@ -1038,14 +1094,18 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     try {
       // Accept the broadcast via HTTP API: POST /broadcast-messages/:messageId/accept
       final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.broadcastMessagesAccept}/$messageId/accept'),
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.broadcastMessagesAccept}/$messageId/accept',
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
         },
       );
 
-      debugPrint('Accept broadcast response: ${response.statusCode} - ${response.body}');
+      debugPrint(
+        'Accept broadcast response: ${response.statusCode} - ${response.body}',
+      );
 
       // Hide loading indicator
       if (mounted) {
@@ -1090,17 +1150,19 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         // API error
         final errorData = jsonDecode(response.body);
         // Handle both error formats: {"error":{"message":"..."}} and {"message":"..."}
-        final errorMessage = errorData['error']?['message'] ??
-                             errorData['message'] ??
-                             'Failed to accept broadcast';
+        final errorMessage =
+            errorData['error']?['message'] ??
+            errorData['message'] ??
+            'Failed to accept broadcast';
 
         // Show error dialog for better UX
         if (mounted) {
           _showAcceptErrorDialog(
             title: 'Cannot Accept Broadcast',
             message: errorMessage,
-            isAppointmentRequired: errorMessage.toLowerCase().contains('appointment') ||
-                                   errorMessage.toLowerCase().contains('professional'),
+            isAppointmentRequired:
+                errorMessage.toLowerCase().contains('appointment') ||
+                errorMessage.toLowerCase().contains('professional'),
           );
         }
       }
@@ -1110,7 +1172,8 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         _showAcceptErrorDialog(
           title: 'Connection Error',
-          message: 'Unable to connect to the server. Please check your internet connection and try again.',
+          message:
+              'Unable to connect to the server. Please check your internet connection and try again.',
           isAppointmentRequired: false,
         );
       }
@@ -1131,7 +1194,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
     // Dismiss via HTTP API: POST /broadcast-messages/:messageId/dismiss
     try {
       final response = await http.post(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.broadcastMessagesDismiss}/$messageId/dismiss'),
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.broadcastMessagesDismiss}/$messageId/dismiss',
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
@@ -1318,11 +1383,14 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   }
 
   Widget _buildHeader() {
-    final totalNotificationCount = _pendingBroadcastCount + _realtimeNotificationCount;
-    
+    final totalNotificationCount =
+        _pendingBroadcastCount + _realtimeNotificationCount;
+
     // Debug: Log badge count on every rebuild
-    debugPrint('🔔 Building header with badge count: $totalNotificationCount (broadcast: $_pendingBroadcastCount, realtime: $_realtimeNotificationCount)');
-    
+    debugPrint(
+      '🔔 Building header with badge count: $totalNotificationCount (broadcast: $_pendingBroadcastCount, realtime: $_realtimeNotificationCount)',
+    );
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1643,9 +1711,8 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           value: 'View',
           subtitle: 'Previous conversations',
           color: AppColors.primaryPurple,
-          onTap: () => Navigator.of(
-            context,
-          ).pushNamed('/astrologer_chat_list_screen'),
+          onTap: () =>
+              Navigator.of(context).pushNamed('/astrologer_chat_list_screen'),
         ),
       ],
     );
@@ -1735,10 +1802,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
             Expanded(
               child: Text(
                 'Go online to receive broadcast and chat requests from clients.',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: Colors.orange, fontSize: 13),
               ),
             ),
           ],
@@ -1763,10 +1827,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
             Expanded(
               child: Text(
                 'You are online. Waiting for client requests...',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: Colors.green, fontSize: 13),
               ),
             ),
           ],
@@ -2335,7 +2396,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         },
       );
 
-      debugPrint('Fetch online status response: ${response.statusCode} - ${response.body}');
+      debugPrint(
+        'Fetch online status response: ${response.statusCode} - ${response.body}',
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -2372,7 +2435,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
     try {
       final response = await http.get(
-        Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.broadcastMessagesPending}'),
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.broadcastMessagesPending}',
+        ),
         headers: {
           'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
         },
@@ -2424,7 +2489,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         },
       );
 
-      debugPrint('Fetch pending instant chats response: ${response.statusCode}');
+      debugPrint(
+        'Fetch pending instant chats response: ${response.statusCode}',
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -2512,10 +2579,7 @@ class _BroadcastNotificationDialog extends StatelessWidget {
             colors: [AppColors.cardDark, AppColors.backgroundDark],
           ),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Colors.orange.withOpacity(0.4),
-            width: 2,
-          ),
+          border: Border.all(color: Colors.orange.withOpacity(0.4), width: 2),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2713,10 +2777,7 @@ class _InstantChatNotificationDialog extends StatelessWidget {
             colors: [AppColors.cardDark, AppColors.backgroundDark],
           ),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Colors.blue.withAlpha(102),
-            width: 2,
-          ),
+          border: Border.all(color: Colors.blue.withAlpha(102), width: 2),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2766,7 +2827,11 @@ class _InstantChatNotificationDialog extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.person_rounded, color: Colors.white70, size: 16),
+                  const Icon(
+                    Icons.person_rounded,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     clientName,
@@ -2788,10 +2853,7 @@ class _InstantChatNotificationDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white.withAlpha(13),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withAlpha(26),
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.white.withAlpha(26), width: 1),
               ),
               child: Text(
                 message,

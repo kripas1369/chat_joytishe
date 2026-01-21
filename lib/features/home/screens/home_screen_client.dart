@@ -4,6 +4,7 @@ import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
 import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
+import 'package:chat_jyotishi/features/home/widgets/rotating_question_widget.dart';
 import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
 import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
@@ -150,7 +151,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                             const SizedBox(height: 16),
                             _buildHeader(),
                             const SizedBox(height: 20),
-                            _buildMarqueeBanner(),
+                            const RotatingQuestionsWidget(),
+                            // const SizedBox(height: 32),
+                            // _buildMarqueeBanner(),
                             const SizedBox(height: 24),
                             _buildLiveJyotishSection(),
                             const SizedBox(height: 28),
@@ -170,9 +173,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
               Container(
                 color: Colors.black54,
                 child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.purple600,
-                  ),
+                  child: CircularProgressIndicator(color: AppColors.purple600),
                 ),
               ),
           ],
@@ -343,48 +344,49 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
               ),
             ),
+
             // Marquee text
-            Center(
-              child: AnimatedBuilder(
-                animation: _marqueeController,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(
-                      (1 - _marqueeController.value) *
-                              MediaQuery.of(context).size.width -
-                          MediaQuery.of(context).size.width / 2,
-                      0,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.stars_rounded,
-                          color: Colors.amber,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _bannerText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.stars_rounded,
-                          color: Colors.amber,
-                          size: 18,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
+            // Center(
+            //   child: AnimatedBuilder(
+            //     animation: _marqueeController,
+            //     builder: (context, child) {
+            //       return Transform.translate(
+            //         offset: Offset(
+            //           (1 - _marqueeController.value) *
+            //                   MediaQuery.of(context).size.width -
+            //               MediaQuery.of(context).size.width / 2,
+            //           0,
+            //         ),
+            //         child: Row(
+            //           mainAxisSize: MainAxisSize.min,
+            //           children: [
+            //             Icon(
+            //               Icons.stars_rounded,
+            //               color: Colors.amber,
+            //               size: 18,
+            //             ),
+            //             const SizedBox(width: 8),
+            //             Text(
+            //               _bannerText,
+            //               style: const TextStyle(
+            //                 color: Colors.white,
+            //                 fontSize: 14,
+            //                 fontWeight: FontWeight.w500,
+            //                 letterSpacing: 0.5,
+            //               ),
+            //             ),
+            //             const SizedBox(width: 8),
+            //             Icon(
+            //               Icons.stars_rounded,
+            //               color: Colors.amber,
+            //               size: 18,
+            //             ),
+            //           ],
+            //         ),
+            //       );
+            //     },
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -695,23 +697,22 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
                 Text(
                   'Updated every day',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
                 ),
               ],
             ),
           ],
         ),
         const SizedBox(height: 16),
-        ...dailyFeatures.map((feature) => _buildDailyFeatureCard(
-              icon: feature['icon'] as IconData,
-              title: feature['title'] as String,
-              subtitle: feature['subtitle'] as String,
-              color: feature['color'] as Color,
-              onTap: () => _navigateTo(feature['route'] as String),
-            )),
+        ...dailyFeatures.map(
+          (feature) => _buildDailyFeatureCard(
+            icon: feature['icon'] as IconData,
+            title: feature['title'] as String,
+            subtitle: feature['subtitle'] as String,
+            color: feature['color'] as Color,
+            onTap: () => _navigateTo(feature['route'] as String),
+          ),
+        ),
       ],
     );
   }
@@ -732,16 +733,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [
-              color.withOpacity(0.15),
-              color.withOpacity(0.05),
-            ],
+            colors: [color.withOpacity(0.15), color.withOpacity(0.05)],
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 1,
-          ),
+          border: Border.all(color: color.withOpacity(0.3), width: 1),
         ),
         child: Row(
           children: [
@@ -892,10 +887,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
                 Text(
                   'Explore all features',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -943,10 +935,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.cardDark,
-              AppColors.cardMedium.withOpacity(0.7),
-            ],
+            colors: [AppColors.cardDark, AppColors.cardMedium.withOpacity(0.7)],
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -1038,13 +1027,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     return Drawer(
       backgroundColor: AppColors.backgroundDark,
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.cardDark, AppColors.backgroundDark],
-          ),
-        ),
+        decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
         child: SafeArea(
           child: Column(
             children: [
@@ -1069,7 +1052,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             padding: const EdgeInsets.all(4),
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              gradient: AppColors.buttonGradient,
+              gradient: AppColors.primaryGradient,
             ),
             child: Container(
               padding: const EdgeInsets.all(3),
@@ -1120,26 +1103,30 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         'title': 'Profile',
         'route': '/user_profile_screen',
       },
-      {'icon': Icons.history_rounded, 'title': 'History', 'route': '/history'},
+      {
+        'icon': Icons.history_rounded,
+        'title': 'History',
+        'route': '/history_screen_client',
+      },
       {
         'icon': Icons.settings_rounded,
         'title': 'Settings',
-        'route': '/set_password_screen',
+        'route': '/settings_screen',
       },
       {
         'icon': Icons.help_outline_rounded,
         'title': 'Help & Support',
-        'route': '/support',
+        'route': '/help_support_screen',
       },
       {
         'icon': Icons.info_outline_rounded,
         'title': 'About Us',
-        'route': '/about',
+        'route': '/about_us_screen',
       },
       {
         'icon': Icons.privacy_tip_outlined,
         'title': 'Privacy Policy',
-        'route': '/privacy',
+        'route': '/privacy_policy_screen',
       },
     ];
 
@@ -1194,10 +1181,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         MaterialPageRoute(builder: (_) => ChatOptionsPage()),
       );
     } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => PaymentPage()),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentPage()));
     }
   }
 

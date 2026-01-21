@@ -43,10 +43,7 @@ Map<String, dynamic>? decodeJwt(String token) {
 class InstantChatRequestScreen extends StatefulWidget {
   final ActiveAstrologerModel astrologer;
 
-  const InstantChatRequestScreen({
-    super.key,
-    required this.astrologer,
-  });
+  const InstantChatRequestScreen({super.key, required this.astrologer});
 
   @override
   State<InstantChatRequestScreen> createState() =>
@@ -522,10 +519,7 @@ class _InstantChatRequestScreenState extends State<InstantChatRequestScreen>
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  AppColors.cardDark,
-                  AppColors.backgroundDark,
-                ],
+                colors: [AppColors.cardDark, AppColors.backgroundDark],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
