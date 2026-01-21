@@ -1,3 +1,4 @@
+import 'package:chat_jyotishi/features/app_widgets/app_logo.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/setting/widgets/password_text_field.dart';
@@ -51,7 +52,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(20),
-              child: _card(context),
+              child: Column(
+                children: [
+                  buildAppLogo(),
+                  SizedBox(height: 24),
+                  _card(context),
+                ],
+              ),
             ),
           ),
           _footer(),

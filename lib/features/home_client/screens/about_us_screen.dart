@@ -1,3 +1,4 @@
+import 'package:chat_jyotishi/features/app_widgets/app_logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:chat_jyotishi/constants/constant.dart';
@@ -61,7 +62,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       children: [
                         const SizedBox(height: 18),
-                        _buildAppLogo(),
+                        buildAppLogo(),
                         const SizedBox(height: 32),
                         _buildMissionCard(),
                         const SizedBox(height: 24),
@@ -106,55 +107,6 @@ class _AboutUsScreenState extends State<AboutUsScreen>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAppLogo() {
-    return Column(
-      children: [
-        Container(
-          height: 150,
-          width: 150,
-          decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryPurple.withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: ClipOval(
-            child: Image.asset('assets/logo/logo.png', fit: BoxFit.cover),
-          ),
-        ),
-        const SizedBox(height: 20),
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Colors.white, AppColors.lightPurple],
-          ).createShader(bounds),
-          child: const Text(
-            'ChatJyotishi',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Your Cosmic Guide to Life',
-          style: TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 14,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
     );
   }
 

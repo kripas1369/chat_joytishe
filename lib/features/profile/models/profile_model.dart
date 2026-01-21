@@ -69,7 +69,7 @@ class ProfileModel extends Equatable {
   /// Get display price (formatted)
   String? get formattedPrice {
     if (pricePerMinute != null) {
-      return '₹${pricePerMinute!.toStringAsFixed(0)}/min';
+      return '₹${pricePerMinute!.toStringAsFixed(0)}/day';
     }
     return null;
   }

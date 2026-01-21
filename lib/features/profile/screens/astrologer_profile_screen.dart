@@ -21,7 +21,7 @@
 //     return BlocProvider(
 //       create: (context) =>
 //           ProfileBloc(repository: ProfileRepository(ProfileService()))
-//             ..add(LoadAstrologerProfile()), // Load profile immediately
+//             ..add(LoadAstrologerProfile()),
 //       child: const AstrologerProfileScreenContent(),
 //     );
 //   }

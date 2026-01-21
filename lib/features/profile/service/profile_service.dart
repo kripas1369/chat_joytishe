@@ -192,7 +192,6 @@ class ProfileService {
 
     request.headers.addAll({'Cookie': 'accessToken=$accessToken'});
 
-    // 🔍 DEBUG: print file details
     debugPrint('Uploading file path: ${photo.path}');
     debugPrint('Uploading file name: ${path.basename(photo.path)}');
     debugPrint('Uploading file size: ${await photo.length()} bytes');
@@ -243,29 +242,4 @@ class ProfileService {
       throw Exception('Failed to remove profile photo');
     }
   }
-
-  // /// Get chatable users (astrologers for clients)
-  // Future<Map<String, dynamic>> getChatableUsers() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final accessToken = prefs.getString('accessToken');
-  //
-  //   final url = Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.getActiveAstrologers}');
-  //
-  //   final response = await http.get(
-  //     url,
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       'Cookie': 'accessToken=$accessToken',
-  //     },
-  //   );
-  //
-  //   debugPrint('Get Chatable Users Response Status: ${response.statusCode}');
-  //   debugPrint('Get Chatable Users Response Body: ${response.body}');
-  //
-  //   if (response.statusCode == 200) {
-  //     return jsonDecode(response.body);
-  //   } else {
-  //     throw Exception('Failed to get chatable users');
-  //   }
-  // }
 }
