@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 class HomeClientBloc extends Bloc<HomeClientEvent, HomeClientState> {
   final HomeClientRepository repository;
 
-  HomeClientBloc({required this.repository})
-    : super(RotatingQuestionsInitialState()) {
+  HomeClientBloc({required this.repository}) : super(HomeClientInitialState()) {
     on<LoadRotatingQuestionsEvent>(_onLoadQuestions);
     on<NextQuestionEvent>(_onNextQuestion);
     on<PreviousQuestionEvent>(_onPreviousQuestion);
+    on<BookPanditEvent>(_onBookPandit);
   }
 
   Future<void> _onLoadQuestions(
@@ -20,7 +20,7 @@ class HomeClientBloc extends Bloc<HomeClientEvent, HomeClientState> {
   ) async {
     try {
       debugPrint('🔄 BLoC: Loading questions...');
-      emit(RotatingQuestionsLoadingState());
+      emit(HomeClientLoadingState());
 
       final questions = await repository.fetchQuestions();
 
@@ -34,7 +34,7 @@ class HomeClientBloc extends Bloc<HomeClientEvent, HomeClientState> {
     } catch (e) {
       debugPrint('❌ BLoC Error: $e');
       emit(
-        RotatingQuestionsErrorState(
+        HomeClientErrorState(
           message: 'Failed to load questions: ${e.toString()}',
         ),
       );
@@ -64,6 +64,26 @@ class HomeClientBloc extends Bloc<HomeClientEvent, HomeClientState> {
 
       debugPrint('⬅️ BLoC: Moving to question $previousIndex');
       emit(currentState.copyWith(currentIndex: previousIndex));
+    }
+  }
+
+  Future<void> _onBookPandit(
+    BookPanditEvent event,
+    Emitter<HomeClientState> emit,
+  ) async {
+    emit(HomeClientLoadingState());
+
+    try {
+      final booking = await repository.bookPandit(
+        bookingDate: event.bookingDate,
+        category: event.category,
+        type: event.type,
+        location: event.location,
+      );
+
+      emit(HomeClientBookingSuccess(booking));
+    } catch (e) {
+      emit(HomeClientErrorState(message: e.toString()));
     }
   }
 }

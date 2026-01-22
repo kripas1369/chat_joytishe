@@ -416,6 +416,49 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
+  /// Handle when Jyotish sends a reply - unlock chats
+  Future<void> _handleJyotishReply(String jyotishId) async {
+    // Check if this reply is from the Jyotish we're waiting for
+    final isFromLockedJyotish = await _chatLockService.isReplyFromLockedJyotish(
+      jyotishId,
+    );
+
+    if (isFromLockedJyotish) {
+      // Unlock the chats
+      await _chatLockService.unlockChats();
+
+      // Update UI state
+      if (mounted) {
+        setState(() {
+          _isChatLocked = false;
+          _canSendMessage = true;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${widget.otherUserName} has replied! You can now message any Jyotish.',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+
+      // Reload lock status to ensure consistency
+      await _loadLockStatus();
+    }
+  }
+
   Future<void> _loadChatHistory() async {
     setState(() => _isLoading = true);
     try {

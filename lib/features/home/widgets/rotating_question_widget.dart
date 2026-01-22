@@ -153,11 +153,11 @@ class _RotatingQuestionsWidgetState extends State<RotatingQuestionsWidget>
   }
 
   Widget _buildContent(HomeClientState state) {
-    if (state is RotatingQuestionsLoadingState) {
+    if (state is HomeClientLoadingState) {
       return _buildLoadingContent();
     }
 
-    if (state is RotatingQuestionsErrorState) {
+    if (state is HomeClientErrorState) {
       return _buildErrorContent(state.message);
     }
 

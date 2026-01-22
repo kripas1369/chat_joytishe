@@ -5,6 +5,7 @@ class ApiEndpoints {
       'https://jotishapi.autonomoustechnology.net/api/v1';
   static const String serverUrl = 'https://jotishapi.autonomoustechnology.net';
 
+
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
   static const String setPassword = '$baseUrl/auth/set-password';
@@ -26,6 +27,7 @@ class ApiEndpoints {
 
   static const String socketUrl = 'wss://jotishapi.autonomoustechnology.net';
 
+
   // API Endpoints (relative to baseUrl)
   static const String loginEndpoint = '/auth/login';
   static const String logoutEndpoint = '/auth/logout';
@@ -41,15 +43,23 @@ class ApiEndpoints {
   static const String chatUnreadCount = '/chat/unread-count';
   static const String chatSearch = '/chat/search';
   static const String chatActiveChat = '/chat/active-chat';
+
   static const String chatEnd = '/chat/chats'; // PUT /chat/chats/:chatId/end
   static const String chatCreate =
       '/chat/chats'; // POST /chat/chats - create/reactivate chat
+
   static const String chatMarkRead =
       '/chat/chats'; // PUT /chat/chats/:chatId/read
 
   // Appointment Endpoints
   static const String appointments = '$baseUrl/appointments';
   static const String appointmentById = '$baseUrl/appointments'; // + /:id
+
+
+  //Book Pandit EndPoints
+  static const String bookPandit = '$baseUrl/jyotish-bookings';
+
+
 
   // Notification Endpoints
   static const String notifications = '/notifications';

@@ -119,7 +119,7 @@ class _QRCodePageState extends State<QRCodePage> {
       // Navigate to ChatOptionsPage
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => ChatOptionsPage()),
+        MaterialPageRoute(builder: (_) => ChatOptionsScreen()),
       );
     }
   }

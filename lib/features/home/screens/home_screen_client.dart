@@ -238,7 +238,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         ),
         NotificationButton(
           notificationCount: notificationCount,
-          onTap: () => _navigateTo('/notifications'),
+          onTap: () => _navigateTo('/notification_screen'),
         ),
       ],
     );
@@ -537,6 +537,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         width: 80,
         margin: const EdgeInsets.only(right: 16),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Avatar with animated border
             Stack(
@@ -560,7 +561,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       color: AppColors.backgroundDark,
                     ),
                     child: CircleAvatar(
-                      radius: 28,
+                      radius: 26,
                       backgroundColor: AppColors.cardMedium,
                       backgroundImage: imageUrl.isNotEmpty
                           ? NetworkImage(imageUrl)
@@ -572,7 +573,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                                   : '?',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             )
@@ -1079,65 +1080,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
-                  // Features
-                  ...features.map((feature) => Padding(
-                    padding: const EdgeInsets.only(bottom: 3),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          size: 10,
-                          color: isComingSoon
-                              ? AppColors.textMuted
-                              : gradient.colors.first,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            feature,
-                            style: TextStyle(
-                              color: isComingSoon
-                                  ? AppColors.textMuted
-                                  : AppColors.textSecondary,
-                              fontSize: 9,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
-                  const Spacer(),
-                  // CTA Button
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: isComingSoon
-                          ? LinearGradient(
-                              colors: [
-                                Colors.grey.withOpacity(0.3),
-                                Colors.grey.withOpacity(0.2),
-                              ],
-                            )
-                          : gradient,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text(
-                        cta,
-                        style: TextStyle(
-                          color: isComingSoon
-                              ? AppColors.textMuted
-                              : Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -1302,7 +1244,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     if (balance > 0) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ChatOptionsPage()),
+        MaterialPageRoute(builder: (_) => ChatOptionsScreen()),
       );
     } else {
       Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentPage()));

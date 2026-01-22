@@ -1,3 +1,4 @@
+import 'package:chat_jyotishi/features/home/models/book_pandit_model.dart';
 import 'package:chat_jyotishi/features/home/models/rotating_question.dart';
 import 'package:equatable/equatable.dart';
 
@@ -8,9 +9,9 @@ abstract class HomeClientState extends Equatable {
   List<Object?> get props => [];
 }
 
-class RotatingQuestionsInitialState extends HomeClientState {}
+class HomeClientInitialState extends HomeClientState {}
 
-class RotatingQuestionsLoadingState extends HomeClientState {}
+class HomeClientLoadingState extends HomeClientState {}
 
 class RotatingQuestionsLoadedState extends HomeClientState {
   final List<RotatingQuestion> questions;
@@ -37,10 +38,16 @@ class RotatingQuestionsLoadedState extends HomeClientState {
   List<Object?> get props => [questions, currentIndex];
 }
 
-class RotatingQuestionsErrorState extends HomeClientState {
+class HomeClientBookingSuccess extends HomeClientState {
+  final BookingModel booking;
+
+  const HomeClientBookingSuccess(this.booking);
+}
+
+class HomeClientErrorState extends HomeClientState {
   final String message;
 
-  const RotatingQuestionsErrorState({required this.message});
+  const HomeClientErrorState({required this.message});
 
   @override
   List<Object?> get props => [message];
