@@ -25,6 +25,7 @@ class ApiEndpoints {
   static const String uploadProfilePhoto = '$baseUrl/users/upload-photo';
   static const String removeProfilePhoto = '$baseUrl/users/remove-photo';
 
+  /// socket production api
   static const String socketUrl = 'http://192.168.0.206:4000';
 
   // API Endpoints (relative to baseUrl)

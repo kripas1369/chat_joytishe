@@ -1175,7 +1175,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     if (balance > 0) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ChatOptionsPage()),
+        MaterialPageRoute(builder: (_) => ChatOptionsScreen()),
       );
     } else {
       Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentPage()));

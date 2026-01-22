@@ -103,7 +103,7 @@ class MyApp extends StatelessWidget {
 
         ///Payment and broadcast routes
         '/payment_page': (context) => PaymentPage(),
-        '/chat_options_page': (context) => ChatOptionsPage(),
+        '/chat_options_page': (context) => ChatOptionsScreen(),
         '/broadcast_page': (context) => BroadcastPage(),
 
         ///Appointment feature
@@ -112,7 +112,7 @@ class MyApp extends StatelessWidget {
         ///Notification service route
         '/notification_screen': (context) => NotificationScreen(),
       },
-      initialRoute: '/home_screen_client',
+      initialRoute: '/splash_screen',
     );
   }
 }
