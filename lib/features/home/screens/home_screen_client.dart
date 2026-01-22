@@ -123,6 +123,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   @override
   Widget build(BuildContext context) {
     _setSystemUIOverlay();
+
     return BlocProvider(
       create: (context) =>
           ChatBloc(chatRepository: ChatRepository(ChatService()))
@@ -151,6 +152,8 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                             _buildHeader(),
                             const SizedBox(height: 20),
                             const RotatingQuestionsWidget(),
+                            // const SizedBox(height: 32),
+                            // _buildMarqueeBanner(),
                             const SizedBox(height: 24),
                             _buildLiveJyotishSection(),
                             const SizedBox(height: 28),
@@ -580,11 +583,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
                 // Online indicator
                 Positioned(
-                  bottom: 0,
-                  right: 0,
+                  bottom: 2,
+                  right: 2,
                   child: Container(
-                    width: 12,
-                    height: 12,
+                    width: 14,
+                    height: 14,
                     decoration: BoxDecoration(
                       color: Colors.greenAccent,
                       shape: BoxShape.circle,
@@ -603,33 +606,30 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            SizedBox(
-              width: 80,
-              child: Text(
-                astrologer.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
+            const SizedBox(height: 8),
+            Text(
+              astrologer.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: Colors.greenAccent.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: const Text(
                 'LIVE',
                 style: TextStyle(
                   color: Colors.greenAccent,
-                  fontSize: 8,
+                  fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                 ),
@@ -806,54 +806,86 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       {
         'icon': Icons.chat_bubble_rounded,
         'title': 'Chat with Jyotish',
-        'subtitle': 'Talk to astrologers',
+        'subtitle': 'Instant answers in real-time',
+        'features': ['Verified Jyotish', 'Secure chat & fast replies'],
+        'cta': 'Start Chatting',
         'gradient': LinearGradient(
           colors: [Color(0xFF06B6D4), Color(0xFF0891B2)],
         ),
         'route': '/chat_list_screen',
+        'isComingSoon': false,
       },
-      // {
-      //   'icon': Icons.videocam_rounded,
-      //   'title': 'Live with Jyotish',
-      //   'subtitle': '1:1 Video consultation',
-      //   'gradient': AppColors.buttonGradient,
-      //   'route': '/live_session',
-      // },
       {
         'icon': Icons.calendar_month_rounded,
-        'title': 'Get Appointment',
-        'subtitle': 'Book a session',
+        'title': 'Book Appointment',
+        'subtitle': 'Full kundali review',
+        'features': ['Detailed analysis', '1:1 consultation slots'],
+        'cta': 'Book Now',
         'gradient': LinearGradient(
           colors: [Color(0xFF10B981), Color(0xFF059669)],
         ),
-        'route': '/appointment_screen',
+        'route': '/appointment',
+        'isComingSoon': false,
       },
-      // {
-      //   'icon': Icons.auto_graph_rounded,
-      //   'title': 'Full Kundali Review',
-      //   'subtitle': 'Complete birth chart',
-      //   'gradient': LinearGradient(
-      //     colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-      //   ),
-      //   'route': '/kundali',
-      // },
       {
         'icon': Icons.person_pin_rounded,
         'title': 'Book Pandit Ji',
-        'subtitle': 'For puja & rituals',
+        'subtitle': 'Rituals, puja & ceremonies',
+        'features': ['Puja & rituals booking', 'Verified pandit network'],
+        'cta': 'Book Now',
         'gradient': LinearGradient(
           colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
         ),
-        'route': '/book_pandit_screen',
+        'route': '/book_pandit',
+        'isComingSoon': false,
       },
       {
         'icon': Icons.home_work_rounded,
-        'title': 'Book Vastustra',
-        'subtitle': 'Home & office vastu',
+        'title': 'Book Vaastu Sastri',
+        'subtitle': 'Home & office vaastu',
+        'features': ['Vastu guidance', 'Home & office remedies'],
+        'cta': 'Book Now',
         'gradient': LinearGradient(
           colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
         ),
-        'route': '/book_vaastu_sastri_screen',
+        'route': '/vastustra',
+        'isComingSoon': false,
+      },
+      {
+        'icon': Icons.menu_book_rounded,
+        'title': 'Katha Vachak',
+        'subtitle': 'Events & programs',
+        'features': ['कथा वाचन booking', 'Events & programs'],
+        'cta': 'Book Now',
+        'gradient': LinearGradient(
+          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+        ),
+        'route': '/katha_vachak',
+        'isComingSoon': false,
+      },
+      {
+        'icon': Icons.favorite_rounded,
+        'title': 'Kundali Match',
+        'subtitle': 'Compatibility insights',
+        'features': ['Dosha & remedies', 'Match analysis'],
+        'cta': 'Coming Soon',
+        'gradient': LinearGradient(
+          colors: [Color(0xFF64748B), Color(0xFF475569)],
+        ),
+        'route': null,
+        'isComingSoon': true,
+      },
+      {
+        'icon': Icons.flight_takeoff_rounded,
+        'title': 'Travel Prediction',
+        'subtitle': 'Auspicious dates',
+        'features': ['Safe travel guidance', 'Best travel times'],
+        'cta': 'Coming Soon',
+        'gradient': LinearGradient(
+          colors: [Color(0xFF64748B), Color(0xFF475569)],
+        ),
+        'route': null,
+        'isComingSoon': true,
       },
     ];
 
@@ -900,7 +932,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.1,
+            childAspectRatio: 0.75,
           ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -911,8 +943,13 @@ class _HomeScreenClientState extends State<HomeScreenClient>
               icon: service['icon'] as IconData,
               title: service['title'] as String,
               subtitle: service['subtitle'] as String,
+              features: service['features'] as List<String>,
+              cta: service['cta'] as String,
               gradient: service['gradient'] as LinearGradient,
-              onTap: () => _navigateTo(service['route'] as String),
+              isComingSoon: service['isComingSoon'] as bool,
+              onTap: service['route'] != null
+                  ? () => _navigateTo(service['route'] as String)
+                  : null,
               index: index,
             );
           },
@@ -925,12 +962,15 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     required IconData icon,
     required String title,
     required String subtitle,
+    required List<String> features,
+    required String cta,
     required LinearGradient gradient,
-    required VoidCallback onTap,
+    required bool isComingSoon,
+    VoidCallback? onTap,
     required int index,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isComingSoon ? null : onTap,
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -973,9 +1013,34 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
               ),
             ),
+            // Coming Soon badge
+            if (isComingSoon)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.amber.withOpacity(0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Text(
+                    'Soon',
+                    style: TextStyle(
+                      color: Colors.amber,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
             // Content
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -992,15 +1057,15 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                         ),
                       ],
                     ),
-                    child: Icon(icon, color: Colors.white, size: 22),
+                    child: Icon(icon, color: Colors.white, size: 20),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 12),
                   Text(
                     title,
                     style: const TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1009,8 +1074,8 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1239,7 +1304,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         context,
         MaterialPageRoute(
           builder: (_) => ChatScreen(
-            chatId: 'chat_${currentUserId}_${astrologer.id}',
+            chatId: '',
             otherUserId: astrologer.id,
             otherUserName: astrologer.name,
             otherUserPhoto: astrologer.profilePhoto,

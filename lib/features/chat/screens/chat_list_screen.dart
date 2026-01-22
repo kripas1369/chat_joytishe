@@ -195,7 +195,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
         context,
         MaterialPageRoute(
           builder: (_) => ChatScreen(
-            chatId: 'chat_${currentUserId}_${astrologer.id}',
+            chatId: '',
             otherUserId: astrologer.id,
             // Jyotishi ID as receiver
             otherUserName: astrologer.name,
