@@ -151,8 +151,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                             _buildHeader(),
                             const SizedBox(height: 20),
                             const RotatingQuestionsWidget(),
-                            // const SizedBox(height: 32),
-                            // _buildMarqueeBanner(),
                             const SizedBox(height: 24),
                             _buildLiveJyotishSection(),
                             const SizedBox(height: 28),
@@ -237,7 +235,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         ),
         NotificationButton(
           notificationCount: notificationCount,
-          onTap: () => _navigateTo('/notifications'),
+          onTap: () => _navigateTo('/notification_screen'),
         ),
       ],
     );
@@ -810,13 +808,13 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         ),
         'route': '/chat_list_screen',
       },
-      {
-        'icon': Icons.videocam_rounded,
-        'title': 'Live with Jyotish',
-        'subtitle': '1:1 Video consultation',
-        'gradient': AppColors.buttonGradient,
-        'route': '/live_session',
-      },
+      // {
+      //   'icon': Icons.videocam_rounded,
+      //   'title': 'Live with Jyotish',
+      //   'subtitle': '1:1 Video consultation',
+      //   'gradient': AppColors.buttonGradient,
+      //   'route': '/live_session',
+      // },
       {
         'icon': Icons.calendar_month_rounded,
         'title': 'Get Appointment',
@@ -824,17 +822,17 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         'gradient': LinearGradient(
           colors: [Color(0xFF10B981), Color(0xFF059669)],
         ),
-        'route': '/appointment',
+        'route': '/appointment_screen',
       },
-      {
-        'icon': Icons.auto_graph_rounded,
-        'title': 'Full Kundali Review',
-        'subtitle': 'Complete birth chart',
-        'gradient': LinearGradient(
-          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-        ),
-        'route': '/kundali',
-      },
+      // {
+      //   'icon': Icons.auto_graph_rounded,
+      //   'title': 'Full Kundali Review',
+      //   'subtitle': 'Complete birth chart',
+      //   'gradient': LinearGradient(
+      //     colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+      //   ),
+      //   'route': '/kundali',
+      // },
       {
         'icon': Icons.person_pin_rounded,
         'title': 'Book Pandit Ji',
