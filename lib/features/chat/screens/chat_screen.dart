@@ -98,7 +98,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     final endedKey = 'chat_ended_${widget.otherUserId}';
     final isEnded = prefs.getBool(endedKey) ?? false;
 
-    debugPrint('Checking local ended state for ${widget.otherUserId}: $isEnded');
+    debugPrint(
+      'Checking local ended state for ${widget.otherUserId}: $isEnded',
+    );
 
     if (isEnded && mounted) {
       setState(() {
@@ -416,49 +418,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
-  /// Handle when Jyotish sends a reply - unlock chats
-  Future<void> _handleJyotishReply(String jyotishId) async {
-    // Check if this reply is from the Jyotish we're waiting for
-    final isFromLockedJyotish = await _chatLockService.isReplyFromLockedJyotish(
-      jyotishId,
-    );
-
-    if (isFromLockedJyotish) {
-      // Unlock the chats
-      await _chatLockService.unlockChats();
-
-      // Update UI state
-      if (mounted) {
-        setState(() {
-          _isChatLocked = false;
-          _canSendMessage = true;
-        });
-
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${widget.otherUserName} has replied! You can now message any Jyotish.',
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-
-      // Reload lock status to ensure consistency
-      await _loadLockStatus();
-    }
-  }
-
   Future<void> _loadChatHistory() async {
     setState(() => _isLoading = true);
     try {
@@ -497,14 +456,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           final chatData = data['data'];
           if (chatData['status'] != null) {
             chatStatus = chatData['status'].toString().toUpperCase();
-          } else if (chatData['chat'] != null && chatData['chat']['status'] != null) {
+          } else if (chatData['chat'] != null &&
+              chatData['chat']['status'] != null) {
             chatStatus = chatData['chat']['status'].toString().toUpperCase();
           }
         }
 
         debugPrint('Chat status from server: $chatStatus');
 
-        if (chatStatus == 'ENDED' || chatStatus == 'CLOSED' || chatStatus == 'INACTIVE') {
+        if (chatStatus == 'ENDED' ||
+            chatStatus == 'CLOSED' ||
+            chatStatus == 'INACTIVE') {
           debugPrint('Chat is ended - showing Chat Again button');
           if (mounted) {
             setState(() {
@@ -530,7 +492,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           // Try to get chatId from first message if not found yet
           if (_actualChatId.isEmpty && loadedMessages.isNotEmpty) {
             final firstMsgChatId = loadedMessages.first['chatId'];
-            if (firstMsgChatId != null && firstMsgChatId.toString().isNotEmpty) {
+            if (firstMsgChatId != null &&
+                firstMsgChatId.toString().isNotEmpty) {
               _actualChatId = firstMsgChatId.toString();
               debugPrint('Chat ID from message: $_actualChatId');
             }
@@ -565,7 +528,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   /// Update lock status based on who sent the last message in history
-  Future<void> _updateLockStatusFromHistory(List<Map<String, dynamic>> messages) async {
+  Future<void> _updateLockStatusFromHistory(
+    List<Map<String, dynamic>> messages,
+  ) async {
     if (messages.isEmpty) {
       // No messages yet, user can send
       if (mounted) {
@@ -580,7 +545,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     // Messages are sorted by createdAt DESC, so first message is the latest
     final lastMessage = messages.first;
-    final lastSenderId = lastMessage['senderId'] ?? lastMessage['sender']?['id'];
+    final lastSenderId =
+        lastMessage['senderId'] ?? lastMessage['sender']?['id'];
 
     if (lastSenderId == widget.currentUserId) {
       // Last message is from user - lock (waiting for jyotish to reply)
@@ -1046,16 +1012,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
       // Use full URL for POST request
       final String apiUrl = '${ApiEndpoints.baseUrl}${ApiEndpoints.chatCreate}';
-      debugPrint('Calling POST $apiUrl with participantId: ${widget.otherUserId}');
+      debugPrint(
+        'Calling POST $apiUrl with participantId: ${widget.otherUserId}',
+      );
 
       final response = await _dio.post(
         apiUrl,
-        data: {
-          'participantId': widget.otherUserId,
-        },
+        data: {'participantId': widget.otherUserId},
       );
 
-      debugPrint('Reactivate chat response: ${response.statusCode} - ${response.data}');
+      debugPrint(
+        'Reactivate chat response: ${response.statusCode} - ${response.data}',
+      );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
@@ -1115,7 +1083,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         }
       }
     } on DioException catch (e) {
-      debugPrint('Error reactivating chat: ${e.response?.statusCode} - ${e.response?.data}');
+      debugPrint(
+        'Error reactivating chat: ${e.response?.statusCode} - ${e.response?.data}',
+      );
       if (mounted) {
         setState(() => _isLoading = false);
 
@@ -1125,10 +1095,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -1292,10 +1259,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         );
 
         // Go back to previous screen
-        Navigator.pop(context, {'chatEnded': true, 'jyotishId': widget.otherUserId});
+        Navigator.pop(context, {
+          'chatEnded': true,
+          'jyotishId': widget.otherUserId,
+        });
       }
     } on DioException catch (e) {
-      debugPrint('Error ending chat: ${e.response?.statusCode} - ${e.response?.data}');
+      debugPrint(
+        'Error ending chat: ${e.response?.statusCode} - ${e.response?.data}',
+      );
       String errorMessage = 'Failed to end chat. Please try again.';
       if (e.response?.statusCode == 404) {
         errorMessage = 'Chat not found or already ended.';
@@ -1304,10 +1276,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -1554,10 +1523,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           GlassIconButton(icon: Icons.refresh_rounded, onTap: _loadChatHistory),
           SizedBox(width: 8),
           // End chat button (icon only)
-          GlassIconButton(
-            icon: Icons.check_circle_outline,
-            onTap: _endChat,
-          ),
+          GlassIconButton(icon: Icons.check_circle_outline, onTap: _endChat),
         ],
       ),
     );
@@ -1836,10 +1802,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           colors: [AppColors.backgroundDark.withAlpha(204), AppColors.cardDark],
         ),
         border: Border(
-          top: BorderSide(
-            color: Colors.orange.withAlpha(77),
-            width: 1,
-          ),
+          top: BorderSide(color: Colors.orange.withAlpha(77), width: 1),
         ),
       ),
       child: Column(
@@ -1883,7 +1846,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.chat_bubble_outline, color: Colors.white, size: 20),
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Chat Again',

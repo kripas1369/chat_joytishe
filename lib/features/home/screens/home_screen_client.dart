@@ -152,8 +152,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                             _buildHeader(),
                             const SizedBox(height: 20),
                             const RotatingQuestionsWidget(),
-                            // const SizedBox(height: 32),
-                            // _buildMarqueeBanner(),
                             const SizedBox(height: 24),
                             _buildLiveJyotishSection(),
                             const SizedBox(height: 28),
@@ -291,109 +289,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     );
   }
 
-  // Marquee Banner with auto-scrolling text
-  Widget _buildMarqueeBanner() {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        gradient: AppColors.buttonGradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.purple600.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            // Gradient overlay on left
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: 30,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.purple600,
-                      AppColors.purple600.withOpacity(0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Gradient overlay on right
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: 30,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.indigo600.withOpacity(0),
-                      AppColors.indigo600,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Marquee text
-            // Center(
-            //   child: AnimatedBuilder(
-            //     animation: _marqueeController,
-            //     builder: (context, child) {
-            //       return Transform.translate(
-            //         offset: Offset(
-            //           (1 - _marqueeController.value) *
-            //                   MediaQuery.of(context).size.width -
-            //               MediaQuery.of(context).size.width / 2,
-            //           0,
-            //         ),
-            //         child: Row(
-            //           mainAxisSize: MainAxisSize.min,
-            //           children: [
-            //             Icon(
-            //               Icons.stars_rounded,
-            //               color: Colors.amber,
-            //               size: 18,
-            //             ),
-            //             const SizedBox(width: 8),
-            //             Text(
-            //               _bannerText,
-            //               style: const TextStyle(
-            //                 color: Colors.white,
-            //                 fontSize: 14,
-            //                 fontWeight: FontWeight.w500,
-            //                 letterSpacing: 0.5,
-            //               ),
-            //             ),
-            //             const SizedBox(width: 8),
-            //             Icon(
-            //               Icons.stars_rounded,
-            //               color: Colors.amber,
-            //               size: 18,
-            //             ),
-            //           ],
-            //         ),
-            //       );
-            //     },
-            //   ),
-            // ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Live Active Jyotish Section - Messenger Style
+  // Live Active Jyotish Section - Enhanced & Fixed
   Widget _buildLiveJyotishSection() {
     return BlocBuilder<ChatBloc, ChatState>(
       builder: (context, state) {
@@ -408,62 +304,76 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.buttonGradient,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.sensors,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Live Jyotish',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: Colors.greenAccent,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.greenAccent.withOpacity(0.5),
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '${astrologers.length} Online',
-                              style: const TextStyle(
-                                color: Colors.greenAccent,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: AppColors.buttonGradient,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.purple600.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ],
+                        child: const Icon(
+                          Icons.sensors,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Live Jyotish',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: Colors.greenAccent,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.greenAccent.withOpacity(
+                                          0.5,
+                                        ),
+                                        blurRadius: 6,
+                                        spreadRadius: 1,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${astrologers.length} Online',
+                                  style: const TextStyle(
+                                    color: Colors.greenAccent,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 if (isLoading)
                   SizedBox(
@@ -475,20 +385,30 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                     ),
                   )
                 else
-                  IconButton(
-                    onPressed: () =>
-                        context.read<ChatBloc>().add(RefreshActiveUsersEvent()),
-                    icon: Icon(
-                      Icons.refresh,
-                      color: AppColors.textSecondary,
-                      size: 20,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.cardMedium.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: IconButton(
+                      onPressed: () => context.read<ChatBloc>().add(
+                        RefreshActiveUsersEvent(),
+                      ),
+                      icon: Icon(
+                        Icons.refresh,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
                     ),
                   ),
               ],
             ),
             const SizedBox(height: 16),
+            // Fixed height container with proper constraints
             SizedBox(
-              height: 100,
+              height: 110, // Increased height to prevent overflow
               child: astrologers.isEmpty && !isLoading
                   ? Center(
                       child: Column(
@@ -514,6 +434,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
                       itemCount: astrologers.length,
+                      padding: const EdgeInsets.only(bottom: 4),
                       itemBuilder: (context, index) {
                         final astrologer = astrologers[index];
                         return _buildJyotishCard(astrologer);
@@ -534,16 +455,18 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     return GestureDetector(
       onTap: () => _handleJyotishTap(astrologer),
       child: Container(
-        width: 80,
-        margin: const EdgeInsets.only(right: 16),
+        width: 75,
+        margin: const EdgeInsets.only(right: 14),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Avatar with animated border
             Stack(
+              clipBehavior: Clip.none,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(3),
+                  padding: const EdgeInsets.all(2.5),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -553,6 +476,13 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                         AppColors.purple600,
                       ],
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.purple600.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Container(
                     padding: const EdgeInsets.all(2),
@@ -561,7 +491,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       color: AppColors.backgroundDark,
                     ),
                     child: CircleAvatar(
-                      radius: 26,
+                      radius: 24,
                       backgroundColor: AppColors.cardMedium,
                       backgroundImage: imageUrl.isNotEmpty
                           ? NetworkImage(imageUrl)
@@ -573,7 +503,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                                   : '?',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             )
@@ -583,11 +513,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
                 // Online indicator
                 Positioned(
-                  bottom: 2,
-                  right: 2,
+                  bottom: 0,
+                  right: 0,
                   child: Container(
-                    width: 14,
-                    height: 14,
+                    width: 12,
+                    height: 12,
                     decoration: BoxDecoration(
                       color: Colors.greenAccent,
                       shape: BoxShape.circle,
@@ -597,8 +527,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.greenAccent.withOpacity(0.5),
-                          blurRadius: 6,
+                          color: Colors.greenAccent.withOpacity(0.6),
+                          blurRadius: 4,
+                          spreadRadius: 1,
                         ),
                       ],
                     ),
@@ -606,32 +537,47 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              astrologer.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            const SizedBox(height: 6),
+            // Name with proper constraints
+            SizedBox(
+              width: 75,
+              child: Text(
+                astrologer.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
+            // LIVE badge
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.greenAccent.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.greenAccent.withOpacity(0.2),
+                    Colors.green.withOpacity(0.15),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: Colors.greenAccent.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
               child: const Text(
                 'LIVE',
                 style: TextStyle(
                   color: Colors.greenAccent,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
                 ),
               ),
             ),
@@ -641,7 +587,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     );
   }
 
-  // Daily Features Section
+  // Daily Features Section - Enhanced
   Widget _buildDailyFeaturesSection() {
     final dailyFeatures = [
       {
@@ -677,6 +623,13 @@ class _HomeScreenClientState extends State<HomeScreenClient>
               decoration: BoxDecoration(
                 gradient: AppColors.buttonGradient,
                 borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.purple600.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: const Icon(
                 Icons.wb_sunny_rounded,
@@ -738,6 +691,13 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withOpacity(0.3), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -800,15 +760,13 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     );
   }
 
-  // Services Grid
+  // Services Grid - Enhanced
   Widget _buildServicesGrid() {
     final services = [
       {
         'icon': Icons.chat_bubble_rounded,
         'title': 'Chat with Jyotish',
-        'subtitle': 'Instant answers in real-time',
-        'features': ['Verified Jyotish', 'Secure chat & fast replies'],
-        'cta': 'Start Chatting',
+        'subtitle': 'Instant answers',
         'gradient': LinearGradient(
           colors: [Color(0xFF06B6D4), Color(0xFF0891B2)],
         ),
@@ -819,8 +777,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         'icon': Icons.calendar_month_rounded,
         'title': 'Book Appointment',
         'subtitle': 'Full kundali review',
-        'features': ['Detailed analysis', '1:1 consultation slots'],
-        'cta': 'Book Now',
         'gradient': LinearGradient(
           colors: [Color(0xFF10B981), Color(0xFF059669)],
         ),
@@ -830,33 +786,27 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       {
         'icon': Icons.person_pin_rounded,
         'title': 'Book Pandit Ji',
-        'subtitle': 'Rituals, puja & ceremonies',
-        'features': ['Puja & rituals booking', 'Verified pandit network'],
-        'cta': 'Book Now',
+        'subtitle': 'Puja & rituals',
         'gradient': LinearGradient(
           colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
         ),
-        'route': '/book_pandit',
+        'route': '/book_pandit_screen',
         'isComingSoon': false,
       },
       {
         'icon': Icons.home_work_rounded,
         'title': 'Book Vaastu Sastri',
-        'subtitle': 'Home & office vaastu',
-        'features': ['Vastu guidance', 'Home & office remedies'],
-        'cta': 'Book Now',
+        'subtitle': 'Home & office',
         'gradient': LinearGradient(
           colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
         ),
-        'route': '/vastustra',
+        'route': '/book_vaastu_sastri_screen',
         'isComingSoon': false,
       },
       {
         'icon': Icons.menu_book_rounded,
         'title': 'Katha Vachak',
         'subtitle': 'Events & programs',
-        'features': ['कथा वाचन booking', 'Events & programs'],
-        'cta': 'Book Now',
         'gradient': LinearGradient(
           colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
         ),
@@ -866,21 +816,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       {
         'icon': Icons.favorite_rounded,
         'title': 'Kundali Match',
-        'subtitle': 'Compatibility insights',
-        'features': ['Dosha & remedies', 'Match analysis'],
-        'cta': 'Coming Soon',
-        'gradient': LinearGradient(
-          colors: [Color(0xFF64748B), Color(0xFF475569)],
-        ),
-        'route': null,
-        'isComingSoon': true,
-      },
-      {
-        'icon': Icons.flight_takeoff_rounded,
-        'title': 'Travel Prediction',
-        'subtitle': 'Auspicious dates',
-        'features': ['Safe travel guidance', 'Best travel times'],
-        'cta': 'Coming Soon',
+        'subtitle': 'Compatibility',
         'gradient': LinearGradient(
           colors: [Color(0xFF64748B), Color(0xFF475569)],
         ),
@@ -899,6 +835,13 @@ class _HomeScreenClientState extends State<HomeScreenClient>
               decoration: BoxDecoration(
                 gradient: AppColors.buttonGradient,
                 borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.purple600.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: const Icon(
                 Icons.grid_view_rounded,
@@ -932,7 +875,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 0.75,
+            childAspectRatio: 0.85,
           ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -943,8 +886,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
               icon: service['icon'] as IconData,
               title: service['title'] as String,
               subtitle: service['subtitle'] as String,
-              features: service['features'] as List<String>,
-              cta: service['cta'] as String,
               gradient: service['gradient'] as LinearGradient,
               isComingSoon: service['isComingSoon'] as bool,
               onTap: service['route'] != null
@@ -962,8 +903,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     required IconData icon,
     required String title,
     required String subtitle,
-    required List<String> features,
-    required String cta,
     required LinearGradient gradient,
     required bool isComingSoon,
     VoidCallback? onTap,
@@ -1019,7 +958,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 top: 8,
                 right: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
@@ -1040,9 +982,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
               ),
             // Content
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
@@ -1057,17 +1000,18 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                         ),
                       ],
                     ),
-                    child: Icon(icon, color: Colors.white, size: 20),
+                    child: Icon(icon, color: Colors.white, size: 22),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     title,
                     style: const TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
+                      height: 1.2,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
@@ -1075,7 +1019,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                     subtitle,
                     style: const TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 10,
+                      fontSize: 11,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
