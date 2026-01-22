@@ -12,6 +12,7 @@ class ProfileService {
   Future<Map<String, dynamic>> getCurrentUserProfile() async {
     final prefs = await SharedPreferences.getInstance();
     final accessToken = prefs.getString('accessToken');
+    final refreshToken = prefs.getString('refreshToken');
 
     final url = Uri.parse(ApiEndpoints.getCurrentUserProfile);
 
@@ -19,7 +20,7 @@ class ProfileService {
       url,
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': 'accessToken=$accessToken',
+        'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
       },
     );
 
@@ -63,20 +64,7 @@ class ProfileService {
       'zoadicSign': zoadicSign,
       'gender': gender,
     };
-    debugPrint('^^^^^^^^^^^^^^^^^^^');
-    debugPrint('^^^^^^^^^^^^^^^^^^^');
-    debugPrint('^^^^^^^^^^^^^^^^^^^');
-    debugPrint('^^^^^^^^^^^^^^^^^^^');
-    debugPrint('^^^^^^^^^^^^^^^^^^^');
-    debugPrint('^^^^^^^^^^^^^^^^^^^');
-    print(zoadicSign);
-    print(zoadicSign);
-    print(zoadicSign);
-    print(zoadicSign);
-    print(zoadicSign);
-    print(zoadicSign);
-    debugPrint('^^^^^^^^^^^^^^^^^^^');
-    debugPrint('^^^^^^^^^^^^^^^^^^^');
+
     debugPrint('Complete Profile Setup Request URL: $url');
     debugPrint(
       'Complete Profile Setup Request Headers: '

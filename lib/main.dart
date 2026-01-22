@@ -6,6 +6,8 @@ import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests
 import 'package:chat_jyotishi/features/chat_astrologer/screens/broadcast_messages_screen.dart';
 import 'package:chat_jyotishi/features/history_client/screens/history_screen_client.dart';
 import 'package:chat_jyotishi/features/home/screens/about_us_screen.dart';
+import 'package:chat_jyotishi/features/home/screens/book_pandit_screen.dart';
+import 'package:chat_jyotishi/features/home/screens/book_vaastu_sastri.dart';
 import 'package:chat_jyotishi/features/home/screens/help_support_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart'
     show HomeScreenClient;
@@ -78,8 +80,10 @@ class MyApp extends StatelessWidget {
         '/splash_screen': (context) => SplashScreen(),
         '/login_screen': (context) => LoginScreen(),
         '/login_screen_astrologer': (context) => LoginScreenAstrologer(),
-        // '/home_screen_client': (context) => HomeScreenClientContent(),
+        '/home_screen_client': (context) => HomeScreenClient(),
         '/history_screen_client': (context) => HistoryScreenClient(),
+        '/book_pandit_screen': (context) => BookPanditScreen(),
+        '/book_vaastu_sastri_screen': (context) => BookVaastuSastriScreen(),
         '/settings_screen': (context) => SettingsScreen(),
         '/help_support_screen': (context) => HelpSupportScreen(),
         '/about_us_screen': (context) => AboutUsScreen(),
@@ -99,7 +103,7 @@ class MyApp extends StatelessWidget {
 
         ///Payment and broadcast routes
         '/payment_page': (context) => PaymentPage(),
-        // '/chat_options_page': (context) => ChatOptionsScreen(),
+        '/chat_options_page': (context) => ChatOptionsPage(),
         '/broadcast_page': (context) => BroadcastPage(),
 
         ///Appointment feature
@@ -108,7 +112,7 @@ class MyApp extends StatelessWidget {
         ///Notification service route
         '/notification_screen': (context) => NotificationScreen(),
       },
-      initialRoute: '/splash_screen',
+      initialRoute: '/home_screen_client',
     );
   }
 }

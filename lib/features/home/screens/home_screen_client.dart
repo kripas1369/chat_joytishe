@@ -123,7 +123,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   @override
   Widget build(BuildContext context) {
     _setSystemUIOverlay();
-
     return BlocProvider(
       create: (context) =>
           ChatBloc(chatRepository: ChatRepository(ChatService()))
@@ -843,7 +842,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         'gradient': LinearGradient(
           colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
         ),
-        'route': '/book_pandit',
+        'route': '/book_pandit_screen',
       },
       {
         'icon': Icons.home_work_rounded,
@@ -852,7 +851,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         'gradient': LinearGradient(
           colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
         ),
-        'route': '/vastustra',
+        'route': '/book_vaastu_sastri_screen',
       },
     ];
 

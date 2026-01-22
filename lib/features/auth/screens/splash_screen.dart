@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:chat_jyotishi/features/auth/widgets/app_button_splash.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,8 +13,10 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _rotationController;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
@@ -24,11 +26,21 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(seconds: 30),
     )..repeat();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
     _rotationController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -44,76 +56,50 @@ class _SplashScreenState extends State<SplashScreen>
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(decoration: BoxDecoration(color: Colors.black)),
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _onGetStarted,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(decoration: BoxDecoration(color: Colors.black)),
+            Center(
+              child: ScaleTransition(
+                scale: _pulseAnimation,
+                child: Image.asset(
+                  'assets/logo/logo.png',
+                  width: screenWidth,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
 
-          // Opacity(
-          //   opacity: 0.4,
-          //   child: ClipOval(
-          //     child: Image.asset(
-          //       'assets/logo/logo.png',
-          //       width: screenWidth,
-          //       height: screenWidth,
-          //       fit: BoxFit.contain,
-          //     ),
-          //   ),
-          // ),
-          Center(
-            child: AnimatedBuilder(
-              animation: _rotationController,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: _rotationController.value * 2 * pi,
-                  child: Opacity(
-                    opacity: 0.15,
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/image/splash_image1.webp',
-                        width: screenWidth,
-                        height: screenWidth,
-                        fit: BoxFit.contain,
+            Center(
+              child: AnimatedBuilder(
+                animation: _rotationController,
+                builder: (context, child) {
+                  return Transform.rotate(
+                    angle: _rotationController.value * 2 * pi,
+                    child: Opacity(
+                      opacity: 0.15,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/image/splash_image1.webp',
+                          width: screenWidth * 0.65,
+
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Twinkling stars
-          const TwinklingStars(starCount: 3),
-
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: EdgeInsets.only(top: 50, left: 16, right: 16),
-                child: Image.asset(
-                  'assets/logo/name_logo.png',
-                  fit: BoxFit.contain,
-                  width: screenWidth * 0.6,
-                ),
+                  );
+                },
               ),
             ),
-          ),
 
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 66),
-              child: SizedBox(
-                width: 240,
-                child: AppButtonSplash(
-                  title: 'Get Started',
-                  suffixIcon: Icon(Icons.arrow_forward, color: Colors.white70),
-                  onTap: _onGetStarted,
-                ),
-              ),
-            ),
-          ),
-        ],
+            // Twinkling stars
+            const TwinklingStars(starCount: 3),
+          ],
+        ),
       ),
     );
   }
