@@ -56,6 +56,9 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
   // Actual chat ID (may be updated from server)
   late String _actualChatId;
 
+  // Chat session ended state
+  bool _isChatEnded = false;
+
   late AnimationController _typingAnimationController;
 
   @override
@@ -347,26 +350,99 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
     }
   }
 
+  /// Handle when chat is ended (by self or client)
   void _showChatEndedDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cardDark,
-        title: Text('Chat Ended', style: TextStyle(color: Colors.white)),
-        content: Text(
-          'This chat session has ended.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: Text('OK'),
+    if (mounted) {
+      setState(() {
+        _isChatEnded = true;
+      });
+    }
+  }
+
+  /// Build chat ended overlay UI for astrologer
+  Widget _buildChatEndedOverlay() {
+    return Container(
+      color: AppColors.backgroundDark.withAlpha(240),
+      child: Center(
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 32),
+          padding: EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.cardDark, AppColors.backgroundDark],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.primaryPurple.withAlpha(102), width: 2),
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withAlpha(51),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.chat_bubble_outline, color: Colors.orange, size: 48),
+              ),
+              SizedBox(height: 24),
+              Text(
+                'Chat Session Ended',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'You can no longer message this person.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'You can chat again only when the client messages you.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+              SizedBox(height: 32),
+              // Go Back button
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.primaryPurple, AppColors.deepPurple],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryPurple.withAlpha(102),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Go Back',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -374,39 +450,113 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
   void _endChat() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cardDark,
-        title: Text('End Chat?', style: TextStyle(color: Colors.white)),
-        content: Text(
-          'Are you sure you want to end this chat?',
-          style: TextStyle(color: Colors.white70),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.cardDark, AppColors.backgroundDark],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.green.withAlpha(102), width: 2),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                'End Chat?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Are you sure you want to end this chat session?',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(26),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        Navigator.pop(context);
+                        try {
+                          // Use actualChatId which may have been updated
+                          await _dio.put('${ApiEndpoints.chatEnd}/$_actualChatId/end');
+                          // Set chat ended state to show overlay
+                          if (mounted) {
+                            setState(() {
+                              _isChatEnded = true;
+                            });
+                          }
+                        } catch (e) {
+                          debugPrint('Error ending chat: $e');
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to end chat'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.green, Colors.green.shade700],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Done',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                // Use actualChatId which may have been updated
-                await _dio.put('${ApiEndpoints.chatEnd}/$_actualChatId/end');
-                if (mounted) {
-                  Navigator.pop(context);
-                }
-              } catch (e) {
-                debugPrint('Error ending chat: $e');
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to end chat'), backgroundColor: Colors.red),
-                  );
-                }
-              }
-            },
-            child: Text('End', style: TextStyle(color: Colors.red)),
-          ),
-        ],
       ),
     );
   }
@@ -440,20 +590,26 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
       body: Container(
         decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
         child: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              _buildHeader(),
-              Expanded(
-                child: _isLoading
-                    ? Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryPurple,
-                        ),
-                      )
-                    : _buildMessagesList(),
+              Column(
+                children: [
+                  _buildHeader(),
+                  Expanded(
+                    child: _isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryPurple,
+                            ),
+                          )
+                        : _buildMessagesList(),
+                  ),
+                  if (_isClientTyping) _buildTypingIndicator(),
+                  if (!_isChatEnded) _buildInputArea(),
+                ],
               ),
-              if (_isClientTyping) _buildTypingIndicator(),
-              _buildInputArea(),
+              // Chat ended overlay
+              if (_isChatEnded) _buildChatEndedOverlay(),
             ],
           ),
         ),
@@ -528,9 +684,9 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
               ],
             ),
           ),
-          // End chat button
+          // End chat button (icon only)
           GlassIconButton(
-            icon: Icons.call_end,
+            icon: Icons.check_circle_outline,
             onTap: _endChat,
           ),
         ],

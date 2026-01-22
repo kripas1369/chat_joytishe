@@ -1,6 +1,10 @@
 class ApiEndpoints {
-  static const String serverUrl = 'http://192.168.0.206:4000';
-  static const String baseUrl = 'http://192.168.0.206:4000/api/v1';
+  // static const String serverUrl = 'http://192.168.0.206:4000';
+  //   static const String baseUrl = 'http://192.168.0.206:4000/api/v1';
+  static const String baseUrl =
+      'https://jotishapi.autonomoustechnology.net/api/v1';
+  static const String serverUrl = 'https://jotishapi.autonomoustechnology.net';
+
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
   static const String setPassword = '$baseUrl/auth/set-password';
@@ -20,7 +24,7 @@ class ApiEndpoints {
   static const String uploadProfilePhoto = '$baseUrl/users/upload-photo';
   static const String removeProfilePhoto = '$baseUrl/users/remove-photo';
 
-  static const String socketUrl = 'http://192.168.0.206:4000';
+  static const String socketUrl = 'wss://jotishapi.autonomoustechnology.net';
 
   // API Endpoints (relative to baseUrl)
   static const String loginEndpoint = '/auth/login';
@@ -37,7 +41,9 @@ class ApiEndpoints {
   static const String chatUnreadCount = '/chat/unread-count';
   static const String chatSearch = '/chat/search';
   static const String chatActiveChat = '/chat/active-chat';
-  static const String chatEnd = '/chats'; // PUT /chats/:chatId/end
+  static const String chatEnd = '/chat/chats'; // PUT /chat/chats/:chatId/end
+  static const String chatCreate =
+      '/chat/chats'; // POST /chat/chats - create/reactivate chat
   static const String chatMarkRead =
       '/chat/chats'; // PUT /chat/chats/:chatId/read
 

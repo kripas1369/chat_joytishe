@@ -65,13 +65,14 @@ class SocketService {
       socket = IO.io(
         ApiEndpoints.socketUrl,
         IO.OptionBuilder()
-            .setTransports(['websocket', 'polling']) // Allow both transports
+            .setTransports(['websocket']) // Use websocket for wss://
+            .enableAutoConnect()
             .enableForceNew() // Force new connection
+            .enableReconnection()
+            .setReconnectionAttempts(5)
+            .setReconnectionDelay(1000)
             .setExtraHeaders({
-              // Send cookies exactly like browser
               'cookie': cookieString,
-              'origin': ApiEndpoints.socketUrl,
-              'user-agent': 'Flutter-Socket-Client',
             })
             .build(),
       );
@@ -106,12 +107,14 @@ class SocketService {
       socket = IO.io(
         ApiEndpoints.socketUrl,
         IO.OptionBuilder()
-            .setTransports(['websocket', 'polling'])
+            .setTransports(['websocket']) // Use websocket for wss://
+            .enableAutoConnect()
             .enableForceNew()
+            .enableReconnection()
+            .setReconnectionAttempts(5)
+            .setReconnectionDelay(1000)
             .setExtraHeaders({
               'cookie': cookieString,
-              'origin': ApiEndpoints.socketUrl,
-              'user-agent': 'Flutter-Socket-Client',
             })
             .build(),
       );
