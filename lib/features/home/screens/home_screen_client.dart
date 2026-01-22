@@ -534,6 +534,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         width: 80,
         margin: const EdgeInsets.only(right: 16),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Avatar with animated border
             Stack(
@@ -557,7 +558,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       color: AppColors.backgroundDark,
                     ),
                     child: CircleAvatar(
-                      radius: 28,
+                      radius: 26,
                       backgroundColor: AppColors.cardMedium,
                       backgroundImage: imageUrl.isNotEmpty
                           ? NetworkImage(imageUrl)
@@ -569,7 +570,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                                   : '?',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             )
@@ -579,11 +580,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
                 // Online indicator
                 Positioned(
-                  bottom: 2,
-                  right: 2,
+                  bottom: 0,
+                  right: 0,
                   child: Container(
-                    width: 14,
-                    height: 14,
+                    width: 12,
+                    height: 12,
                     decoration: BoxDecoration(
                       color: Colors.greenAccent,
                       shape: BoxShape.circle,
@@ -602,30 +603,33 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              astrologer.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            const SizedBox(height: 6),
+            SizedBox(
+              width: 80,
+              child: Text(
+                astrologer.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: Colors.greenAccent.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
                 'LIVE',
                 style: TextStyle(
                   color: Colors.greenAccent,
-                  fontSize: 9,
+                  fontSize: 8,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                 ),
