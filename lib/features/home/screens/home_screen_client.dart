@@ -780,7 +780,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         'gradient': LinearGradient(
           colors: [Color(0xFF10B981), Color(0xFF059669)],
         ),
-        'route': '/appointment',
+        'route': '/appointment_screen',
         'isComingSoon': false,
       },
       {

@@ -198,6 +198,7 @@ class _LoginCardState extends State<LoginCard> {
 
               AppButton(
                 title: widget.usePassword ? 'LOGIN' : 'SEND OTP',
+                gradient: AppColors.primaryGradient1,
                 isLoading: state is AuthLoadingState,
                 icon: Icons.auto_awesome,
                 onTap: () {

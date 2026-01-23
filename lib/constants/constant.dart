@@ -27,6 +27,16 @@ class AppColors {
   static const Color success = Color(0xFF19611C);
   static const Color error = Color(0xFFA51010);
 
+  static const LinearGradient primaryGradient1 = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      Color(0xFF7C3AED), // purple-600
+      Color(0xFFDB2777), // pink-600
+      Color(0xFFDC2626), // red-600
+    ],
+  );
+
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
