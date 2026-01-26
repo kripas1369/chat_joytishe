@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/api_endpoints.dart';
+import '../models/astrologer_profile_model.dart';
 
 class ChatService {
   Future<Map<String, dynamic>> fetchActiveAstrologers() async {
@@ -334,6 +335,59 @@ class ChatService {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Get astrologer profile by ID
+  /// API: GET /api/v1/astrologers/:id
+  Future<AstrologerProfile> getAstrologerProfile(String astrologerId) async {
+    _checkInitialized();
+    try {
+      final response = await _dio.get(
+        '${ApiEndpoints.baseUrl}/astrologers/$astrologerId',
+      );
+
+      debugPrint('Astrologer profile response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        // Handle both direct data and nested data structure
+        if (data['success'] == true && data['data'] != null) {
+          return AstrologerProfile.fromJson(data['data']);
+        } else if (data['astrologer'] != null) {
+          return AstrologerProfile.fromJson(data['astrologer']);
+        } else {
+          return AstrologerProfile.fromJson(data);
+        }
+      }
+      throw Exception('Failed to get astrologer profile');
+    } on DioException catch (e) {
+      debugPrint('Error fetching astrologer profile: ${e.message}');
+      if (e.response?.statusCode == 404) {
+        throw Exception('Astrologer not found');
+      }
+      throw Exception('Failed to get astrologer profile: ${e.message}');
+    }
+  }
+
+  /// Get user details by ID (works for both clients and astrologers)
+  /// API: GET /api/v1/users/:id/details
+  Future<Map<String, dynamic>> getUserDetails(String userId) async {
+    _checkInitialized();
+    try {
+      final response = await _dio.get(
+        '${ApiEndpoints.baseUrl}${ApiEndpoints.userDetails}/$userId/details',
+      );
+
+      debugPrint('User details response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return response.data['data'] ?? response.data;
+      }
+      throw Exception('Failed to get user details');
+    } on DioException catch (e) {
+      debugPrint('Error fetching user details: ${e.message}');
+      throw Exception('Failed to get user details: ${e.message}');
     }
   }
 }

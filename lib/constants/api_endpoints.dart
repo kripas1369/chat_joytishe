@@ -1,10 +1,12 @@
 class ApiEndpoints {
-  // static const String serverUrl = 'http://192.168.0.206:4000';
-  //   static const String baseUrl = 'http://192.168.0.206:4000/api/v1';
-  static const String baseUrl =
-      'https://jotishapi.autonomoustechnology.net/api/v1';
-  static const String serverUrl = 'https://jotishapi.autonomoustechnology.net';
+  static const String serverUrl = 'http://192.168.0.206:4000';
+  static const String baseUrl = 'http://192.168.0.206:4000/api/v1';
 
+  //   static const String serverUrl = 'http://192.168.1.73:4000';
+  //   static const String baseUrl = 'http://192.168.1.73:4000/api/v1';
+  //   static const String baseUrl =
+  //   'https://jotishapi.autonomoustechnology.net/api/v1';
+  //   static const String serverUrl = 'https://jotishapi.autonomoustechnology.net';
 
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
@@ -25,8 +27,7 @@ class ApiEndpoints {
   static const String uploadProfilePhoto = '$baseUrl/users/upload-photo';
   static const String removeProfilePhoto = '$baseUrl/users/remove-photo';
 
-  static const String socketUrl = 'wss://jotishapi.autonomoustechnology.net';
-
+  static const String socketUrl = 'ws://192.168.0.206:4000';
 
   // API Endpoints (relative to baseUrl)
   static const String loginEndpoint = '/auth/login';
@@ -55,11 +56,8 @@ class ApiEndpoints {
   static const String appointments = '$baseUrl/appointments';
   static const String appointmentById = '$baseUrl/appointments'; // + /:id
 
-
   //Book Pandit EndPoints
   static const String bookPandit = '$baseUrl/jyotish-bookings';
-
-
 
   // Notification Endpoints
   static const String notifications = '/notifications';
@@ -84,4 +82,9 @@ class ApiEndpoints {
   static const String astrologerToggleOnline = '/astrologer/toggle-online';
   static const String userDetails = '/users'; // + /:id/details
   static const String chatableUsers = '/users/chatable';
+
+  // Coin Endpoints
+  static const String coinBalance = '/coins/balance';
+  static const String coinAdd = '/coins/add';
+  static const String coinTransactions = '/coins/transactions';
 }

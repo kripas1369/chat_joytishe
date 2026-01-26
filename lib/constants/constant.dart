@@ -27,6 +27,26 @@ class AppColors {
   static const Color success = Color(0xFF19611C);
   static const Color error = Color(0xFFA51010);
 
+  // Cosmic Theme Colors (New Design)
+  static const Color primaryBlack = Color(0xFF000000);
+  static const Color cosmicPurple = Color(0xFF9333EA); // purple-600
+  static const Color cosmicPink = Color(0xFFEC4899); // pink-600
+  static const Color cosmicRed = Color(0xFFEF4444); // red-600
+
+  // Gradient Colors
+  static const Color purple300 = Color(0xFFC084FC);
+  static const Color purple400 = Color(0xFFA855F7);
+  static const Color pink300 = Color(0xFFF9A8D4);
+  static const Color pink400 = Color(0xFFF472B6);
+  static const Color red300 = Color(0xFFFCA5A5);
+  static const Color red400 = Color(0xFFF87171);
+
+  // Text Colors
+  static const Color textWhite = Color(0xFFFFFFFF);
+  static const Color textGray200 = Color(0xFFE5E7EB);
+  static const Color textGray300 = Color(0xFFD1D5DB);
+  static const Color textGray400 = Color(0xFF9CA3AF);
+
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -100,5 +120,22 @@ class AppColors {
 
   static const LinearGradient premiumGradient = LinearGradient(
     colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+  );
+
+  // Cosmic Theme Gradients
+  static const LinearGradient cosmicPrimaryGradient = LinearGradient(
+    colors: [cosmicPurple, cosmicPink],
+  );
+
+  static const LinearGradient cosmicHeroGradient = LinearGradient(
+    colors: [cosmicPurple, cosmicPink, cosmicRed],
+  );
+
+  static const LinearGradient cosmicTextGradient = LinearGradient(
+    colors: [purple300, pink300, purple300],
+  );
+
+  static const LinearGradient cosmicTextGradient2 = LinearGradient(
+    colors: [pink400, red400, purple400],
   );
 }
