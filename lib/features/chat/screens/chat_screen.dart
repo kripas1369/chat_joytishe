@@ -8,6 +8,10 @@ import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/chat/widgets/profile_status.dart';
 import 'package:chat_jyotishi/features/chat/screens/service_inquiry_screen.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_provider.dart';
+import 'package:chat_jyotishi/features/payment/widgets/insufficient_coins_sheet.dart';
+import 'package:chat_jyotishi/features/payment/models/coin_models.dart';
+import 'package:chat_jyotishi/features/chat/widgets/astrologer_profile_sheet.dart';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -123,11 +127,25 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
-  /// Load coin balance
+  /// Load coin balance from server
   Future<void> _loadCoinBalance() async {
-    final balance = await _coinService.getBalance();
-    if (mounted) {
-      setState(() => _coinBalance = balance);
+    try {
+      // Initialize coin provider if not already done
+      if (!coinProvider.isInitialized) {
+        await coinProvider.initialize();
+      } else {
+        await coinProvider.refreshBalance();
+      }
+      if (mounted) {
+        setState(() => _coinBalance = coinProvider.balance);
+      }
+    } catch (e) {
+      debugPrint('Error loading coin balance: $e');
+      // Fallback to local balance
+      final balance = await _coinService.getBalance();
+      if (mounted) {
+        setState(() => _coinBalance = balance);
+      }
     }
   }
 
@@ -367,9 +385,47 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       }
     });
 
+    // Listen for chat errors (including insufficient coins)
+    _socketService.onChatError((data) {
+      debugPrint('Chat error received: $data');
+      final errorCode = data['code']?.toString();
+      final errorMessage = data['message']?.toString() ?? 'An error occurred';
+
+      // Check for insufficient coins error
+      if (InsufficientCoinsException.isInsufficientCoinsError(errorCode, errorMessage)) {
+        final required = InsufficientCoinsException.extractRequiredCoins(errorMessage);
+        final available = InsufficientCoinsException.extractAvailableCoins(errorMessage);
+
+        if (mounted) {
+          showInsufficientCoinsSheet(
+            context: context,
+            requiredCoins: required,
+            availableCoins: available > 0 ? available : coinProvider.balance,
+            message: errorMessage,
+          ).then((_) => _loadCoinBalance());
+        }
+      } else {
+        // Show generic error
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    });
+
     // Listen for chat ended
     _socketService.onChatEnded((data) {
-      if (mounted) {
+      // Only handle if this event is for the current chat
+      final eventChatId = data['chatId']?.toString() ?? '';
+      final currentChatId = _actualChatId.isNotEmpty ? _actualChatId : widget.chatId;
+
+      debugPrint('Chat ended event - eventChatId: $eventChatId, currentChatId: $currentChatId');
+
+      if (eventChatId == currentChatId && mounted) {
         _showChatEndedDialog();
       }
     });
@@ -585,41 +641,28 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       return;
     }
 
-    // Check coin balance
-    if (_coinBalance < 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Insufficient coins. Please add more coins to continue.',
-          ),
-          backgroundColor: Colors.red,
-          action: SnackBarAction(
-            label: 'Add Coins',
-            textColor: Colors.white,
-            onPressed: () => Navigator.pushNamed(context, '/payment_page'),
-          ),
-        ),
-      );
-      return;
-    }
+    // Cost per message (backend enforces, this is for UI check)
+    const int messageCost = CoinCosts.ordinaryChat; // 2 coins
 
-    // Deduct 1 coin
-    final deductSuccess = await _coinService.deductCoins(1);
-    if (!deductSuccess) {
+    // Check coin balance using CoinProvider
+    final currentBalance = coinProvider.balance;
+    if (currentBalance < messageCost) {
+      // Show insufficient coins bottom sheet
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to deduct coin. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
+        await showInsufficientCoinsSheet(
+          context: context,
+          requiredCoins: messageCost,
+          availableCoins: currentBalance,
+          message: 'You need $messageCost coins to send a message.',
         );
+        // Refresh balance after returning from payment
+        await _loadCoinBalance();
       }
       return;
     }
 
-    // Update coin balance
-    await _loadCoinBalance();
-
+    // Save content before clearing (in case we need to retry)
+    final savedContent = content;
     _messageController.clear();
     _stopTyping();
 
@@ -628,7 +671,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     setState(() {
       _messages.insert(0, {
         'id': tempId,
-        'content': content,
+        'content': savedContent,
         'senderId': widget.currentUserId,
         'receiverId': widget.otherUserId,
         'isRead': false,
@@ -640,11 +683,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     _scrollToBottom();
 
+    // Send message via socket - backend will deduct coins
     _socketService.sendMessage(
       receiverId: widget.otherUserId,
-      content: content,
+      content: savedContent,
       type: 'TEXT',
     );
+
+    // Optimistically deduct coins locally (backend enforces actual deduction)
+    coinProvider.localDeduct(messageCost);
+    if (mounted) {
+      setState(() => _coinBalance = coinProvider.balance);
+    }
 
     // LOCK: After sending message, lock all chats
     await _chatLockService.lockChats(
@@ -991,6 +1041,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _socketService.offTypingIndicator();
     _socketService.offUserStatus();
     _socketService.offChatEnded();
+    _socketService.offChatError();
   }
 
   /// Handle when chat is ended (by self or other user)
@@ -1110,6 +1161,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         );
       }
     }
+  }
+
+  /// Show astrologer profile bottom sheet
+  void _showAstrologerProfile() {
+    showAstrologerProfileSheet(
+      context: context,
+      astrologerId: widget.otherUserId,
+      astrologerName: widget.otherUserName,
+      astrologerPhoto: widget.otherUserPhoto,
+      isOnline: _isOtherUserOnline,
+    );
   }
 
   /// End the chat session
@@ -1481,42 +1543,65 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           ),
           SizedBox(width: 12),
 
-          profileStatus(radius: 22, isActive: _isOtherUserOnline),
-          SizedBox(width: 14),
+          // Tappable profile section - shows astrologer details on tap
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.otherUserName,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
+            child: GestureDetector(
+              onTap: _showAstrologerProfile,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  profileStatus(radius: 22, isActive: _isOtherUserOnline),
+                  SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.otherUserName,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.3,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.white54,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          _isOtherUserTyping
+                              ? 'typing...'
+                              : _isOtherUserOnline
+                              ? 'Active now • Tap for profile'
+                              : 'Offline • Tap for profile',
+                          style: TextStyle(
+                            color: _isOtherUserTyping
+                                ? AppColors.primaryPurple
+                                : _isOtherUserOnline
+                                ? Colors.greenAccent
+                                : Colors.white54,
+                            fontSize: 12,
+                            fontWeight: _isOtherUserTyping
+                                ? FontWeight.w500
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(height: 6),
-                SizedBox(width: 6),
-                Text(
-                  _isOtherUserTyping
-                      ? 'typing...'
-                      : _isOtherUserOnline
-                      ? 'Active now'
-                      : 'Offline',
-                  style: TextStyle(
-                    color: _isOtherUserTyping
-                        ? AppColors.primaryPurple
-                        : _isOtherUserOnline
-                        ? Colors.greenAccent
-                        : Colors.white54,
-                    fontSize: 13,
-                    fontWeight: _isOtherUserTyping
-                        ? FontWeight.w500
-                        : FontWeight.normal,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           // Refresh button

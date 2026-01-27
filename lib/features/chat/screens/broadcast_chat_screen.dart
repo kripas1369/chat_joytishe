@@ -6,6 +6,9 @@ import '../../../constants/constant.dart';
 import '../../app_widgets/glass_icon_button.dart';
 import '../../app_widgets/show_top_snackBar.dart';
 import '../../app_widgets/star_field_background.dart';
+import '../../payment/services/coin_provider.dart';
+import '../../payment/widgets/insufficient_coins_sheet.dart';
+import '../../payment/models/coin_models.dart';
 import '../service/socket_service.dart';
 import 'chat_screen.dart';
 
@@ -252,11 +255,27 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
           _isWaiting = false;
         });
 
+        final errorCode = data['code']?.toString();
         String errorMessage = data['message'] ?? 'An error occurred';
-        if (data['code'] == 'ACTIVE_CHAT_EXISTS') {
+
+        // Check for insufficient coins error
+        if (InsufficientCoinsException.isInsufficientCoinsError(errorCode, errorMessage)) {
+          final required = InsufficientCoinsException.extractRequiredCoins(errorMessage);
+          final available = InsufficientCoinsException.extractAvailableCoins(errorMessage);
+
+          showInsufficientCoinsSheet(
+            context: context,
+            requiredCoins: required > 0 ? required : CoinCosts.broadcastMessage,
+            availableCoins: available > 0 ? available : coinProvider.balance,
+            message: 'You need ${CoinCosts.broadcastMessage} coin to send a broadcast message.',
+          ).then((_) => coinProvider.refreshBalance());
+          return;
+        }
+
+        if (errorCode == 'ACTIVE_CHAT_EXISTS') {
           errorMessage =
               'You already have an active chat. Please end it first.';
-        } else if (data['code'] == 'NO_ASTROLOGERS_ONLINE') {
+        } else if (errorCode == 'NO_ASTROLOGERS_ONLINE') {
           errorMessage = 'No astrologers are available at the moment.';
         }
 

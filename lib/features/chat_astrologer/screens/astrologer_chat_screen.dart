@@ -152,7 +152,13 @@ class _AstrologerChatScreenState extends State<AstrologerChatScreen>
 
     // Listen for chat ended
     _socketService.onChatEnded((data) {
-      if (mounted) {
+      // Only handle if this event is for the current chat
+      final eventChatId = data['chatId']?.toString() ?? '';
+      final currentChatId = _actualChatId.isNotEmpty ? _actualChatId : widget.chatId;
+
+      debugPrint('Chat ended event - eventChatId: $eventChatId, currentChatId: $currentChatId');
+
+      if (eventChatId == currentChatId && mounted) {
         _showChatEndedDialog();
       }
     });
