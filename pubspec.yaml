@@ -87,6 +87,8 @@ flutter:
     - assets/image/image.png
     - assets/logo/logo.png
     - assets/logo/name_logo.png
+    # Onboarding images - add your custom images here
+    - assets/onboarding/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

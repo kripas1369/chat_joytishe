@@ -53,7 +53,7 @@ class _LoginCardAstrologerState extends State<LoginCardAstrologer> {
               barrierDismissible: false,
               builder: (_) => Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.primaryPurple,
+                  color: AppColors.cosmicPurple,
                 ),
               ),
             );
@@ -90,16 +90,22 @@ class _LoginCardAstrologerState extends State<LoginCardAstrologer> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.primaryPurple.withOpacity(0.15),
-                AppColors.deepPurple.withOpacity(0.08),
+                AppColors.cosmicPurple.withOpacity(0.15),
+                AppColors.cosmicPink.withOpacity(0.1),
+                AppColors.cosmicRed.withOpacity(0.08),
               ],
             ),
             borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: AppColors.cosmicPurple.withOpacity(0.2),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.75),
-                blurRadius: 35,
+                color: AppColors.cosmicPurple.withOpacity(0.3),
+                blurRadius: 40,
                 offset: Offset(0, 24),
+                spreadRadius: 2,
               ),
             ],
           ),
@@ -176,6 +182,7 @@ class _LoginCardAstrologerState extends State<LoginCardAstrologer> {
                 title: 'LOGIN',
                 isLoading: state is AuthLoadingState,
                 icon: Icons.auto_awesome,
+                gradient: AppColors.cosmicHeroGradient,
                 onTap: () {
                   final identifier = emailController.text.trim();
                   final password = passwordController.text.trim();
@@ -215,7 +222,7 @@ class _LoginCardAstrologerState extends State<LoginCardAstrologer> {
                       TextSpan(
                         text: ' CLICK-HERE',
                         style: TextStyle(
-                          color: AppColors.accentPurple,
+                          color: AppColors.pink400,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

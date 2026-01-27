@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../onboarding/screens/onboarding_screen.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -17,6 +19,13 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _rotationController;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+
+  // Key for tracking if onboarding has been shown
+  static const String _onboardingCompleteKey = 'onboarding_complete';
+  
+  // Set to true to always show onboarding (for testing)
+  // Change to false after testing to restore normal behavior
+  static const bool _forceShowOnboarding = true;
 
   @override
   void initState() {
@@ -35,6 +44,64 @@ class _SplashScreenState extends State<SplashScreen>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    // Auto-navigate after 3 seconds
+    _startAutoNavigation();
+  }
+
+  /// Start auto-navigation timer
+  void _startAutoNavigation() {
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        _navigateToNextScreen();
+      }
+    });
+  }
+
+  /// Check if onboarding is complete and navigate accordingly
+  Future<void> _navigateToNextScreen() async {
+    if (!mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingComplete = prefs.getBool(_onboardingCompleteKey) ?? false;
+
+    if (!mounted) return;
+
+    // Force show onboarding if flag is set (for testing)
+    if (_forceShowOnboarding || !onboardingComplete) {
+      // Navigate to onboarding screen
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const OnboardingScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
+      );
+    } else {
+      // User has seen onboarding, go directly to login
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const LoginScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
+  }
+  
+  /// Reset onboarding status (for testing/debugging)
+  /// Call this method to reset onboarding and show it again
+  static Future<void> resetOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_onboardingCompleteKey);
   }
 
   @override
@@ -58,7 +125,7 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: _onGetStarted,
+        onTap: _navigateToNextScreen,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -101,13 +168,6 @@ class _SplashScreenState extends State<SplashScreen>
           ],
         ),
       ),
-    );
-  }
-
-  void _onGetStarted() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
 }

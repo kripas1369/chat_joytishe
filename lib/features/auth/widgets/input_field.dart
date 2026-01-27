@@ -28,8 +28,8 @@ class InputField extends StatelessWidget {
         SizedBox(height: 6),
         TextFormField(
           controller: controller,
-          cursorColor: Colors.white,
-          cursorWidth: 1,
+          cursorColor: AppColors.cosmicPurple,
+          cursorWidth: 2,
           obscureText: obscure,
           style: TextStyle(color: Colors.white),
           decoration: InputDecoration(
@@ -40,12 +40,29 @@ class InputField extends StatelessWidget {
                 ? Icon(suffixIcon, color: Colors.white)
                 : null,
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white),
+            hintStyle: TextStyle(color: AppColors.textGray400),
             filled: true,
-            fillColor: AppColors.primaryPurple.withOpacity(0.06),
+            fillColor: Colors.white.withOpacity(0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: AppColors.cosmicPurple.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.cosmicPurple.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.cosmicPurple.withOpacity(0.5),
+                width: 2,
+              ),
             ),
           ),
         ),
