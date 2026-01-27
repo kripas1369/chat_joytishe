@@ -1,5 +1,8 @@
+import 'package:chat_jyotishi/features/app_widgets/app_background_gradient.dart';
 import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
+import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:flutter/material.dart';
 import '../../../constants/constant.dart';
 
@@ -52,9 +55,7 @@ class _HoroscopeGridScreenState extends State<HoroscopeScreen>
     return Scaffold(
       body: Stack(
         children: [
-          Container(
-            decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
-          ),
+          buildGradientBackground(),
           Positioned(
             top: -100,
             left: -50,
@@ -79,6 +80,7 @@ class _HoroscopeGridScreenState extends State<HoroscopeScreen>
             ),
           ),
 
+          // buildNightModeOverlay(),
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,14 +142,7 @@ class _HoroscopeGridScreenState extends State<HoroscopeScreen>
       child: Container(
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primaryPurple.withOpacity(0.4),
-              AppColors.deepPurple.withOpacity(0.08),
-            ],
-          ),
+          gradient: AppColors.cosmicHeroGradient.withOpacity(0.8),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
           boxShadow: [

@@ -1,4 +1,5 @@
 import 'package:chat_jyotishi/features/appointment/screens/appointment_screen.dart';
+import 'package:chat_jyotishi/features/auth/screens/initial_logo_screen.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/chat_list_screen_astrologer.dart';
@@ -59,6 +60,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey,
       routes: {
+        '/initial_logo_screen': (context) => InitialLogoScreen(),
         '/splash_screen': (context) => SplashScreen(),
         '/onboarding_screen': (context) => OnboardingScreen(),
         '/login_screen': (context) => LoginScreen(),

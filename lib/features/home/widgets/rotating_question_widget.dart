@@ -191,7 +191,7 @@ class _RotatingQuestionsWidgetState extends State<RotatingQuestionsWidget>
                       word: _currentTitleWords[index],
                       index: index,
                       style: const TextStyle(
-                        color: gold,
+                        color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         height: 1.4,

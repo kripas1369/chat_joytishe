@@ -118,7 +118,7 @@ class AppColors {
     colors: [Color(0xFFC0C0C0), Color(0xFF808080)],
   );
 
-  static const LinearGradient premiumGradient = LinearGradient(
+  static const LinearGradient professionalGradient = LinearGradient(
     colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
   );
 

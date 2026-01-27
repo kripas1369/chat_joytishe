@@ -170,8 +170,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                           children: [
                             const SizedBox(height: 16),
                             _buildHeader(),
-                            const SizedBox(height: 20),
-                            _buildLiveJyotishSection(),
+                            // const SizedBox(height: 20),
+                            // _buildLiveJyotishSection(),
                             const SizedBox(height: 24),
                             const RotatingQuestionsWidget(),
                             const SizedBox(height: 28),
@@ -222,9 +222,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const WelcomeScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const WelcomeScreen()),
                 );
               },
               child: Container(
@@ -1550,7 +1548,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     );
   }
 
-
   // Navigation and action handlers
   void _navigateTo(String route) {
     if (route == '/chat_list_screen') {
@@ -1655,5 +1652,4 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       }
     }
   }
-
 }

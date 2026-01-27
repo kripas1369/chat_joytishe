@@ -1,4 +1,6 @@
 import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
+import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
+import 'package:chat_jyotishi/features/home/screens/home_dashboard_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -53,7 +55,8 @@ class _AppointmentScreenState extends State<AppointmentScreen>
       backgroundColor: AppColors.backgroundDark,
       body: Stack(
         children: [
-          buildGradientBackground(),
+          // buildGradientBackground(),
+          StarFieldBackground(),
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -92,7 +95,7 @@ class _AppointmentScreenState extends State<AppointmentScreen>
             icon: Icons.arrow_back_rounded,
             onTap: () => Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => HomeScreenClient()),
+              MaterialPageRoute(builder: (context) => HomeDashboardScreen()),
             ),
           ),
           const SizedBox(width: 16),
@@ -145,7 +148,7 @@ class _AppointmentScreenState extends State<AppointmentScreen>
                 ),
                 decoration: BoxDecoration(
                   gradient: isSelected
-                      ? AppColors.cardGradient1.withOpacity(0.8)
+                      ? AppColors.cosmicHeroGradient
                       : LinearGradient(
                           colors: [
                             AppColors.cardDark.withOpacity(0.5),
@@ -363,11 +366,11 @@ class _AppointmentScreenState extends State<AppointmentScreen>
 
     switch (tier.toLowerCase()) {
       case 'premium':
-        color = gold;
+        color = Colors.pinkAccent;
         label = 'Premium';
         break;
       case 'professional':
-        color = AppColors.accentPurple;
+        color = gold;
         label = 'Pro';
         break;
       default:
@@ -453,7 +456,7 @@ class _AppointmentScreenState extends State<AppointmentScreen>
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           gradient: isPrimary
-              ? AppColors.splashReverseGradient
+              ? AppColors.cosmicHeroGradient
               : LinearGradient(
                   colors: [
                     AppColors.cardDark.withOpacity(0.6),
@@ -498,9 +501,9 @@ class _AppointmentScreenState extends State<AppointmentScreen>
   LinearGradient _getTierGradient(String tier) {
     switch (tier.toLowerCase()) {
       case 'premium':
-        return AppColors.premiumGradient;
+        return AppColors.cosmicHeroGradient;
       case 'professional':
-        return AppColors.cardGradient1;
+        return AppColors.professionalGradient;
       default:
         return AppColors.standardGradient;
     }

@@ -157,7 +157,7 @@ class _NotificationScreenState extends State<NotificationScreen>
                 ),
                 decoration: BoxDecoration(
                   gradient: isSelected
-                      ? AppColors.primaryGradient
+                      ? AppColors.cosmicHeroGradient
                       : LinearGradient(
                           colors: [
                             AppColors.cardDark.withOpacity(0.5),
