@@ -1,10 +1,9 @@
 import 'package:chat_jyotishi/features/appointment/screens/appointment_screen.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
-import 'package:chat_jyotishi/features/auth/screens/splash_screen.dart';
-import 'package:chat_jyotishi/features/chat/screens/broadcast_loading_screen.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/chat_list_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
+import 'package:chat_jyotishi/features/chat_astrologer/screens/broadcast_messages_screen.dart';
 import 'package:chat_jyotishi/features/history_client/screens/history_screen_client.dart';
 import 'package:chat_jyotishi/features/home/screens/about_us_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/book_pandit_screen.dart';
@@ -17,20 +16,20 @@ import 'package:chat_jyotishi/features/home/screens/privacy_policy_screen.dart';
 import 'package:chat_jyotishi/features/home_astrologer/screens/home_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/notification/screens/notification_screen.dart';
 import 'package:chat_jyotishi/features/notification/services/notification_service.dart';
+import 'package:chat_jyotishi/features/onboarding/screens/onboarding_screen.dart';
 import 'package:chat_jyotishi/features/payment/screens/broadcast_page.dart';
 import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
 import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
 import 'package:chat_jyotishi/features/setting/screens/change_password_screen.dart';
 import 'package:chat_jyotishi/features/setting/screens/set_password_screen.dart';
 import 'package:chat_jyotishi/features/setting/screens/settings_screen.dart';
-import 'package:chat_jyotishi/features/test_screens/test_home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 import 'features/auth/screens/login_screen.dart';
 
-import 'features/auth/screens/initial_logo_screen.dart';
+import 'features/auth/screens/splash_screen.dart';
 import 'features/profile/screens/user_profile_screen.dart';
 
 /// Global navigator key for navigation from notification service
@@ -60,32 +59,12 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey,
       routes: {
-        // '/splash_screen': (context) => SplashScreen(),
-        // '/login_screen': (context) => LoginScreen(),
-        // '/login_screen_astrologer': (context) => LoginScreenAstrologer(),
-        // '/home_screen_client': (context) => HomeScreenClient(),
-        // '/home_screen_astrologer': (context) => HomeScreenAstrologer(),
-        // '/user_profile_screen': (context) => UserProfileScreen(),
-        // '/horoscope_screen': (context) => HoroscopeScreen(),
-        // // '/chat_screen': (context) => ChatScreen(),
-        // '/set_password_screen': (context) => SetPasswordScreen(),
-        // '/change_password_screen': (context) => ChangePasswordScreen(),
-        // '/chat_list_screen': (context) => ChatListScreen(),
-        // '/astrologer_chat_list_screen': (context) => AstrologerChatListScreen(),
-        // // Astrologer incoming requests and broadcasts
-        // '/incoming_requests': (context) => IncomingRequestsScreen(),
-        // '/broadcast_messages': (context) => BroadcastMessagesScreen(),
-        // // Payment and broadcast routes
-        // '/payment_page': (context) => PaymentPage(),
-        // '/chat_options_page': (context) => ChatOptionsPage(),
-        // '/broadcast_page': (context) => BroadcastPage(),
-        '/initial_logo_screen': (context) => InitialLogoScreen(),
         '/splash_screen': (context) => SplashScreen(),
+        '/onboarding_screen': (context) => OnboardingScreen(),
         '/login_screen': (context) => LoginScreen(),
         '/login_screen_astrologer': (context) => LoginScreenAstrologer(),
-
-        ///Home routes
         '/home_screen_client': (context) => HomeScreenClient(),
+        '/history_screen_client': (context) => HistoryScreenClient(),
         '/book_pandit_screen': (context) => BookPanditScreen(),
         '/book_vaastu_sastri_screen': (context) => BookVaastuSastriScreen(),
         '/settings_screen': (context) => SettingsScreen(),
@@ -109,20 +88,14 @@ class MyApp extends StatelessWidget {
         '/payment_page': (context) => PaymentPage(),
         '/chat_options_page': (context) => ChatOptionsScreen(),
         '/broadcast_page': (context) => BroadcastPage(),
-        '/broadcast_loading_screen': (context) => BroadcastLoadingScreen(),
 
         ///Appointment feature
         '/appointment_screen': (context) => AppointmentScreen(),
 
         ///Notification service route
         '/notification_screen': (context) => NotificationScreen(),
-
-        ///History routes
-        '/history_screen_client': (context) => HistoryScreenClient(),
-
-        '/test_home_screen': (context) => TestHomeScreen(),
       },
-      initialRoute: '/home_screen_client',
+      initialRoute: '/splash_screen',
     );
   }
 }

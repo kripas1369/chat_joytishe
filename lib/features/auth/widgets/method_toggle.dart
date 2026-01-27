@@ -14,8 +14,12 @@ class MethodToggle extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Color(0xFF10162E),
+          color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.cosmicPurple.withOpacity(0.2),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
@@ -29,13 +33,23 @@ class MethodToggle extends StatelessWidget {
 
   Widget _tab(String text, IconData icon, bool enabled) {
     return Expanded(
-      child: Container(
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
         padding: EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: enabled
-              ? AppColors.primaryPurple.withOpacity(0.5)
-              : Colors.transparent,
+          gradient: enabled ? AppColors.cosmicPrimaryGradient : null,
+          color: enabled ? null : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
+          boxShadow: enabled
+              ? [
+                  BoxShadow(
+                    color: AppColors.cosmicPurple.withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -43,14 +57,15 @@ class MethodToggle extends StatelessWidget {
             Icon(
               icon,
               size: 16,
-              color: enabled ? Colors.white : Colors.white54,
+              color: enabled ? Colors.white : AppColors.textGray400,
             ),
             SizedBox(width: 6),
             Text(
               text,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: enabled ? Colors.white : Colors.white70,
+                fontSize: 12,
+                color: enabled ? Colors.white : AppColors.textGray300,
               ),
             ),
           ],

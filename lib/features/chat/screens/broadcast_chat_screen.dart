@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/constant.dart';
@@ -9,6 +10,9 @@ import '../../app_widgets/star_field_background.dart';
 import '../../payment/services/coin_provider.dart';
 import '../../payment/widgets/insufficient_coins_sheet.dart';
 import '../../payment/models/coin_models.dart';
+import '../models/active_user_model.dart';
+import '../repository/chat_repository.dart';
+import '../service/chat_service.dart';
 import '../service/socket_service.dart';
 import 'chat_screen.dart';
 
@@ -104,8 +108,9 @@ class BroadcastChatScreen extends StatefulWidget {
 }
 
 class _BroadcastChatScreenState extends State<BroadcastChatScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final SocketService _socketService = SocketService();
+  final ChatRepository _chatRepository = ChatRepository(ChatService());
 
   bool _isConnecting = false;
   bool _isSending = false;
@@ -114,10 +119,17 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
   int? _selectedIndex;
   DateTime? _expiresAt;
   Timer? _countdownTimer;
+  Timer? _refreshTimer;
   int _remainingSeconds = 300; // 5 minutes
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  late AnimationController _connectionController;
+  late AnimationController _rotationController;
+  late AnimationController _waveController;
+  late Animation<double> _waveAnimation;
+
+  List<ActiveAstrologerModel> _onlineAstrologers = [];
 
   String? _currentUserId;
   String? _accessToken;
@@ -133,12 +145,47 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
   void _setupAnimations() {
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    _connectionController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat();
+
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    )..repeat();
+
+    _waveController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _waveAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _waveController, curve: Curves.easeInOut),
+    );
+  }
+
+  Future<void> _loadOnlineAstrologers() async {
+    try {
+      final astrologers = await _chatRepository.getActiveAstrologers();
+      if (mounted) {
+        setState(() {
+          _onlineAstrologers = astrologers
+              .where((a) => a.isOnline)
+              .take(6) // Show max 6 online astrologers
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading online astrologers: $e');
+    }
   }
 
   Future<void> _initializeUser() async {
@@ -339,6 +386,12 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
       _isWaiting = true;
     });
 
+    // Load online astrologers when waiting starts
+    _loadOnlineAstrologers();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _loadOnlineAstrologers();
+    });
+
     try {
       _socketService.sendBroadcastMessage(
         content: _selectedMessage!,
@@ -346,6 +399,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
       );
       setState(() => _isSending = false);
     } catch (e) {
+      _refreshTimer?.cancel();
       setState(() {
         _isSending = false;
         _isWaiting = false;
@@ -360,10 +414,12 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
 
   void _cancelBroadcast() {
     _countdownTimer?.cancel();
+    _refreshTimer?.cancel();
     setState(() {
       _isWaiting = false;
       _selectedMessage = null;
       _selectedIndex = null;
+      _onlineAstrologers = [];
     });
     // Note: The backend may need a cancel event - for now we just reset UI
   }
@@ -371,7 +427,11 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    _refreshTimer?.cancel();
     _pulseController.dispose();
+    _connectionController.dispose();
+    _rotationController.dispose();
+    _waveController.dispose();
 
     // Remove listeners
     _socketService.offBroadcastSent();
@@ -385,12 +445,23 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.primaryBlack,
       body: Stack(
         children: [
-          StarFieldBackground(),
+          const StarFieldBackground(),
           Container(
             decoration: BoxDecoration(
-              gradient: AppColors.backgroundGradient.withOpacity(0.9),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.7),
+                  AppColors.cosmicPurple.withOpacity(0.3),
+                  AppColors.cosmicPink.withOpacity(0.2),
+                  Colors.black.withOpacity(0.9),
+                ],
+                stops: const [0.0, 0.3, 0.6, 1.0],
+              ),
             ),
           ),
           SafeArea(
@@ -413,7 +484,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
               color: Colors.black54,
               child: const Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.primaryPurple,
+                  color: AppColors.cosmicPurple,
                 ),
               ),
             ),
@@ -430,28 +501,37 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
           icon: Icons.arrow_back,
         ),
         const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Everyone Jyotish',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [
+                          AppColors.purple300,
+                          AppColors.pink300,
+                          AppColors.red300,
+                        ],
+                      ).createShader(bounds),
+                      child: const Text(
+                        'Everyone Jyotish',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'Broadcast to all astrologers',
+                      style: TextStyle(
+                        color: AppColors.textGray300,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                'Broadcast to all astrologers',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -461,18 +541,30 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header text
-        const Text(
-          'What do you need help with?',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [
+              AppColors.purple300,
+              AppColors.pink300,
+              AppColors.red300,
+            ],
+          ).createShader(bounds),
+          child: const Text(
+            'What do you need help with?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           'Select a topic to broadcast to all online astrologers',
-          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+          style: TextStyle(
+            color: AppColors.textGray300,
+            fontSize: 14,
+          ),
         ),
         const SizedBox(height: 20),
 
@@ -576,7 +668,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 gradient: _selectedMessage != null
-                    ? LinearGradient(colors: [Colors.orange, Colors.deepOrange])
+                    ? AppColors.cosmicHeroGradient
                     : null,
                 color: _selectedMessage == null
                     ? Colors.white.withOpacity(0.1)
@@ -585,9 +677,10 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
                 boxShadow: _selectedMessage != null
                     ? [
                         BoxShadow(
-                          color: Colors.orange.withOpacity(0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          color: AppColors.cosmicRed.withOpacity(0.5),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                          spreadRadius: 2,
                         ),
                       ]
                     : null,
@@ -636,54 +729,50 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
   }
 
   Widget _buildWaitingView() {
-    return Center(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Animated waiting indicator
-          AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _pulseAnimation.value,
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primaryPurple.withOpacity(0.5),
-                        blurRadius: 30,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.broadcast_on_personal,
-                    size: 50,
-                    color: Colors.white,
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-
-          const Text(
-            'Waiting for an astrologer...',
+          const SizedBox(height: 20),
+          // Connection animation with spider web and astrologers
+          _buildConnectionAnimation(),
+          const SizedBox(height: 20),
+          // Status info
+          Text(
+            _onlineAstrologers.isEmpty
+                ? 'Finding Online Astrologers...'
+                : 'Connecting to ${_onlineAstrologers.length} Online Astrologers',
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              color: AppColors.textGray300,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 40),
+          // Status text
+          ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [
+                AppColors.purple300,
+                AppColors.pink300,
+                AppColors.red300,
+              ],
+            ).createShader(bounds),
+            child: const Text(
+              'Waiting for an astrologer...',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Your message has been sent to all online astrologers',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: AppColors.textGray300,
               fontSize: 14,
             ),
             textAlign: TextAlign.center,
@@ -696,20 +785,28 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.1),
               borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppColors.cosmicPurple.withOpacity(0.3),
+                width: 1,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   Icons.timer,
-                  color: _remainingSeconds < 60 ? Colors.red : Colors.white,
+                  color: _remainingSeconds < 60
+                      ? AppColors.cosmicRed
+                      : AppColors.cosmicPurple,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Expires in ${_formatTime(_remainingSeconds)}',
                   style: TextStyle(
-                    color: _remainingSeconds < 60 ? Colors.red : Colors.white,
+                    color: _remainingSeconds < 60
+                        ? AppColors.cosmicRed
+                        : Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -727,20 +824,245 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white24),
+                border: Border.all(
+                  color: AppColors.cosmicPurple.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
-              child: const Text(
+              child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: AppColors.textGray300,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
+          const SizedBox(height: 40),
         ],
       ),
     );
+  }
+
+  Widget _buildConnectionAnimation() {
+    // Use online astrologers or create placeholder positions
+    final astrologerCount = _onlineAstrologers.isEmpty ? 6 : _onlineAstrologers.length;
+    final displayAstrologers = _onlineAstrologers.isEmpty
+        ? List.generate(6, (i) => null)
+        : _onlineAstrologers.take(6).toList();
+
+    return SizedBox(
+      width: 320,
+      height: 320,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([
+          _pulseAnimation,
+          _connectionController,
+          _rotationController,
+          _waveController,
+        ]),
+        builder: (context, child) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              // Spider web network
+              CustomPaint(
+                size: const Size(320, 320),
+                painter: SpiderWebPainter(
+                  progress: _connectionController.value,
+                  rotation: _rotationController.value,
+                  color: AppColors.cosmicPurple,
+                ),
+              ),
+
+              // Astrologer avatars positioned around the web
+              ...List.generate(astrologerCount, (index) {
+                final angle = (index * 2 * pi / astrologerCount) - (pi / 2);
+                final radius = 130.0;
+                final waveOffset = sin((_waveAnimation.value + index * 0.3) * 2 * pi) * 8;
+                final currentRadius = radius + waveOffset;
+                
+                final x = cos(angle + _rotationController.value * 0.5) * currentRadius;
+                final y = sin(angle + _rotationController.value * 0.5) * currentRadius;
+                
+                final astrologer = index < displayAstrologers.length 
+                    ? displayAstrologers[index] 
+                    : null;
+
+                return Positioned(
+                  left: 160 + x - 30,
+                  top: 160 + y - 30,
+                  child: Transform.scale(
+                    scale: 0.8 + (sin((_waveAnimation.value + index * 0.2) * 2 * pi) * 0.2),
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.cosmicPurple.withOpacity(0.8),
+                            AppColors.cosmicPink.withOpacity(0.6),
+                          ],
+                        ),
+                        border: Border.all(
+                          color: AppColors.cosmicPurple.withOpacity(0.8),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.cosmicPurple.withOpacity(0.6),
+                            blurRadius: 15,
+                            spreadRadius: 3,
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: astrologer?.profilePhoto != null &&
+                                astrologer!.profilePhoto.isNotEmpty
+                            ? Image.network(
+                                astrologer.profilePhoto,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+
+              // Center pulsing icon
+              Transform.scale(
+                scale: _pulseAnimation.value,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.cosmicPrimaryGradient,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.cosmicPurple.withOpacity(0.6),
+                        blurRadius: 30,
+                        spreadRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.wifi_find_rounded,
+                    color: Colors.white,
+                    size: 45,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+}
+
+/// Custom painter for spider web network animation
+class SpiderWebPainter extends CustomPainter {
+  final double progress;
+  final double rotation;
+  final Color color;
+
+  SpiderWebPainter({
+    required this.progress,
+    required this.rotation,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final maxRadius = size.width / 2 - 20;
+    const nodeCount = 8; // Number of astrologer positions
+
+    // Create concentric circles (spider web rings)
+    final rings = 4;
+    for (int ring = 1; ring <= rings; ring++) {
+      final ringRadius = (maxRadius / rings) * ring;
+      final ringProgress = (progress + ring * 0.1) % 1.0;
+      final opacity = (0.2 + (ringProgress * 0.3)).clamp(0.0, 0.5);
+
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = color.withOpacity(opacity);
+
+      canvas.drawCircle(center, ringRadius, paint);
+    }
+
+    // Draw radial lines (spider web spokes)
+    for (int i = 0; i < nodeCount; i++) {
+      final angle = (i * 2 * pi / nodeCount) - (pi / 2) + (rotation * 0.3);
+      final lineProgress = (progress + i * 0.15) % 1.0;
+      final opacity = (0.3 + (lineProgress * 0.4)).clamp(0.0, 0.7);
+
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = color.withOpacity(opacity);
+
+      final endPoint = Offset(
+        center.dx + maxRadius * cos(angle),
+        center.dy + maxRadius * sin(angle),
+      );
+
+      canvas.drawLine(center, endPoint, paint);
+    }
+
+    // Draw connecting lines between nodes (web pattern)
+    final nodes = List.generate(nodeCount, (index) {
+      final angle = (index * 2 * pi / nodeCount) - (pi / 2) + (rotation * 0.3);
+      final nodeRadius = maxRadius * 0.85;
+      return Offset(
+        center.dx + nodeRadius * cos(angle),
+        center.dy + nodeRadius * sin(angle),
+      );
+    });
+
+    // Draw web connections
+    for (int i = 0; i < nodes.length; i++) {
+      for (int j = i + 1; j < nodes.length; j++) {
+        final distance = (nodes[i] - nodes[j]).distance;
+        if (distance < maxRadius * 1.2) {
+          final lineProgress = (progress + (i + j) * 0.1) % 1.0;
+          final opacity = (0.15 + (lineProgress * 0.25)).clamp(0.0, 0.4);
+
+          final paint = Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1
+            ..color = color.withOpacity(opacity);
+
+          canvas.drawLine(nodes[i], nodes[j], paint);
+        }
+      }
+    }
+
+    // Draw pulsing center node
+    final centerPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = color.withOpacity(0.4 + (progress * 0.3));
+    canvas.drawCircle(center, 6, centerPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant SpiderWebPainter oldDelegate) {
+    return progress != oldDelegate.progress || rotation != oldDelegate.rotation;
   }
 }

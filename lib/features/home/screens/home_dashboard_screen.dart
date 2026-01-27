@@ -1,8 +1,5 @@
 import 'dart:convert';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
-import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
-import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
-import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
 import 'package:chat_jyotishi/features/home/widgets/rotating_question_widget.dart';
 import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
@@ -17,6 +14,7 @@ import 'package:chat_jyotishi/features/chat/service/chat_service.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_screen.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
+import 'package:chat_jyotishi/features/home/screens/welcome_screen.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -61,7 +59,6 @@ class HomeDashboardScreen extends StatefulWidget {
 
 class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     with TickerProviderStateMixin {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final CoinService _coinService = CoinService();
   final SocketService _socketService = SocketService();
 
@@ -141,9 +138,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
           ChatBloc(chatRepository: ChatRepository(ChatService()))
             ..add(FetchActiveUsersEvent()),
       child: Scaffold(
-        key: _scaffoldKey,
         backgroundColor: AppColors.primaryBlack,
-        drawer: _buildDrawer(),
         body: Stack(
           children: [
             // Background
@@ -223,9 +218,35 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       children: [
         Row(
           children: [
-            GlassIconButton(
-              icon: Icons.menu_rounded,
-              onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const WelcomeScreen(),
+                  ),
+                );
+              },
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: AppColors.cosmicPrimaryGradient,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.cosmicPurple.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
             ),
             const SizedBox(width: 16),
             _buildAppLogo(),
@@ -1529,152 +1550,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     );
   }
 
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: AppColors.primaryBlack,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primaryBlack,
-              AppColors.cosmicPurple.withOpacity(0.1),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildDrawerHeader(),
-              Divider(color: Colors.white.withOpacity(0.08)),
-              Expanded(child: _buildDrawerItems()),
-              Divider(color: Colors.white.withOpacity(0.08)),
-              _buildDrawerLogout(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerHeader() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: AppColors.cosmicPrimaryGradient,
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primaryBlack,
-              ),
-              child: const CircleAvatar(
-                radius: 40,
-                backgroundColor: AppColors.cardMedium,
-                child: Icon(
-                  Icons.person_rounded,
-                  color: AppColors.textGray300,
-                  size: 40,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '$userName Shrestha',
-            style: const TextStyle(
-              color: AppColors.textWhite,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            userEmail,
-            style: const TextStyle(color: AppColors.textGray400, fontSize: 13),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawerItems() {
-    final items = [
-      {
-        'icon': Icons.home_rounded,
-        'title': 'Home',
-        'selected': true,
-        'route': null,
-      },
-      {
-        'icon': Icons.person_rounded,
-        'title': 'Profile',
-        'route': '/user_profile_screen',
-      },
-      {
-        'icon': Icons.history_rounded,
-        'title': 'History',
-        'route': '/history_screen_client',
-      },
-      {
-        'icon': Icons.settings_rounded,
-        'title': 'Settings',
-        'route': '/settings_screen',
-      },
-      {
-        'icon': Icons.help_outline_rounded,
-        'title': 'Help & Support',
-        'route': '/help_support_screen',
-      },
-      {
-        'icon': Icons.info_outline_rounded,
-        'title': 'About Us',
-        'route': '/about_us_screen',
-      },
-      {
-        'icon': Icons.privacy_tip_outlined,
-        'title': 'Privacy Policy',
-        'route': '/privacy_policy_screen',
-      },
-    ];
-
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      children: items.map((item) {
-        return DrawerItem(
-          icon: item['icon'] as IconData,
-          title: item['title'] as String,
-          isSelected: item['selected'] as bool? ?? false,
-          onTap: () {
-            if (item['route'] != null) {
-              _navigateTo(item['route'] as String);
-            } else {
-              Navigator.pop(context);
-            }
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildDrawerLogout() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: DrawerItem(
-        icon: Icons.logout_rounded,
-        title: 'Logout',
-        isDestructive: true,
-        onTap: _handleLogout,
-      ),
-    );
-  }
 
   // Navigation and action handlers
   void _navigateTo(String route) {
@@ -1781,10 +1656,4 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     }
   }
 
-  void _handleLogout() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
-  }
 }

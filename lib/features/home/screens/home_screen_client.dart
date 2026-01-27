@@ -1,8 +1,5 @@
 import 'dart:convert';
 import 'dart:math';
-import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
-import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
-import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
 import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
 import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
@@ -11,7 +8,6 @@ import 'package:chat_jyotishi/features/chat/bloc/chat_bloc.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_events.dart';
 import 'package:chat_jyotishi/features/chat/repository/chat_repository.dart';
 import 'package:chat_jyotishi/features/chat/service/chat_service.dart';
-import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/home/screens/home_dashboard_screen.dart';
 import 'dart:ui';
@@ -59,7 +55,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final CoinService _coinService = CoinService();
-  final SocketService _socketService = SocketService();
   final ScrollController _scrollController = ScrollController();
 
   // Animation Controllers
@@ -102,7 +97,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       vsync: this,
     )..repeat();
     _gradientShiftAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _gradientShiftController, curve: Curves.linear),
+      CurvedAnimation(
+        parent: _gradientShiftController,
+        curve: Curves.linear,
+      ),
     );
 
     // Float animation (3s infinite)
@@ -111,7 +109,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       vsync: this,
     )..repeat(reverse: true);
     _floatAnimation = Tween<double>(begin: 0.0, end: -10.0).animate(
-      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _floatController,
+        curve: Curves.easeInOut,
+      ),
     );
 
     // Pulse animation (2s infinite)
@@ -120,7 +121,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       vsync: this,
     )..repeat(reverse: true);
     _pulseAnimation = Tween<double>(begin: 0.2, end: 0.3).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeInOut,
+      ),
     );
 
     // Fade in animation
@@ -136,7 +140,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       vsync: this,
     )..repeat(reverse: true);
     _bounceAnimation = Tween<double>(begin: 0.0, end: -10.0).animate(
-      CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _bounceController,
+        curve: Curves.easeInOut,
+      ),
     );
   }
 
@@ -175,10 +182,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       create: (context) =>
           ChatBloc(chatRepository: ChatRepository(ChatService()))
             ..add(FetchActiveUsersEvent()),
-      child: Scaffold(
+      child:       Scaffold(
         key: _scaffoldKey,
         backgroundColor: AppColors.primaryBlack,
-        drawer: _buildDrawer(),
         body: Stack(
           children: [
             // Background
@@ -200,8 +206,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 _buildServicesSection(isMobile, isTablet, isDesktop),
                 // Why Choose Us Section
                 _buildWhyChooseUsSection(isMobile),
-                // CTA Section
-                _buildCTASection(isMobile, isTablet, isDesktop),
                 // Footer
                 _buildFooter(isMobile),
               ],
@@ -249,9 +253,29 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           ),
         ),
       ),
-      leading: GlassIconButton(
-        icon: Icons.menu_rounded,
-        onTap: () => _scaffoldKey.currentState?.openDrawer(),
+      leading: GestureDetector(
+        onTap: () {
+          Navigator.pop(context);
+        },
+        child: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: AppColors.cosmicPrimaryGradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.cosmicPurple.withOpacity(0.3),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.arrow_back_rounded,
+            color: Colors.white,
+            size: 24,
+          ),
+        ),
       ),
       title: _buildAppLogo(),
       actions: [
@@ -286,8 +310,8 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         ),
         const SizedBox(width: 8),
         ShaderMask(
-          shaderCallback: (bounds) =>
-              AppColors.cosmicPrimaryGradient.createShader(bounds),
+          shaderCallback: (bounds) => AppColors.cosmicPrimaryGradient
+              .createShader(bounds),
           child: const Text(
             'Jyotish',
             style: TextStyle(
@@ -374,7 +398,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                         shape: BoxShape.circle,
                         color: Colors.white.withOpacity(0.1),
                       ),
-                      child: CustomPaint(painter: HoroscopeWheelPainter()),
+                      child: CustomPaint(
+                        painter: HoroscopeWheelPainter(),
+                      ),
                     ),
                   );
                 },
@@ -435,47 +461,18 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                                       ],
                                       stops: [
                                         _gradientShiftAnimation.value,
-                                        (_gradientShiftAnimation.value + 0.5) %
-                                            1.0,
-                                        (_gradientShiftAnimation.value + 1.0) %
-                                            1.0,
+                                        (_gradientShiftAnimation.value + 0.5) % 1.0,
+                                        (_gradientShiftAnimation.value + 1.0) % 1.0,
                                       ],
                                     ).createShader(bounds);
                                   },
-                                  child: RichText(
+                                  child: Text(
+                                    'Chat Jyotishi',
                                     textAlign: TextAlign.center,
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: 'Discover Your ',
-                                          style: TextStyle(
-                                            fontSize: headingSize,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        WidgetSpan(
-                                          child: ShaderMask(
-                                            shaderCallback: (bounds) {
-                                              return LinearGradient(
-                                                colors: [
-                                                  AppColors.pink400,
-                                                  AppColors.red400,
-                                                  AppColors.purple400,
-                                                ],
-                                              ).createShader(bounds);
-                                            },
-                                            child: Text(
-                                              'Cosmic Path',
-                                              style: TextStyle(
-                                                fontSize: headingSize,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                    style: TextStyle(
+                                      fontSize: headingSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 );
@@ -520,9 +517,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                           child: Opacity(
                             opacity: value,
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 32),
                               child: Text(
                                 'Personalized horoscopes, real-time consultations, and cosmic insights to guide your journey.',
                                 style: TextStyle(
@@ -532,22 +527,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                                 textAlign: TextAlign.center,
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 40),
-                    // CTA Button
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 800),
-                      curve: Curves.easeOut,
-                      builder: (context, value, child) {
-                        return Transform.translate(
-                          offset: Offset(0, 20 * (1 - value)),
-                          child: Opacity(
-                            opacity: value,
-                            child: _buildHeroCTAButton(),
                           ),
                         );
                       },
@@ -598,7 +577,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       onTap: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
+          MaterialPageRoute(
+            builder: (_) => const HomeDashboardScreen(),
+          ),
         );
       },
       child: Container(
@@ -709,7 +690,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                     ),
                   ],
                 ),
-                child: CustomPaint(painter: HoroscopeWheelPainter()),
+                child: CustomPaint(
+                  painter: HoroscopeWheelPainter(),
+                ),
               ),
             );
           },
@@ -759,10 +742,16 @@ class _HomeScreenClientState extends State<HomeScreenClient>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [color.withOpacity(0.8), color.withOpacity(0.6)],
+                  colors: [
+                    color.withOpacity(0.8),
+                    color.withOpacity(0.6),
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: color.withOpacity(0.3), width: 1),
+                border: Border.all(
+                  color: color.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -807,7 +796,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         const SizedBox(height: 16),
         ShaderMask(
           shaderCallback: (bounds) => LinearGradient(
-            colors: [AppColors.purple300, AppColors.pink300, AppColors.red300],
+            colors: [
+              AppColors.purple300,
+              AppColors.pink300,
+              AppColors.red300,
+            ],
           ).createShader(bounds),
           child: const Text(
             'Personalized Horoscopes',
@@ -835,21 +828,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
 
   Widget _buildFeatureItem(int index) {
     final features = [
-      {
-        'icon': Icons.stars,
-        'title': 'Daily Predictions',
-        'desc': 'Get your daily horoscope',
-      },
-      {
-        'icon': Icons.favorite,
-        'title': 'Love Compatibility',
-        'desc': 'Find your perfect match',
-      },
-      {
-        'icon': Icons.work,
-        'title': 'Career Guidance',
-        'desc': 'Navigate your career path',
-      },
+      {'icon': Icons.stars, 'title': 'Daily Predictions', 'desc': 'Get your daily horoscope'},
+      {'icon': Icons.favorite, 'title': 'Love Compatibility', 'desc': 'Find your perfect match'},
+      {'icon': Icons.work, 'title': 'Career Guidance', 'desc': 'Navigate your career path'},
     ];
     final feature = features[index];
 
@@ -915,7 +896,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   }
 
   // How It Works Section
-  Widget _buildHowItWorksSection(bool isMobile, bool isTablet, bool isDesktop) {
+  Widget _buildHowItWorksSection(
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
+  ) {
     return SliverToBoxAdapter(
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -926,7 +911,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.black, Colors.grey.shade900, Colors.black],
+            colors: [
+              Colors.black,
+              Colors.grey.shade900,
+              Colors.black,
+            ],
           ),
         ),
         child: Column(
@@ -964,16 +953,12 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             // Steps
             isMobile
                 ? Column(
-                    children: List.generate(
-                      3,
-                      (index) => _buildStepCard(index),
-                    ),
+                    children: List.generate(3, (index) => _buildStepCard(index)),
                   )
                 : Row(
-                    children: List.generate(
-                      3,
-                      (index) => Expanded(child: _buildStepCard(index)),
-                    ),
+                    children: List.generate(3, (index) => Expanded(
+                      child: _buildStepCard(index),
+                    )),
                   ),
           ],
         ),
@@ -983,21 +968,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
 
   Widget _buildStepCard(int index) {
     final steps = [
-      {
-        'number': '1',
-        'title': 'Sign Up',
-        'desc': 'Create your account in seconds',
-      },
-      {
-        'number': '2',
-        'title': 'Connect',
-        'desc': 'Choose your preferred astrologer',
-      },
-      {
-        'number': '3',
-        'title': 'Transform',
-        'desc': 'Get insights and guidance',
-      },
+      {'number': '1', 'title': 'Sign Up', 'desc': 'Create your account in seconds'},
+      {'number': '2', 'title': 'Connect', 'desc': 'Choose your preferred astrologer'},
+      {'number': '3', 'title': 'Transform', 'desc': 'Get insights and guidance'},
     ];
     final step = steps[index];
     final gradients = [
@@ -1025,9 +998,8 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          gradients[index].colors.first.withOpacity(
-                            _pulseAnimation.value,
-                          ),
+                          gradients[index].colors.first
+                              .withOpacity(_pulseAnimation.value),
                           Colors.transparent,
                         ],
                       ),
@@ -1081,7 +1053,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   }
 
   // Services Section
-  Widget _buildServicesSection(bool isMobile, bool isTablet, bool isDesktop) {
+  Widget _buildServicesSection(
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
+  ) {
     final crossAxisCount = isMobile ? 1 : (isTablet ? 2 : 3);
 
     return SliverToBoxAdapter(
@@ -1213,7 +1189,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           color: Colors.black.withOpacity(0.5),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: (service['gradient'] as LinearGradient).colors.first
+            color: (service['gradient'] as LinearGradient)
+                .colors
+                .first
                 .withOpacity(0.3),
             width: 1,
           ),
@@ -1370,7 +1348,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                   gradient: AppColors.cosmicPrimaryGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.check, color: Colors.white, size: 28),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1409,7 +1391,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -1417,21 +1402,13 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             children: [
-              _buildStatItem(
-                'Total Consultations',
-                '10,000+',
-                AppColors.pink300,
-              ),
+              _buildStatItem('Total Consultations', '10,000+', AppColors.pink300),
               const SizedBox(height: 24),
               _buildStatItem('Expert Astrologers', '50+', AppColors.purple300),
               const SizedBox(height: 24),
               _buildStatItem('Happy Clients', '8,500+', AppColors.red300),
               const SizedBox(height: 24),
-              _buildStatItem(
-                'Satisfaction Rate',
-                '98%',
-                Colors.yellow.shade300,
-              ),
+              _buildStatItem('Satisfaction Rate', '98%', Colors.yellow.shade300),
             ],
           ),
         ),
@@ -1443,7 +1420,13 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
         Text(
           value,
           style: TextStyle(
@@ -1500,7 +1483,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             const SizedBox(height: 24),
             Text(
               'Join thousands who have found clarity and guidance through our platform.',
-              style: TextStyle(color: AppColors.textGray300, fontSize: 24),
+              style: TextStyle(
+                color: AppColors.textGray300,
+                fontSize: 24,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
@@ -1572,12 +1558,18 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [_buildAppLogo(), _buildFooterLinks(isMobile)],
+                    children: [
+                      _buildAppLogo(),
+                      _buildFooterLinks(isMobile),
+                    ],
                   ),
             const SizedBox(height: 40),
             Text(
               '© 2026 Chat Jyotish. All rights reserved.',
-              style: TextStyle(color: AppColors.textGray400, fontSize: 12),
+              style: TextStyle(
+                color: AppColors.textGray400,
+                fontSize: 12,
+              ),
             ),
           ],
         ),
@@ -1596,160 +1588,16 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           onTap: () {},
           child: Text(
             link,
-            style: TextStyle(color: AppColors.textGray400, fontSize: 14),
+            style: TextStyle(
+              color: AppColors.textGray400,
+              fontSize: 14,
+            ),
           ),
         );
       }).toList(),
     );
   }
 
-  // Drawer
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: AppColors.primaryBlack,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primaryBlack,
-              AppColors.cosmicPurple.withOpacity(0.1),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildDrawerHeader(),
-              Divider(color: Colors.white.withOpacity(0.08)),
-              Expanded(child: _buildDrawerItems()),
-              Divider(color: Colors.white.withOpacity(0.08)),
-              _buildDrawerLogout(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerHeader() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: AppColors.cosmicPrimaryGradient,
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primaryBlack,
-              ),
-              child: const CircleAvatar(
-                radius: 40,
-                backgroundColor: AppColors.cardMedium,
-                child: Icon(
-                  Icons.person_rounded,
-                  color: AppColors.textSecondary,
-                  size: 40,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '$userName Shrestha',
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            userEmail,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawerItems() {
-    final items = [
-      {
-        'icon': Icons.home_rounded,
-        'title': 'Home',
-        'selected': true,
-        'route': null,
-      },
-      {
-        'icon': Icons.person_rounded,
-        'title': 'Profile',
-        'route': '/user_profile_screen',
-      },
-      {
-        'icon': Icons.history_rounded,
-        'title': 'History',
-        'route': '/history_screen_client',
-      },
-      {
-        'icon': Icons.settings_rounded,
-        'title': 'Settings',
-        'route': '/settings_screen',
-      },
-      {
-        'icon': Icons.help_outline_rounded,
-        'title': 'Help & Support',
-        'route': '/help_support_screen',
-      },
-      {
-        'icon': Icons.info_outline_rounded,
-        'title': 'About Us',
-        'route': '/about_us_screen',
-      },
-      {
-        'icon': Icons.privacy_tip_outlined,
-        'title': 'Privacy Policy',
-        'route': '/privacy_policy_screen',
-      },
-    ];
-
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      children: items.map((item) {
-        return DrawerItem(
-          icon: item['icon'] as IconData,
-          title: item['title'] as String,
-          isSelected: item['selected'] as bool? ?? false,
-          onTap: () {
-            if (item['route'] != null) {
-              _navigateTo(item['route'] as String);
-            } else {
-              Navigator.pop(context);
-            }
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildDrawerLogout() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: DrawerItem(
-        icon: Icons.logout_rounded,
-        title: 'Logout',
-        isDestructive: true,
-        onTap: _handleLogout,
-      ),
-    );
-  }
 
   // Navigation and action handlers
   void _navigateTo(String route) {
@@ -1771,15 +1619,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         MaterialPageRoute(builder: (_) => ChatOptionsScreen()),
       );
     } else {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentPage()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PaymentPage()),
+      );
     }
-  }
-
-  void _handleLogout() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
   }
 }
 

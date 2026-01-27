@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
@@ -8,6 +9,7 @@ import 'package:chat_jyotishi/features/chat/service/chat_lock_service.dart';
 import 'package:chat_jyotishi/features/chat/widgets/astrologer_profile_sheet.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/constant.dart';
@@ -338,13 +340,25 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
 
   @override
   Widget build(BuildContext context) {
+    _setSystemUIOverlay();
+
     return Scaffold(
+      backgroundColor: AppColors.primaryBlack,
       body: Stack(
         children: [
           StarFieldBackground(),
           Container(
             decoration: BoxDecoration(
-              gradient: AppColors.backgroundGradient.withOpacity(0.9),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.7),
+                  AppColors.cosmicPurple.withOpacity(0.3),
+                  Colors.black.withOpacity(0.9),
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
             ),
           ),
           SafeArea(
@@ -384,12 +398,20 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
             Container(
               color: Colors.black54,
               child: Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primaryPurple,
-                ),
+                child: CircularProgressIndicator(color: AppColors.cosmicPurple),
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  void _setSystemUIOverlay() {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.primaryBlack,
       ),
     );
   }
@@ -402,164 +424,266 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
           icon: Icons.arrow_back,
         ),
         SizedBox(width: 16),
-        Text(
-          'Chats',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
+        ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [AppColors.purple300, AppColors.pink300, AppColors.red300],
+          ).createShader(bounds),
+          child: Text(
+            'Chats',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         Spacer(),
-        IconButton(
-          onPressed: isLoading
-              ? null
-              : () => context.read<ChatBloc>().add(RefreshActiveUsersEvent()),
-          icon: isLoading
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Icon(Icons.refresh, color: Colors.white),
+        Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.cosmicPrimaryGradient,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            onPressed: isLoading
+                ? null
+                : () => context.read<ChatBloc>().add(RefreshActiveUsersEvent()),
+            icon: isLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(Icons.refresh, color: Colors.white),
+          ),
         ),
       ],
     );
   }
 
   Widget _balanceCard() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.monetization_on_rounded, color: gold, size: 28),
-          SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Your Balance',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              Text(
-                '$_coinBalance coins',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.cosmicPurple.withOpacity(0.2),
+                AppColors.cosmicPink.withOpacity(0.15),
+                AppColors.cosmicRed.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.cosmicPurple.withOpacity(0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.cosmicPurple.withOpacity(0.2),
+                blurRadius: 20,
+                spreadRadius: 2,
               ),
             ],
           ),
-          Spacer(),
-          GestureDetector(
-            onTap: () async {
-              await Navigator.pushNamed(context, '/payment_page');
-              _loadCoinBalance();
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: AppColors.cosmicPrimaryGradient,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.cosmicPurple.withOpacity(0.4),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.monetization_on_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
-              child: Row(
+              SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.add, color: Colors.white, size: 18),
-                  SizedBox(width: 4),
                   Text(
-                    'Add',
+                    'Your Balance',
+                    style: TextStyle(
+                      color: AppColors.textGray300,
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    '$_coinBalance coins',
                     style: TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-            ),
+              Spacer(),
+              GestureDetector(
+                onTap: () async {
+                  await Navigator.pushNamed(context, '/payment_page');
+                  _loadCoinBalance();
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.cosmicPrimaryGradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.cosmicPurple.withOpacity(0.4),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.add, color: Colors.white, size: 18),
+                      SizedBox(width: 4),
+                      Text(
+                        'Add',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _lockStatusBanner() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.withAlpha(51), Colors.blueAccent.withAlpha(26)],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withAlpha(77)),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.blue,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Waiting for reply',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'From ${_lockedJyotishName ?? "Jyotish"}',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
-                ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.cosmicPurple.withOpacity(0.2),
+                AppColors.cosmicPink.withOpacity(0.15),
               ],
             ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.cosmicPurple.withOpacity(0.4),
+              width: 1,
+            ),
           ),
-          Icon(Icons.lock_rounded, color: Colors.blue, size: 20),
-        ],
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  gradient: AppColors.cosmicPrimaryGradient,
+                  shape: BoxShape.circle,
+                ),
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Waiting for reply',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'From ${_lockedJyotishName ?? "Jyotish"}',
+                      style: TextStyle(
+                        color: AppColors.textGray300,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: AppColors.cosmicPrimaryGradient,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.lock_rounded, color: Colors.white, size: 16),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _searchBar() {
-    return Container(
-      height: 42,
-      padding: EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primaryPurple.withOpacity(0.15),
-            AppColors.deepPurple.withOpacity(0.08),
-          ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          height: 42,
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.cosmicPurple.withOpacity(0.15),
+                AppColors.cosmicPink.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.cosmicPurple.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.search, color: AppColors.textGray300),
+              SizedBox(width: 8),
+              Text(
+                'Search...',
+                style: TextStyle(color: AppColors.textGray400, fontSize: 14),
+              ),
+            ],
+          ),
         ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.primaryPurple.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.search, color: Colors.white54),
-          SizedBox(width: 8),
-          Text('Search...', style: TextStyle(color: Colors.white54)),
-        ],
       ),
     );
   }
@@ -573,26 +697,37 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
       children: [
         Row(
           children: [
-            Text(
-              'ACTIVE NOW',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
+            ShaderMask(
+              shaderCallback: (bounds) => LinearGradient(
+                colors: [
+                  AppColors.purple300,
+                  AppColors.pink300,
+                  AppColors.red300,
+                ],
+              ).createShader(bounds),
+              child: Text(
+                'ACTIVE NOW',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             SizedBox(width: 8),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.2),
+                gradient: LinearGradient(
+                  colors: [Colors.green, Colors.greenAccent],
+                ),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 '1 coin/chat',
                 style: TextStyle(
-                  color: Colors.green,
+                  color: Colors.white,
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                 ),
@@ -605,7 +740,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                 height: 12,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white54,
+                  color: AppColors.cosmicPurple,
                 ),
               ),
             ],
@@ -618,7 +753,10 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
               ? Center(
                   child: Text(
                     'No active astrologers',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.textGray400,
+                      fontSize: 12,
+                    ),
                   ),
                 )
               : ListView.separated(
@@ -641,7 +779,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.white70,
+                                color: AppColors.textGray300,
                                 fontSize: 11,
                               ),
                             ),
@@ -678,11 +816,18 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryPurple.withAlpha(30),
+                gradient: AppColors.cosmicPrimaryGradient,
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.cosmicPurple.withOpacity(0.4),
+                    blurRadius: 20,
+                    spreadRadius: 4,
+                  ),
+                ],
               ),
               child: CircularProgressIndicator(
-                color: AppColors.primaryPurple,
+                color: Colors.white,
                 strokeWidth: 3,
               ),
             ),
@@ -690,7 +835,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
             Text(
               'Loading conversations...',
               style: TextStyle(
-                color: Colors.white70,
+                color: AppColors.textGray300,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -712,29 +857,45 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primaryPurple.withAlpha(40),
-                    AppColors.deepPurple.withAlpha(20),
+                    AppColors.cosmicPurple.withOpacity(0.3),
+                    AppColors.cosmicPink.withOpacity(0.2),
                   ],
                 ),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.primaryPurple.withAlpha(60),
+                  color: AppColors.cosmicPurple.withOpacity(0.5),
                   width: 2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.cosmicPurple.withOpacity(0.3),
+                    blurRadius: 20,
+                    spreadRadius: 4,
+                  ),
+                ],
               ),
               child: Icon(
                 Icons.chat_bubble_outline_rounded,
                 size: 52,
-                color: AppColors.primaryPurple,
+                color: Colors.white,
               ),
             ),
             SizedBox(height: 24),
-            Text(
-              'No conversations yet',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
+            ShaderMask(
+              shaderCallback: (bounds) => LinearGradient(
+                colors: [
+                  AppColors.purple300,
+                  AppColors.pink300,
+                  AppColors.red300,
+                ],
+              ).createShader(bounds),
+              child: Text(
+                'No conversations yet',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             SizedBox(height: 10),
@@ -744,7 +905,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                 'Start chatting with an astrologer from the "Active Now" section above',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white54,
+                  color: AppColors.textGray300,
                   fontSize: 14,
                   height: 1.4,
                 ),
@@ -763,26 +924,42 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
           padding: EdgeInsets.only(bottom: 12),
           child: Row(
             children: [
-              Text(
-                'RECENT CHATS',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  letterSpacing: 1.2,
-                  fontWeight: FontWeight.w600,
+              ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [
+                    AppColors.purple300,
+                    AppColors.pink300,
+                    AppColors.red300,
+                  ],
+                ).createShader(bounds),
+                child: Text(
+                  'RECENT CHATS',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               SizedBox(width: 8),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryPurple.withAlpha(40),
+                  gradient: AppColors.cosmicPrimaryGradient,
                   borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.cosmicPurple.withOpacity(0.4),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
                 child: Text(
                   '${_conversations.length}',
                   style: TextStyle(
-                    color: AppColors.primaryPurple,
+                    color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -794,16 +971,27 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(10),
+                    gradient: AppColors.cosmicPrimaryGradient,
                     borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.cosmicPurple.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.refresh, color: Colors.white54, size: 14),
+                      Icon(Icons.refresh, color: Colors.white, size: 14),
                       SizedBox(width: 4),
                       Text(
                         'Refresh',
-                        style: TextStyle(color: Colors.white54, fontSize: 11),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -816,7 +1004,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: _loadConversations,
-            color: AppColors.primaryPurple,
+            color: AppColors.cosmicPurple,
             backgroundColor: AppColors.cardDark,
             child: ListView.builder(
               physics: AlwaysScrollableScrollPhysics(
@@ -888,287 +1076,353 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
 
     return GestureDetector(
       onTap: () => _openChatFromConversation(chat, user),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: isEnded
-              ? Colors.grey.withAlpha(20)
-              : AppColors.cardDark.withAlpha(200),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: unreadCount > 0
-                ? gold.withAlpha(100)
-                : isEnded
-                ? Colors.grey.withAlpha(40)
-                : AppColors.primaryPurple.withAlpha(30),
-            width: unreadCount > 0 ? 1.5 : 1,
-          ),
-          boxShadow: unreadCount > 0
-              ? [
-                  BoxShadow(
-                    color: gold.withAlpha(20),
-                    blurRadius: 8,
-                    spreadRadius: 0,
-                  ),
-                ]
-              : null,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () => _openChatFromConversation(chat, user),
-            child: Padding(
-              padding: EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  // Profile photo with online indicator
-                  GestureDetector(
-                    onTap: () => _showProfileSheet(
-                      odtherUserId,
-                      name,
-                      profilePhoto,
-                      isOnline,
-                    ),
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: 58,
-                          height: 58,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: isOnline
-                                ? LinearGradient(
-                                    colors: [
-                                      Colors.green.shade400,
-                                      Colors.green.shade600,
-                                    ],
-                                  )
-                                : AppColors.primaryGradient,
-                          ),
-                          padding: EdgeInsets.all(2.5),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.cardDark,
-                            ),
-                            padding: EdgeInsets.all(2),
-                            child: ClipOval(
-                              child: imageUrl.isNotEmpty
-                                  ? Image.network(
-                                      imageUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
-                                          _buildInitials(name),
-                                    )
-                                  : _buildInitials(name),
-                            ),
-                          ),
-                        ),
-                        // Online indicator
-                        Positioned(
-                          bottom: 2,
-                          right: 2,
-                          child: Container(
-                            width: 14,
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: isOnline
-                                  ? Colors.green
-                                  : Colors.grey.shade600,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.cardDark,
-                                width: 2.5,
-                              ),
-                              boxShadow: isOnline
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.green.withAlpha(150),
-                                        blurRadius: 4,
-                                        spreadRadius: 1,
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                          ),
-                        ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            margin: EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isEnded
+                    ? [
+                        Colors.grey.withOpacity(0.1),
+                        Colors.grey.withOpacity(0.05),
+                      ]
+                    : unreadCount > 0
+                    ? [
+                        AppColors.cosmicPurple.withOpacity(0.2),
+                        AppColors.cosmicPink.withOpacity(0.15),
+                      ]
+                    : [
+                        AppColors.cosmicPurple.withOpacity(0.1),
+                        AppColors.cosmicPink.withOpacity(0.05),
                       ],
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  // Chat info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Name row with badges
-                        Row(
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: unreadCount > 0
+                    ? AppColors.cosmicPurple.withOpacity(0.6)
+                    : isEnded
+                    ? Colors.grey.withOpacity(0.3)
+                    : AppColors.cosmicPurple.withOpacity(0.3),
+                width: unreadCount > 0 ? 1.5 : 1,
+              ),
+              boxShadow: unreadCount > 0
+                  ? [
+                      BoxShadow(
+                        color: AppColors.cosmicPurple.withOpacity(0.3),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => _openChatFromConversation(chat, user),
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      // Profile photo with online indicator
+                      GestureDetector(
+                        onTap: () => _showProfileSheet(
+                          odtherUserId,
+                          name,
+                          profilePhoto,
+                          isOnline,
+                        ),
+                        child: Stack(
                           children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      name,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: unreadCount > 0
-                                            ? FontWeight.bold
-                                            : FontWeight.w600,
-                                        fontSize: 15,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                            Container(
+                              width: 58,
+                              height: 58,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: isOnline
+                                    ? LinearGradient(
+                                        colors: [
+                                          Colors.green.shade400,
+                                          Colors.green.shade600,
+                                        ],
+                                      )
+                                    : AppColors.cosmicPrimaryGradient,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                        (isOnline
+                                                ? Colors.green
+                                                : AppColors.cosmicPurple)
+                                            .withOpacity(0.4),
+                                    blurRadius: 12,
+                                    spreadRadius: 2,
                                   ),
-                                  if (role == 'ASTROLOGER') ...[
-                                    SizedBox(width: 6),
-                                    Icon(
-                                      Icons.verified_rounded,
-                                      color: gold,
-                                      size: 16,
-                                    ),
-                                  ],
                                 ],
                               ),
+                              padding: EdgeInsets.all(2.5),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.cardDark,
+                                ),
+                                padding: EdgeInsets.all(2),
+                                child: ClipOval(
+                                  child: imageUrl.isNotEmpty
+                                      ? Image.network(
+                                          imageUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              _buildInitials(name),
+                                        )
+                                      : _buildInitials(name),
+                                ),
+                              ),
                             ),
-                            // Time
-                            Text(
-                              timeStr,
-                              style: TextStyle(
-                                color: unreadCount > 0 ? gold : Colors.white54,
-                                fontSize: 11,
-                                fontWeight: unreadCount > 0
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
+                            // Online indicator
+                            Positioned(
+                              bottom: 2,
+                              right: 2,
+                              child: Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: isOnline
+                                      ? Colors.green
+                                      : Colors.grey.shade600,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.cardDark,
+                                    width: 2.5,
+                                  ),
+                                  boxShadow: isOnline
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.green.withAlpha(150),
+                                            blurRadius: 4,
+                                            spreadRadius: 1,
+                                          ),
+                                        ]
+                                      : null,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 4),
-                        // Specialization or role info
-                        if (specialization != null && specialization.isNotEmpty)
-                          Padding(
-                            padding: EdgeInsets.only(bottom: 4),
-                            child: Row(
+                      ),
+                      SizedBox(width: 12),
+                      // Chat info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Name row with badges
+                            Row(
                               children: [
-                                Icon(
-                                  Icons.auto_awesome,
-                                  color: AppColors.primaryPurple,
-                                  size: 12,
-                                ),
-                                SizedBox(width: 4),
                                 Expanded(
-                                  child: Text(
-                                    specialization,
-                                    style: TextStyle(
-                                      color: AppColors.primaryPurple,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          name,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: unreadCount > 0
+                                                ? FontWeight.bold
+                                                : FontWeight.w600,
+                                            fontSize: 15,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (role == 'ASTROLOGER') ...[
+                                        SizedBox(width: 6),
+                                        Container(
+                                          padding: EdgeInsets.all(2),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                gold,
+                                                gold.withAlpha(200),
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.verified_rounded,
+                                            color: Colors.white,
+                                            size: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
-                                if (rating > 0) ...[
-                                  Icon(
-                                    Icons.star_rounded,
-                                    color: Colors.amber,
-                                    size: 12,
+                                // Time
+                                Text(
+                                  timeStr,
+                                  style: TextStyle(
+                                    color: unreadCount > 0
+                                        ? gold
+                                        : Colors.white54,
+                                    fontSize: 11,
+                                    fontWeight: unreadCount > 0
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
                                   ),
-                                  SizedBox(width: 2),
-                                  Text(
-                                    rating.toStringAsFixed(1),
-                                    style: TextStyle(
-                                      color: Colors.amber,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ],
                             ),
-                          ),
-                        // Last message row
-                        Row(
-                          children: [
-                            if (isEnded)
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                margin: EdgeInsets.only(right: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withAlpha(40),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Ended',
-                                  style: TextStyle(
-                                    color: Colors.orange,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            Expanded(
-                              child: Text(
-                                lastMessage ?? 'Start a conversation',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: lastMessage != null
-                                      ? (unreadCount > 0
-                                            ? Colors.white70
-                                            : Colors.white54)
-                                      : Colors.white38,
-                                  fontSize: 13,
-                                  fontWeight: unreadCount > 0
-                                      ? FontWeight.w500
-                                      : FontWeight.normal,
-                                  fontStyle: lastMessage == null
-                                      ? FontStyle.italic
-                                      : FontStyle.normal,
-                                ),
-                              ),
-                            ),
-                            // Unread badge
-                            if (unreadCount > 0)
-                              Container(
-                                margin: EdgeInsets.only(left: 8),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [gold, gold.withAlpha(220)],
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: gold.withAlpha(100),
-                                      blurRadius: 4,
+                            SizedBox(height: 4),
+                            // Specialization or role info
+                            if (specialization != null &&
+                                specialization.isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.only(bottom: 4),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(3),
+                                      decoration: BoxDecoration(
+                                        gradient:
+                                            AppColors.cosmicPrimaryGradient,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.auto_awesome,
+                                        color: Colors.white,
+                                        size: 10,
+                                      ),
                                     ),
+                                    SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        specialization,
+                                        style: TextStyle(
+                                          color: AppColors.purple300,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (rating > 0) ...[
+                                      Icon(
+                                        Icons.star_rounded,
+                                        color: Colors.amber,
+                                        size: 12,
+                                      ),
+                                      SizedBox(width: 2),
+                                      Text(
+                                        rating.toStringAsFixed(1),
+                                        style: TextStyle(
+                                          color: Colors.amber,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
-                                child: Text(
-                                  unreadCount > 99
-                                      ? '99+'
-                                      : unreadCount.toString(),
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
+                              ),
+                            // Last message row
+                            Row(
+                              children: [
+                                if (isEnded)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    margin: EdgeInsets.only(right: 6),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          AppColors.cosmicRed.withOpacity(0.3),
+                                          AppColors.cosmicPink.withOpacity(0.2),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                        color: AppColors.cosmicRed.withOpacity(
+                                          0.4,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Ended',
+                                      style: TextStyle(
+                                        color: AppColors.cosmicRed,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: Text(
+                                    lastMessage ?? 'Start a conversation',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: lastMessage != null
+                                          ? (unreadCount > 0
+                                                ? Colors.white70
+                                                : Colors.white54)
+                                          : Colors.white38,
+                                      fontSize: 13,
+                                      fontWeight: unreadCount > 0
+                                          ? FontWeight.w500
+                                          : FontWeight.normal,
+                                      fontStyle: lastMessage == null
+                                          ? FontStyle.italic
+                                          : FontStyle.normal,
+                                    ),
                                   ),
                                 ),
-                              ),
+                                // Unread badge
+                                if (unreadCount > 0)
+                                  Container(
+                                    margin: EdgeInsets.only(left: 8),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: AppColors.cosmicPrimaryGradient,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.cosmicPurple
+                                              .withOpacity(0.5),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      unreadCount > 99
+                                          ? '99+'
+                                          : unreadCount.toString(),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

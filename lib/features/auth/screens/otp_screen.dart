@@ -10,7 +10,7 @@ import '../bloc/auth_states.dart';
 import '../repository/auth_repository.dart';
 import '../service/auth_service.dart';
 import '../../app_widgets/star_field_background.dart';
-import '../../home/screens/home_screen_client.dart';
+import '../../home/screens/welcome_screen.dart';
 
 class OtpScreen extends StatelessWidget {
   final String phoneNumber;
@@ -76,15 +76,31 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppColors.backgroundDark,
+        systemNavigationBarColor: AppColors.primaryBlack,
       ),
     );
     return Scaffold(
+      backgroundColor: AppColors.primaryBlack,
       body: Stack(
         children: [
+          // Star field background (matching homepage)
           StarFieldBackground(),
+          
+          // Cosmic gradient overlay
           Container(
-            decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.7),
+                  AppColors.cosmicPurple.withOpacity(0.3),
+                  AppColors.cosmicPink.withOpacity(0.2),
+                  Colors.black.withOpacity(0.9),
+                ],
+                stops: const [0.0, 0.3, 0.6, 1.0],
+              ),
+            ),
           ),
           _otpHeader(),
           Center(
@@ -107,7 +123,7 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
 
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => HomeScreenClient()),
+                      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
                     );
                   } else if (state is AuthOtpLoadedState) {
                     setState(() {
@@ -146,7 +162,11 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
             children: [
               ShaderMask(
                 shaderCallback: (bounds) => LinearGradient(
-                  colors: [Colors.white, AppColors.lightPurple],
+                  colors: [
+                    AppColors.purple300,
+                    AppColors.pink300,
+                    AppColors.red300,
+                  ],
                 ).createShader(bounds),
                 child: RichText(
                   text: TextSpan(
@@ -174,10 +194,17 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
                 ),
               ),
               SizedBox(width: 4),
-              Icon(
-                Icons.auto_awesome,
-                size: 24,
-                color: AppColors.primaryPurple,
+              Container(
+                padding: EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: AppColors.cosmicPrimaryGradient,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.auto_awesome,
+                  size: 24,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
@@ -187,7 +214,8 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
             style: TextStyle(
               fontSize: 10,
               letterSpacing: 1.4,
-              color: Colors.white70,
+              color: AppColors.purple400,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -205,12 +233,24 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.15),
-            AppColors.deepPurple.withOpacity(0.08),
+            AppColors.cosmicPurple.withOpacity(0.15),
+            AppColors.cosmicPink.withOpacity(0.1),
+            AppColors.cosmicRed.withOpacity(0.08),
           ],
         ),
-        // color: cardColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.cosmicPurple.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cosmicPurple.withOpacity(0.3),
+            blurRadius: 40,
+            offset: Offset(0, 24),
+            spreadRadius: 2,
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -226,7 +266,10 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
           SizedBox(height: 8),
           Text(
             'Code sent to ${widget.phoneNumber}',
-            style: TextStyle(color: Colors.white60, fontSize: 12),
+            style: TextStyle(
+              color: AppColors.textGray300,
+              fontSize: 12,
+            ),
           ),
           SizedBox(height: 24),
           Row(
@@ -239,6 +282,7 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
               title: 'VERIFY',
               isLoading: isLoading,
               icon: Icons.verified,
+              gradient: AppColors.cosmicHeroGradient,
               onTap: () {
                 String otp = _controllers.map((c) => c.text).join();
 
@@ -279,7 +323,9 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
             child: Text(
               'Resend OTP',
               style: TextStyle(
-                color: isLoading ? Colors.white38 : Colors.white,
+                color: isLoading
+                    ? AppColors.textGray400
+                    : AppColors.pink400,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -299,7 +345,7 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
         maxLength: 1,
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
-        cursorColor: Colors.white,
+        cursorColor: AppColors.cosmicPurple,
         style: TextStyle(
           color: Colors.white,
           fontSize: 18,
@@ -309,14 +355,27 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
         decoration: InputDecoration(
           counterText: '',
           filled: true,
-          fillColor: AppColors.primaryPurple.withOpacity(0.06),
+          fillColor: Colors.white.withOpacity(0.05),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(
+              color: AppColors.cosmicPurple.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: AppColors.cosmicPurple.withOpacity(0.2),
+              width: 1,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.primaryPurple, width: 2),
+            borderSide: BorderSide(
+              color: AppColors.cosmicPurple,
+              width: 2,
+            ),
           ),
         ),
         onChanged: (value) {
@@ -339,7 +398,10 @@ class _OtpScreenContentState extends State<OtpScreenContent> {
       child: Text(
         'Authentication in progress…',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 11, color: Colors.white70),
+        style: TextStyle(
+          fontSize: 11,
+          color: AppColors.textGray400,
+        ),
       ),
     );
   }

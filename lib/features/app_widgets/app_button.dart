@@ -25,8 +25,16 @@ class AppButton extends StatelessWidget {
         duration: Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          gradient: gradient ?? AppColors.splashGradient,
-          borderRadius: BorderRadius.circular(18),
+          gradient: gradient ?? AppColors.cosmicHeroGradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.cosmicRed.withOpacity(0.5),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+              spreadRadius: 2,
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -48,7 +56,7 @@ class AppButton extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
               ),

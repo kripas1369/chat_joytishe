@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../constants/constant.dart';
+import '../../app_widgets/star_field_background.dart';
 import '../bloc/auth_bloc.dart';
 
 import '../repository/auth_repository.dart';
@@ -57,14 +58,31 @@ class _LoginScreenContentState extends State<LoginScreenContent>
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppColors.backgroundDark,
+        systemNavigationBarColor: AppColors.primaryBlack,
       ),
     );
     return Scaffold(
+      backgroundColor: AppColors.primaryBlack,
       body: Stack(
         children: [
+          // Star field background (matching homepage)
+          const StarFieldBackground(),
+
+          // Cosmic gradient overlay
           Container(
-            decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.7),
+                  AppColors.cosmicPurple.withOpacity(0.3),
+                  AppColors.cosmicPink.withOpacity(0.2),
+                  Colors.black.withOpacity(0.9),
+                ],
+                stops: const [0.0, 0.3, 0.6, 1.0],
+              ),
+            ),
           ),
 
           _loginHeader(),
@@ -102,7 +120,11 @@ class _LoginScreenContentState extends State<LoginScreenContent>
             children: [
               ShaderMask(
                 shaderCallback: (bounds) => LinearGradient(
-                  colors: [Colors.white, AppColors.lightPurple],
+                  colors: [
+                    AppColors.purple300,
+                    AppColors.pink300,
+                    AppColors.red300,
+                  ],
                 ).createShader(bounds),
                 child: RichText(
                   text: TextSpan(
@@ -130,10 +152,17 @@ class _LoginScreenContentState extends State<LoginScreenContent>
                 ),
               ),
               SizedBox(width: 4),
-              Icon(
-                Icons.auto_awesome,
-                size: 24,
-                color: AppColors.primaryPurple,
+              Container(
+                padding: EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: AppColors.cosmicPrimaryGradient,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.auto_awesome,
+                  size: 24,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
@@ -143,7 +172,8 @@ class _LoginScreenContentState extends State<LoginScreenContent>
             style: TextStyle(
               fontSize: 10,
               letterSpacing: 1.4,
-              color: Colors.white70,
+              color: AppColors.purple400,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -159,7 +189,10 @@ class _LoginScreenContentState extends State<LoginScreenContent>
       child: Text(
         'Protected by celestial encryption.\n© ${DateTime.now().year} ChatJyotish. All rights aligned.',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 11, color: Colors.white70),
+        style: TextStyle(
+          fontSize: 11,
+          color: AppColors.textGray400,
+        ),
       ),
     );
   }

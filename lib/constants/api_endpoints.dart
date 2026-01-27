@@ -1,10 +1,12 @@
 class ApiEndpoints {
-  static const String serverUrl = 'http://192.168.0.206:4000';
-  static const String baseUrl = 'http://192.168.0.206:4000/api/v1';
+  // static const String serverUrl = 'http://192.168.0.206:4000';
+  // static const String baseUrl = 'http://192.168.0.206:4000/api/v1';
 
-  // static const String baseUrl =
-  //     'https://jotishapi.autonomoustechnology.net/api/v1';
-  // static const String serverUrl = 'https://jotishapi.autonomoustechnology.net';
+  // static const String serverUrl = 'http://192.168.1.73:4000';
+  // static const String baseUrl = 'http://192.168.1.73:4000/api/v1';
+  static const String baseUrl =
+      'https://jotishapi.autonomoustechnology.net/api/v1';
+  static const String serverUrl = 'https://jotishapi.autonomoustechnology.net';
 
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
@@ -25,9 +27,8 @@ class ApiEndpoints {
   static const String uploadProfilePhoto = '$baseUrl/users/upload-photo';
   static const String removeProfilePhoto = '$baseUrl/users/remove-photo';
 
-  static const String socketUrl = 'ws://192.168.0.206:4000';
-
-  // static const String socketUrl = 'ws://jotishapi.autonomoustechnology.net';
+  // static const String socketUrl = 'ws://192.168.0.206:4000';
+  static const String socketUrl = 'ws://jotishapi.autonomoustechnology.net';
 
   // API Endpoints (relative to baseUrl)
   static const String loginEndpoint = '/auth/login';
