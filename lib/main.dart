@@ -14,6 +14,7 @@ import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart'
     show HomeScreenClient;
 import 'package:chat_jyotishi/features/home/screens/horroscope_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/privacy_policy_screen.dart';
+import 'package:chat_jyotishi/features/home/screens/welcome_screen.dart';
 import 'package:chat_jyotishi/features/home_astrologer/screens/home_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/notification/screens/notification_screen.dart';
 import 'package:chat_jyotishi/features/notification/services/notification_service.dart';
@@ -31,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'features/auth/screens/login_screen.dart';
 
 import 'features/auth/screens/splash_screen.dart';
+import 'features/chat/screens/broadcast_loading_screen.dart';
 import 'features/profile/screens/user_profile_screen.dart';
 
 /// Global navigator key for navigation from notification service
@@ -61,6 +63,7 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       routes: {
         '/initial_logo_screen': (context) => InitialLogoScreen(),
+        '/welcome_screen': (context) => WelcomeScreen(),
         '/splash_screen': (context) => SplashScreen(),
         '/onboarding_screen': (context) => OnboardingScreen(),
         '/login_screen': (context) => LoginScreen(),
@@ -90,14 +93,16 @@ class MyApp extends StatelessWidget {
         '/payment_page': (context) => PaymentPage(),
         '/chat_options_page': (context) => ChatOptionsScreen(),
         '/broadcast_page': (context) => BroadcastPage(),
+        '/broadcast_loading_screen': (context) => BroadcastLoadingScreen(),
 
         ///Appointment feature
         '/appointment_screen': (context) => AppointmentScreen(),
 
         ///Notification service route
         '/notification_screen': (context) => NotificationScreen(),
+
       },
-      initialRoute: '/splash_screen',
+      initialRoute: '/broadcast_loading_screen',
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:flutter/material.dart';
 
 class BroadcastLoadingScreen extends StatefulWidget {
@@ -86,8 +87,8 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
 
     final astrologers = <AstrologerNode>[];
 
-    // Create 10-12 astrologers with random positions
-    final count = 10 + random.nextInt(3); // 10-12 astrologers
+    // Create 8 astrologers with random positions
+    final count = 8; // 8 astrologers
 
     for (int i = 0; i < count; i++) {
       // Generate random position ensuring they're not too close to center or edges
@@ -200,7 +201,7 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
             // Astrologer nodes
             ..._buildAstrologers(size),
 
-            // Center node
+            // Center node with Earth
             _centerNode(),
 
             // Bottom text
@@ -293,7 +294,7 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
             },
           ),
 
-          // Main node with glow
+          // Main node with glow and Earth icon
           AnimatedBuilder(
             animation: _pulseController,
             builder: (_, __) => Container(
@@ -316,13 +317,7 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
                   ),
                 ],
               ),
-              child: Center(
-                child: Icon(
-                  Icons.wifi_tethering,
-                  color: Colors.white,
-                  size: 48,
-                ),
-              ),
+              child: Center(child: Text('🌍', style: TextStyle(fontSize: 50))),
             ),
           ),
         ],
@@ -407,8 +402,6 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     }).toList();
   }
 
-  // ================= PARTICLES =================
-
   Widget _buildParticle(int index) {
     final rand = Random(index);
     final dx = rand.nextDouble();
@@ -449,7 +442,7 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
 
   Widget _bottomText() {
     return Positioned(
-      bottom: 30,
+      bottom: 100,
       left: 0,
       right: 0,
       child: Column(
@@ -472,9 +465,17 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
           ),
 
           SizedBox(height: 4),
-          Text(
-            'Waiting for response...',
-            style: TextStyle(color: Colors.white60, fontSize: 12),
+          Column(
+            children: [
+              Text(
+                'Connecting to Astrologers...',
+                style: TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+              Text(
+                'Please be Patience',
+                style: TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+            ],
           ),
         ],
       ),

@@ -493,7 +493,7 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
             'Hi, ${displayName.split(' ').first}',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -539,7 +539,7 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                     color: AppColors.cosmicPink,
                   ),
                   child: Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
@@ -553,7 +553,7 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(12),
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Column(
@@ -608,8 +608,8 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                                     child: Container(
                                       width: double.infinity,
                                       padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                        horizontal: 12,
+                                        vertical: 16,
+                                        horizontal: 20,
                                       ),
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
@@ -642,169 +642,119 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                                           ),
                                         ],
                                       ),
-                                      child: Stack(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
-                                          // Animated shine effect
-                                          Positioned.fill(
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                              child: Transform.translate(
-                                                offset: Offset(
-                                                  _buttonShineAnimation.value *
-                                                      300,
-                                                  0,
-                                                ),
-                                                child: Container(
-                                                  width: 50,
-                                                  decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      colors: [
-                                                        Colors.transparent,
-                                                        Colors.white
-                                                            .withOpacity(0.3),
-                                                        Colors.transparent,
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
+                                          // Animated chat icon
+                                          Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(
+                                                0.2,
                                               ),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.chat_bubble_rounded,
+                                              color: Colors.white,
+                                              size: 18,
                                             ),
                                           ),
-                                          // Button content
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                            ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                // Animated chat icon
-                                                Container(
-                                                  padding: const EdgeInsets.all(
-                                                    5,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white
-                                                        .withOpacity(0.2),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: Icon(
-                                                    Icons.chat_bubble_rounded,
-                                                    color: Colors.white,
-                                                    size: 16,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                // Text with pulsing indicator
-                                                Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Text(
-                                                      'Start Live Chat with Jyotish',
-                                                      style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                        letterSpacing: 0.5,
-                                                        shadows: [
-                                                          Shadow(
-                                                            color: Colors.black
-                                                                .withOpacity(
-                                                                  0.3,
-                                                                ),
-                                                            blurRadius: 4,
-                                                            offset: Offset(
-                                                              0,
-                                                              2,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 1),
-                                                    // Pulsing "Available Now" indicator
-                                                    AnimatedBuilder(
-                                                      animation:
-                                                          _pulseController,
-                                                      builder: (context, child) {
-                                                        return Opacity(
-                                                          opacity:
-                                                              0.7 +
-                                                              (_pulseController
-                                                                      .value *
-                                                                  0.3),
-                                                          child: Row(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            children: [
-                                                              Container(
-                                                                width: 5,
-                                                                height: 5,
-                                                                decoration: BoxDecoration(
-                                                                  color: Color(
-                                                                    0xFF10B981,
-                                                                  ),
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                  boxShadow: [
-                                                                    BoxShadow(
-                                                                      color: Color(
-                                                                        0xFF10B981,
-                                                                      ).withOpacity(0.8),
-                                                                      blurRadius:
-                                                                          6,
-                                                                      spreadRadius:
-                                                                          1.5,
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                              const SizedBox(
-                                                                width: 3,
-                                                              ),
-                                                              Text(
-                                                                'Available Now',
-                                                                style: TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                  letterSpacing:
-                                                                      0.3,
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        );
-                                                      },
+                                          const SizedBox(width: 12),
+                                          // Text with pulsing indicator
+                                          Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Start Live Chat with Jyotish',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: 0.5,
+                                                  shadows: [
+                                                    Shadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.3),
+                                                      blurRadius: 4,
+                                                      offset: Offset(0, 2),
                                                     ),
                                                   ],
                                                 ),
-                                                const SizedBox(width: 10),
-                                                // Animated arrow
-                                                Container(
-                                                  padding: const EdgeInsets.all(
-                                                    5,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white
-                                                        .withOpacity(0.2),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: Icon(
-                                                    Icons.arrow_forward_rounded,
-                                                    color: Colors.white,
-                                                    size: 16,
-                                                  ),
-                                                ),
-                                              ],
+                                              ),
+                                              const SizedBox(height: 2),
+                                              // Pulsing "Available Now" indicator
+                                              AnimatedBuilder(
+                                                animation: _pulseController,
+                                                builder: (context, child) {
+                                                  return Opacity(
+                                                    opacity:
+                                                        0.7 +
+                                                        (_pulseController
+                                                                .value *
+                                                            0.3),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Container(
+                                                          width: 6,
+                                                          height: 6,
+                                                          decoration: BoxDecoration(
+                                                            color: Color(
+                                                              0xFF10B981,
+                                                            ),
+                                                            shape:
+                                                                BoxShape.circle,
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color: Color(
+                                                                  0xFF10B981,
+                                                                ).withOpacity(0.8),
+                                                                blurRadius: 6,
+                                                                spreadRadius:
+                                                                    1.5,
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        Text(
+                                                          'Available Now',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            letterSpacing: 0.3,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(width: 12),
+                                          // Animated arrow
+                                          Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(
+                                                0.2,
+                                              ),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.arrow_forward_rounded,
+                                              color: Colors.white,
+                                              size: 18,
                                             ),
                                           ),
                                         ],

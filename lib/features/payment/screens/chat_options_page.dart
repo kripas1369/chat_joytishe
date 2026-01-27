@@ -53,7 +53,6 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
     }
   }
 
-
   void _showInsufficientCoinsDialog(int required) {
     showDialog(
       context: context,
@@ -98,19 +97,14 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
         ),
         content: Text(
           'You need $required coin(s) but only have $_coinBalance.\nPlease add more coins to continue.',
-          style: TextStyle(
-            color: AppColors.textGray300,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: AppColors.textGray300, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(
-                color: AppColors.textGray400,
-              ),
+              style: TextStyle(color: AppColors.textGray400),
             ),
           ),
           Container(
@@ -154,74 +148,73 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
   @override
   Widget build(BuildContext context) {
     _setSystemUIOverlay();
-    
+
     // Provide ChatBloc if not already available
     return BlocProvider(
-      create: (context) => ChatBloc(
-        chatRepository: ChatRepository(ChatService()),
-      )..add(FetchActiveUsersEvent()),
+      create: (context) =>
+          ChatBloc(chatRepository: ChatRepository(ChatService()))
+            ..add(FetchActiveUsersEvent()),
       child: Scaffold(
         backgroundColor: AppColors.primaryBlack,
         body: Stack(
           children: [
-          // Star field background
-          StarFieldBackground(),
-          // Cosmic gradient overlay
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withOpacity(0.7),
-                  AppColors.cosmicPurple.withOpacity(0.3),
-                  Colors.black.withOpacity(0.9),
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              ),
-            ),
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 16),
-                  _buildHeader(),
-                  SizedBox(height: 24),
-                  _buildBalanceCard(),
-                  SizedBox(height: 32),
-                  _buildOptionsTitle(),
-                  SizedBox(height: 20),
-                  _buildOptionCard(
-                    icon: Icons.chat_bubble_rounded,
-                    title: 'Start instant chat with astrologer',
-                    subtitle: 'Astrologer any where from the world can accept',
-                    coinCost: 100,
-                    gradient: LinearGradient(
-                      colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
-                    ),
-                    onTap: _handleSingleChat,
-                  ),
-                  SizedBox(height: 16),
-                  _buildExpertListCard(),
-                  SizedBox(height: 16),
-                  _buildKundaliReviewCard(),
-                  SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-          if (_isLoading)
+            // Star field background
+            StarFieldBackground(),
+            // Cosmic gradient overlay
             Container(
-              color: Colors.black54,
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.cosmicPurple,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.7),
+                    AppColors.cosmicPurple.withOpacity(0.3),
+                    Colors.black.withOpacity(0.9),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
               ),
             ),
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 16),
+                    _buildHeader(),
+                    SizedBox(height: 24),
+                    // _buildBalanceCard(),
+                    SizedBox(height: 20),
+                    _buildOptionCard(
+                      icon: Icons.chat_bubble_rounded,
+                      title: 'Start instant chat with astrologer',
+                      subtitle:
+                          'Astrologer any where from the world can accept',
+                      coinCost: 100,
+                      gradient: LinearGradient(
+                        colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
+                      ),
+                      onTap: _handleSingleChat,
+                    ),
+                    SizedBox(height: 16),
+                    _buildExpertListCard(),
+                    SizedBox(height: 16),
+                    _buildKundaliReviewCard(),
+                    SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+            if (_isLoading)
+              Container(
+                color: Colors.black54,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.cosmicPurple,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -248,11 +241,7 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
         SizedBox(width: 16),
         ShaderMask(
           shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              AppColors.purple300,
-              AppColors.pink300,
-              AppColors.red300,
-            ],
+            colors: [AppColors.purple300, AppColors.pink300, AppColors.red300],
           ).createShader(bounds),
           child: Text(
             'Chat Options',
@@ -263,163 +252,149 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
             ),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildBalanceCard() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.cosmicPurple.withOpacity(0.2),
-                AppColors.cosmicPink.withOpacity(0.15),
-                AppColors.cosmicRed.withOpacity(0.1),
-              ],
+        Spacer(),
+        Row(
+          children: [
+            Icon(Icons.monetization_on, color: gold, size: 24),
+            SizedBox(width: 4),
+            Text(
+              '$_coinBalance',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.cosmicPurple.withOpacity(0.3),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.cosmicPurple.withOpacity(0.2),
-                blurRadius: 20,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: AppColors.cosmicPrimaryGradient,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.cosmicPurple.withOpacity(0.4),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Icon(Icons.monetization_on_rounded, color: Colors.white, size: 32),
-              ),
-              SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your Balance',
-                    style: TextStyle(
-                      color: AppColors.textGray300,
-                      fontSize: 14,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.monetization_on, color: gold, size: 24),
-                      SizedBox(width: 4),
-                      Text(
-                        '$_coinBalance',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'coins',
-                        style: TextStyle(
-                          color: AppColors.textGray400,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Spacer(),
-              GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/payment_page'),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.cosmicPrimaryGradient,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.cosmicPurple.withOpacity(0.4),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.add, color: Colors.white, size: 18),
-                      SizedBox(width: 4),
-                      Text(
-                        'Add',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOptionsTitle() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              AppColors.purple300,
-              AppColors.pink300,
-              AppColors.red300,
-            ],
-          ).createShader(bounds),
-          child: Text(
-            'Choose Your Option',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          'Select how you want to connect with astrologers',
-          style: TextStyle(
-            color: AppColors.textGray300,
-            fontSize: 14,
-          ),
+          ],
         ),
       ],
     );
   }
+
+  // Widget _buildBalanceCard() {
+  //   return ClipRRect(
+  //     borderRadius: BorderRadius.circular(20),
+  //     child: BackdropFilter(
+  //       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+  //       child: Container(
+  //         padding: EdgeInsets.all(20),
+  //         decoration: BoxDecoration(
+  //           gradient: LinearGradient(
+  //             begin: Alignment.topLeft,
+  //             end: Alignment.bottomRight,
+  //             colors: [
+  //               AppColors.cosmicPurple.withOpacity(0.2),
+  //               AppColors.cosmicPink.withOpacity(0.15),
+  //               AppColors.cosmicRed.withOpacity(0.1),
+  //             ],
+  //           ),
+  //           borderRadius: BorderRadius.circular(20),
+  //           border: Border.all(
+  //             color: AppColors.cosmicPurple.withOpacity(0.3),
+  //             width: 1,
+  //           ),
+  //           boxShadow: [
+  //             BoxShadow(
+  //               color: AppColors.cosmicPurple.withOpacity(0.2),
+  //               blurRadius: 20,
+  //               spreadRadius: 2,
+  //             ),
+  //           ],
+  //         ),
+  //         child: Row(
+  //           children: [
+  //             Container(
+  //               padding: EdgeInsets.all(12),
+  //               decoration: BoxDecoration(
+  //                 gradient: AppColors.cosmicPrimaryGradient,
+  //                 borderRadius: BorderRadius.circular(12),
+  //                 boxShadow: [
+  //                   BoxShadow(
+  //                     color: AppColors.cosmicPurple.withOpacity(0.4),
+  //                     blurRadius: 12,
+  //                     spreadRadius: 2,
+  //                   ),
+  //                 ],
+  //               ),
+  //               child: Icon(
+  //                 Icons.monetization_on_rounded,
+  //                 color: Colors.white,
+  //                 size: 32,
+  //               ),
+  //             ),
+  //             SizedBox(width: 16),
+  //             Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(
+  //                   'Your Balance',
+  //                   style: TextStyle(
+  //                     color: AppColors.textGray300,
+  //                     fontSize: 14,
+  //                   ),
+  //                 ),
+  //                 SizedBox(height: 4),
+  //                 Row(
+  //                   children: [
+  //                     Icon(Icons.monetization_on, color: gold, size: 24),
+  //                     SizedBox(width: 4),
+  //                     Text(
+  //                       '$_coinBalance',
+  //                       style: TextStyle(
+  //                         color: Colors.white,
+  //                         fontSize: 28,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                     ),
+  //                     SizedBox(width: 4),
+  //                     Text(
+  //                       'coins',
+  //                       style: TextStyle(
+  //                         color: AppColors.textGray400,
+  //                         fontSize: 16,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ),
+  //             Spacer(),
+  //             GestureDetector(
+  //               onTap: () => Navigator.pushNamed(context, '/payment_page'),
+  //               child: Container(
+  //                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  //                 decoration: BoxDecoration(
+  //                   gradient: AppColors.cosmicPrimaryGradient,
+  //                   borderRadius: BorderRadius.circular(12),
+  //                   boxShadow: [
+  //                     BoxShadow(
+  //                       color: AppColors.cosmicPurple.withOpacity(0.4),
+  //                       blurRadius: 12,
+  //                       spreadRadius: 2,
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 child: Row(
+  //                   children: [
+  //                     Icon(Icons.add, color: Colors.white, size: 18),
+  //                     SizedBox(width: 4),
+  //                     Text(
+  //                       'Add',
+  //                       style: TextStyle(
+  //                         color: Colors.white,
+  //                         fontWeight: FontWeight.w600,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildOptionCard({
     required IconData icon,
@@ -629,13 +604,19 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: cardGradient.colors.first.withOpacity(0.5),
+                                color: cardGradient.colors.first.withOpacity(
+                                  0.5,
+                                ),
                                 blurRadius: 15,
                                 spreadRadius: 3,
                               ),
                             ],
                           ),
-                          child: Icon(Icons.people_rounded, color: Colors.white, size: 28),
+                          child: Icon(
+                            Icons.people_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
                         SizedBox(width: 16),
                         Expanded(
@@ -661,7 +642,11 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
                               SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(Icons.monetization_on, color: gold, size: 18),
+                                  Icon(
+                                    Icons.monetization_on,
+                                    color: gold,
+                                    size: 18,
+                                  ),
                                   SizedBox(width: 4),
                                   Text(
                                     '200 coins',
@@ -679,10 +664,13 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AppColors.cosmicRed.withOpacity(0.2),
+                                        color: AppColors.cosmicRed.withOpacity(
+                                          0.2,
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: AppColors.cosmicRed.withOpacity(0.4),
+                                          color: AppColors.cosmicRed
+                                              .withOpacity(0.4),
                                           width: 1,
                                         ),
                                       ),
@@ -740,12 +728,18 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
                             padding: EdgeInsets.all(2),
                             child: CircleAvatar(
                               radius: 24,
-                              backgroundColor: AppColors.cosmicPurple.withOpacity(0.3),
-                              backgroundImage: astrologer.profilePhoto.isNotEmpty
+                              backgroundColor: AppColors.cosmicPurple
+                                  .withOpacity(0.3),
+                              backgroundImage:
+                                  astrologer.profilePhoto.isNotEmpty
                                   ? NetworkImage(astrologer.profilePhoto)
                                   : null,
                               child: astrologer.profilePhoto.isEmpty
-                                  ? Icon(Icons.person, color: Colors.white, size: 24)
+                                  ? Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: 24,
+                                    )
                                   : null,
                             ),
                           );
@@ -766,7 +760,8 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
     final cardGradient = LinearGradient(
       colors: [AppColors.cosmicPurple, AppColors.cosmicRed],
     );
-    final hasEnoughCoins = _coinBalance >= 300; // Assuming 300 coins for kundali review
+    final hasEnoughCoins =
+        _coinBalance >= 300; // Assuming 300 coins for kundali review
 
     return BlocBuilder<ChatBloc, ChatState>(
       builder: (context, state) {
@@ -824,13 +819,19 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: cardGradient.colors.first.withOpacity(0.5),
+                                color: cardGradient.colors.first.withOpacity(
+                                  0.5,
+                                ),
                                 blurRadius: 15,
                                 spreadRadius: 3,
                               ),
                             ],
                           ),
-                          child: Icon(Icons.stars_rounded, color: Colors.white, size: 28),
+                          child: Icon(
+                            Icons.stars_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
                         SizedBox(width: 16),
                         Expanded(
@@ -856,7 +857,11 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
                               SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(Icons.monetization_on, color: gold, size: 18),
+                                  Icon(
+                                    Icons.monetization_on,
+                                    color: gold,
+                                    size: 18,
+                                  ),
                                   SizedBox(width: 4),
                                   Text(
                                     '300 coins',
@@ -874,10 +879,13 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AppColors.cosmicRed.withOpacity(0.2),
+                                        color: AppColors.cosmicRed.withOpacity(
+                                          0.2,
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: AppColors.cosmicRed.withOpacity(0.4),
+                                          color: AppColors.cosmicRed
+                                              .withOpacity(0.4),
                                           width: 1,
                                         ),
                                       ),
@@ -935,12 +943,18 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
                             padding: EdgeInsets.all(2),
                             child: CircleAvatar(
                               radius: 24,
-                              backgroundColor: AppColors.cosmicPurple.withOpacity(0.3),
-                              backgroundImage: astrologer.profilePhoto.isNotEmpty
+                              backgroundColor: AppColors.cosmicPurple
+                                  .withOpacity(0.3),
+                              backgroundImage:
+                                  astrologer.profilePhoto.isNotEmpty
                                   ? NetworkImage(astrologer.profilePhoto)
                                   : null,
                               child: astrologer.profilePhoto.isEmpty
-                                  ? Icon(Icons.person, color: Colors.white, size: 24)
+                                  ? Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: 24,
+                                    )
                                   : null,
                             ),
                           );
@@ -956,5 +970,4 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
       },
     );
   }
-
 }
