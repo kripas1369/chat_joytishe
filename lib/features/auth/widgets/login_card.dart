@@ -53,11 +53,12 @@ class _LoginCardState extends State<LoginCard> {
             showDialog(
               context: context,
               barrierDismissible: false,
-              builder: (_) => Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primaryPurple,
-                ),
-              ),
+              builder: (_) =>
+                  Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryPurple,
+                    ),
+                  ),
             );
           }
         } else {
@@ -71,10 +72,11 @@ class _LoginCardState extends State<LoginCard> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OtpScreen(
-                phoneNumber: state.phoneNumber,
-                sessionId: state.otpResponse.sessionId,
-              ),
+              builder: (_) =>
+                  OtpScreen(
+                    phoneNumber: state.phoneNumber,
+                    sessionId: state.otpResponse.sessionId,
+                  ),
             ),
           );
         }
@@ -136,70 +138,70 @@ class _LoginCardState extends State<LoginCard> {
                 duration: Duration(milliseconds: 300),
                 child: widget.usePassword
                     ? Column(
-                        key: ValueKey('password_mode'),
-                        children: [
-                          InputField(
-                            controller: emailController,
-                            label: 'Phone / Email',
-                            hint: 'stars@gmail.com',
+                  key: ValueKey('password_mode'),
+                  children: [
+                    InputField(
+                      controller: emailController,
+                      label: 'Phone / Email',
+                      hint: 'stars@gmail.com',
+                    ),
+                    SizedBox(height: 16),
+                    Stack(
+                      alignment: Alignment.centerRight,
+                      children: [
+                        InputField(
+                          controller: passwordController,
+                          label: 'Password',
+                          hint: '*********',
+                          obscure: widget.passwordVisibility,
+                        ),
+                        Positioned(
+                          right: 8,
+                          bottom: 4,
+                          child: IconButton(
+                            icon: Icon(
+                              widget.passwordVisibility
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.white70,
+                            ),
+                            onPressed: widget.onPasswordToggle,
                           ),
-                          SizedBox(height: 16),
-                          Stack(
-                            alignment: Alignment.centerRight,
-                            children: [
-                              InputField(
-                                controller: passwordController,
-                                label: 'Password',
-                                hint: '*********',
-                                obscure: widget.passwordVisibility,
-                              ),
-                              Positioned(
-                                right: 8,
-                                bottom: 4,
-                                child: IconButton(
-                                  icon: Icon(
-                                    widget.passwordVisibility
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
-                                    color: Colors.white70,
-                                  ),
-                                  onPressed: widget.onPasswordToggle,
-                                ),
-                              ),
-                            ],
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        InkWell(
+                          onTap: () {},
+                          child: Text(
+                            'Forget password ?',
+                            style: TextStyle(color: Colors.white),
                           ),
-                          SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              InkWell(
-                                onTap: () {},
-                                child: Text(
-                                  'Forget password ?',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      )
+                        ),
+                      ],
+                    ),
+                  ],
+                )
                     : Column(
-                        key: ValueKey('otp_mode'),
-                        children: [
-                          InputField(
-                            controller: phoneController,
-                            label: 'Phone or Email',
-                            hint: '+977 555 123 4567',
-                          ),
-                        ],
-                      ),
+                  key: ValueKey('otp_mode'),
+                  children: [
+                    InputField(
+                      controller: phoneController,
+                      label: 'Phone or Email',
+                      hint: '+977 555 123 4567',
+                    ),
+                  ],
+                ),
               ),
 
               SizedBox(height: 20),
 
               AppButton(
                 title: widget.usePassword ? 'LOGIN' : 'SEND OTP',
-                gradient: AppColors.primaryGradient1,
+                gradient: AppColors.primaryGradient,
                 isLoading: state is AuthLoadingState,
                 icon: Icons.auto_awesome,
                 onTap: () {
@@ -238,10 +240,11 @@ class _LoginCardState extends State<LoginCard> {
 
               SizedBox(height: 22),
               InkWell(
-                onTap: () => Navigator.pushReplacementNamed(
-                  context,
-                  '/login_screen_astrologer',
-                ),
+                onTap: () =>
+                    Navigator.pushReplacementNamed(
+                      context,
+                      '/login_screen_astrologer',
+                    ),
                 child: RichText(
                   text: TextSpan(
                     children: [

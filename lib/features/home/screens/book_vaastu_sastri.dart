@@ -1,6 +1,8 @@
+import 'dart:ui';
 import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
 import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:chat_jyotishi/features/home/bloc/home_client_bloc.dart';
@@ -28,46 +30,50 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
+  late AnimationController _buttonPulseController;
+  late AnimationController _buttonShineController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _pulseAnimation;
+  late Animation<double> _buttonPulseAnimation;
+  late Animation<double> _buttonShineAnimation;
   late Animation<Offset> _slideAnimation;
 
   final List<CategoryItem> categories = [
     CategoryItem(
       name: 'Home & Residential Vaastu',
-      icon: Icons.temple_hindu,
-      description:
-          'Vaastu guidance for homes to improve peace, health, and prosperity.',
+      icon: Icons.home_work_rounded,
+      description: 'Vaastu guidance for homes to improve peace, health, and prosperity.',
+      colors: [Color(0xFF9333EA), Color(0xFFDB2777)],
     ),
     CategoryItem(
       name: 'Property & Construction Vaastu',
-      icon: Icons.family_restroom,
-      description:
-          'Vaastu consultation for land selection, construction, and property planning.',
+      icon: Icons.apartment_rounded,
+      description: 'Vaastu consultation for land selection, construction, and property planning.',
+      colors: [Color(0xFFDB2777), Color(0xFFE44949)],
     ),
     CategoryItem(
       name: 'Office & Business Vaastu',
-      icon: Icons.celebration,
-      description:
-          'Vaastu solutions to enhance business growth, stability, and success.',
+      icon: Icons.business_rounded,
+      description: 'Vaastu solutions to enhance business growth, stability, and success.',
+      colors: [Color(0xFFE44949), Color(0xFFF97316)],
     ),
     CategoryItem(
       name: 'Vaastu Dasha & Corrections',
-      icon: Icons.auto_awesome,
-      description:
-          'Analysis of Vaastu doshas with practical correction remedies.',
+      icon: Icons.tune_rounded,
+      description: 'Analysis of Vaastu doshas with practical correction remedies.',
+      colors: [Color(0xFFF97316), Color(0xFFFB923C)],
     ),
     CategoryItem(
       name: 'Energy & Directional Remedies',
-      icon: Icons.diamond,
-      description:
-          'Balancing energies and correcting directional imbalances using Vaastu principles.',
+      icon: Icons.explore_rounded,
+      description: 'Balancing energies and correcting directional imbalances using Vaastu principles.',
+      colors: [Color(0xFF9333EA), Color(0xFFDB2777)],
     ),
     CategoryItem(
       name: 'Online & Special Consultation',
-      icon: Icons.more_horiz,
-      description:
-          'Personalized Vaastu consultations available online or for special cases.',
+      icon: Icons.video_call_rounded,
+      description: 'Personalized Vaastu consultations available online or for special cases.',
+      colors: [Color(0xFFDB2777), Color(0xFFE44949)],
     ),
   ];
 
@@ -89,10 +95,12 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
       curve: Curves.easeOut,
     );
 
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
-          CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
-        );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
+    );
 
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
@@ -103,6 +111,24 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    _buttonPulseController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _buttonPulseAnimation = Tween<double>(begin: 1.0, end: 1.03).animate(
+      CurvedAnimation(parent: _buttonPulseController, curve: Curves.easeInOut),
+    );
+
+    _buttonShineController = AnimationController(
+      duration: const Duration(milliseconds: 2500),
+      vsync: this,
+    )..repeat();
+
+    _buttonShineAnimation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _buttonShineController, curve: Curves.easeInOut),
+    );
+
     _fadeController.forward();
   }
 
@@ -110,6 +136,8 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
   void dispose() {
     _fadeController.dispose();
     _pulseController.dispose();
+    _buttonPulseController.dispose();
+    _buttonShineController.dispose();
     detailsController.dispose();
     locationController.dispose();
     _bloc.close();
@@ -126,12 +154,12 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
         return Theme(
           data: ThemeData.dark().copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primaryPurple,
+              primary: Color(0xFF9333EA),
               onPrimary: Colors.white,
-              surface: AppColors.deepPurple,
+              surface: AppColors.primaryBlack,
               onSurface: Colors.white,
             ),
-            dialogBackgroundColor: AppColors.deepPurple,
+            dialogBackgroundColor: AppColors.primaryBlack,
           ),
           child: child!,
         );
@@ -150,48 +178,73 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: MediaQuery.of(context).size.height * 0.75,
         decoration: BoxDecoration(
-          gradient: AppColors.backgroundGradient,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryBlack,
+              Color(0xFF9333EA).withOpacity(0.15),
+              AppColors.primaryBlack,
+            ],
+          ),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
           ),
-          border: Border(
-            top: BorderSide(
-              color: AppColors.primaryPurple.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
         ),
         child: Column(
           children: [
+            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textMuted.withOpacity(0.3),
+                gradient: LinearGradient(
+                  colors: [Color(0xFF9333EA), Color(0xFFDB2777)],
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 20),
 
             // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color(0xFF9333EA),
+                    Color(0xFFDB2777),
+                    Color(0xFFE44949),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFFDB2777).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryPurple.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.deepOrange,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.category,
-                      color: AppColors.primaryPurple,
-                      size: 24,
+                      color: Colors.white,
+                      size: 18,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -202,28 +255,35 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                         Text(
                           'Select Category',
                           style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Choose ceremony type',
+                          'Choose consultation type',
                           style: TextStyle(
-                            color: AppColors.textMuted,
+                            color: Colors.white,
                             fontSize: 12,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.textMuted),
-                    onPressed: () => Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HomeScreenClient(),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 18,
                       ),
                     ),
                   ),
@@ -232,6 +292,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
             ),
             const SizedBox(height: 20),
 
+            // Category list
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -244,6 +305,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                     padding: const EdgeInsets.only(bottom: 12),
                     child: InkWell(
                       onTap: () {
+                        HapticFeedback.mediumImpact();
                         setState(() {
                           selectedCategory = category.name;
                         });
@@ -251,86 +313,105 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                       },
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: isSelected
-                                ? [
-                                    AppColors.primaryPurple.withOpacity(0.3),
-                                    AppColors.primaryPurple.withOpacity(0.15),
-                                  ]
-                                : [
-                                    AppColors.primaryPurple.withOpacity(0.08),
-                                    AppColors.deepPurple.withOpacity(0.05),
-                                  ],
+                          gradient: isSelected
+                              ? LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: category.colors,
+                          )
+                              : LinearGradient(
+                            colors: [
+                              Color(0xFF9333EA).withOpacity(0.15),
+                              Color(0xFFDB2777).withOpacity(0.1),
+                            ],
                           ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isSelected
-                                ? AppColors.primaryPurple.withOpacity(0.5)
-                                : AppColors.primaryPurple.withOpacity(0.2),
+                                ? Colors.white.withOpacity(0.2)
+                                : Color(0xFF9333EA).withOpacity(0.2),
                             width: isSelected ? 2 : 1,
                           ),
+                          boxShadow: isSelected
+                              ? [
+                            BoxShadow(
+                              color: category.colors.first.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ]
+                              : [],
                         ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryPurple.withOpacity(
-                                  isSelected ? 0.3 : 0.2,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(
+                                      isSelected ? 0.25 : 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    category.icon,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
                                 ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                category.icon,
-                                color: isSelected
-                                    ? AppColors.primaryPurple
-                                    : AppColors.primaryPurple.withOpacity(0.7),
-                                size: 24,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    category.name,
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 15,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.w600,
-                                    ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        category.name,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w700
+                                              : FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        category.description,
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.9),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    category.description,
-                                    style: const TextStyle(
-                                      color: AppColors.textMuted,
-                                      fontSize: 12,
+                                ),
+                                if (isSelected)
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      shape: BoxShape.circle,
                                     ),
+                                    child: const Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  )
+                                else
+                                  Icon(
+                                    Icons.circle_outlined,
+                                    color: Colors.white.withOpacity(0.3),
+                                    size: 24,
                                   ),
-                                ],
-                              ),
+                              ],
                             ),
-                            if (isSelected)
-                              Icon(
-                                Icons.check_circle,
-                                color: AppColors.primaryPurple,
-                                size: 24,
-                              )
-                            else
-                              Icon(
-                                Icons.circle_outlined,
-                                color: AppColors.textMuted.withOpacity(0.3),
-                                size: 24,
-                              ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -371,7 +452,8 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
   void _handleCancel() {
     if (selectedCategory != null ||
         selectedDate != null ||
-        detailsController.text.isNotEmpty) {
+        detailsController.text.isNotEmpty ||
+        locationController.text.trim().isNotEmpty) {
       _showCancelConfirmation();
     } else {
       Navigator.pop(context);
@@ -385,99 +467,145 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
         backgroundColor: Colors.transparent,
         child: Container(
           decoration: BoxDecoration(
-            gradient: AppColors.backgroundGradient,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primaryPurple.withOpacity(0.15),
-                  AppColors.deepPurple.withOpacity(0.08),
-                ],
-              ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryBlack,
+                Color(0xFF9333EA).withOpacity(0.15),
+                AppColors.primaryBlack,
+              ],
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade900.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.orange.shade400,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Discard Changes?',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Your entered information will be lost. Are you sure?',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Row(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: Color(0xFFF97316).withOpacity(0.3),
+              width: 2,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          backgroundColor: Colors.white.withOpacity(0.1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xFFF97316).withOpacity(0.3),
+                            Color(0xFFFB923C).withOpacity(0.3),
+                          ],
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(color: Colors.white70),
-                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.warning_amber_rounded,
+                        color: Color(0xFFFB923C),
+                        size: 48,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          setState(() {
-                            selectedCategory = null;
-                            selectedDate = null;
-                            detailsController.clear();
-                          });
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 14),
-                          backgroundColor: AppColors.error,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Discard Changes?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your entered information will be lost. Are you sure?',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color(0xFF9333EA).withOpacity(0.3),
+                                  Color(0xFFDB2777).withOpacity(0.3),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => Navigator.pop(context),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Continue',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                        child: Text(
-                          'Discard',
-                          style: TextStyle(color: Colors.white),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color(0xFFE44949),
+                                  Color(0xFFF97316),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  setState(() {
+                                    selectedCategory = null;
+                                    selectedDate = null;
+                                    detailsController.clear();
+                                    locationController.clear();
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Discard',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -494,7 +622,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
           Text(
             label,
             style: TextStyle(
-              color: AppColors.primaryPurple.withOpacity(0.8),
+              color: Colors.white.withOpacity(0.8),
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -503,7 +631,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
             child: Text(
               value,
               style: const TextStyle(
-                color: AppColors.textPrimary,
+                color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -523,123 +651,193 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
         backgroundColor: Colors.transparent,
         child: Container(
           decoration: BoxDecoration(
-            gradient: AppColors.backgroundGradient,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryBlack,
+                Color(0xFF10B981).withOpacity(0.15),
+                AppColors.primaryBlack,
+              ],
+            ),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.primaryPurple.withOpacity(0.3)),
+            border: Border.all(
+              color: Color(0xFF10B981).withOpacity(0.3),
+              width: 2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryPurple.withOpacity(0.3),
+                color: Color(0xFF10B981).withOpacity(0.2),
                 blurRadius: 30,
-                offset: Offset(0, 0),
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-          child: Container(
-            padding: EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primaryPurple.withOpacity(0.15),
-                  AppColors.deepPurple.withOpacity(0.08),
-                ],
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade400.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.success, width: 2),
-                  ),
-                  child: Icon(
-                    Icons.check_circle,
-                    color: Colors.green.shade400,
-                    size: 48,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Booking Successful!',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Your request has been submitted',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.cardGradient,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildInfoRow('Status', booking.status),
-                      Divider(
-                        color: AppColors.primaryPurple.withOpacity(0.2),
-                        height: 20,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xFF10B981).withOpacity(0.3),
+                            Color(0xFF34D399).withOpacity(0.3),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
                       ),
-                      _buildInfoRow('Category', booking.category),
-                      Divider(
-                        color: AppColors.primaryPurple.withOpacity(0.2),
-                        height: 20,
+                      child: const Icon(
+                        Icons.check_circle,
+                        color: Color(0xFF10B981),
+                        size: 64,
                       ),
-                      _buildInfoRow(
-                        'Date',
-                        DateFormat('MMM dd, yyyy').format(booking.bookingDate),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade900.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.blue.shade700.withOpacity(0.3),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: Colors.blue.shade300,
-                        size: 20,
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Booking Successful!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Admin will review and respond soon',
-                          style: TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12,
-                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your request has been submitted',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Color(0xFF9333EA).withOpacity(0.3),
+                            Color(0xFFDB2777).withOpacity(0.3),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Color(0xFF9333EA).withOpacity(0.3),
                         ),
                       ),
-                    ],
-                  ),
+                      child: Column(
+                        children: [
+                          _buildInfoRow('Status', booking.status),
+                          Divider(
+                            color: Colors.white.withOpacity(0.2),
+                            height: 20,
+                          ),
+                          _buildInfoRow('Category', booking.category),
+                          Divider(
+                            color: Colors.white.withOpacity(0.2),
+                            height: 20,
+                          ),
+                          _buildInfoRow(
+                            'Date',
+                            DateFormat('MMM dd, yyyy').format(booking.bookingDate),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xFF3B82F6).withOpacity(0.3),
+                            Color(0xFF2563EB).withOpacity(0.3),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Color(0xFF3B82F6).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Color(0xFF60A5FA),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Admin will review and respond soon',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    AnimatedBuilder(
+                      animation: _buttonPulseAnimation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _buttonPulseAnimation.value,
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color(0xFF10B981),
+                                  Color(0xFF34D399),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFF10B981).withOpacity(0.4),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => Navigator.pop(context),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Got It!',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                AppButton(
-                  title: 'Got It!',
-                  onTap: () => Navigator.pop(context),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -651,51 +849,75 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Location',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFE44949), Color(0xFFF97316)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.place,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Location',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Where should the Vaastu consultation take place?',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 12,
+          ),
         ),
         const SizedBox(height: 12),
         Container(
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.primaryPurple.withOpacity(0.08),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Color(0xFF9333EA).withOpacity(0.3),
+                Color(0xFFDB2777).withOpacity(0.3),
+              ],
+            ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primaryPurple.withOpacity(0.2)),
+            border: Border.all(
+              color: Color(0xFF9333EA).withOpacity(0.3),
+            ),
           ),
-          child: TextField(
-            textAlignVertical: TextAlignVertical.center,
-            controller: locationController,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
-            decoration: InputDecoration(
-              hintText: 'Enter address or city',
-              hintStyle: const TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 13,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
-              prefixIcon: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryPurple.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: TextField(
+                textAlignVertical: TextAlignVertical.center,
+                controller: locationController,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Enter address or city',
+                  hintStyle: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 13,
                   ),
-                  child: Icon(
-                    Icons.place,
-                    color: AppColors.primaryPurple,
-                    size: 20,
-                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
                 ),
               ),
             ),
@@ -726,12 +948,21 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
           final isLoading = state is HomeClientLoadingState;
 
           return Scaffold(
-            backgroundColor: AppColors.backgroundDark,
+            backgroundColor: AppColors.primaryBlack,
             body: Stack(
               children: [
+                // Background
                 Container(
                   decoration: BoxDecoration(
-                    gradient: AppColors.backgroundGradient,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.primaryBlack,
+                        Color(0xFF9333EA).withOpacity(0.1),
+                        AppColors.primaryBlack,
+                      ],
+                    ),
                   ),
                 ),
                 Positioned(
@@ -746,7 +977,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                         decoration: BoxDecoration(
                           gradient: RadialGradient(
                             colors: [
-                              AppColors.primaryPurple.withOpacity(
+                              Color(0xFF9333EA).withOpacity(
                                 0.15 * _pulseAnimation.value,
                               ),
                               Colors.transparent,
@@ -762,7 +993,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                     opacity: _fadeAnimation,
                     child: Column(
                       children: [
-                        _buildHeader(),
+                        _buildAppBar(),
                         Expanded(
                           child: SingleChildScrollView(
                             physics: const BouncingScrollPhysics(),
@@ -797,11 +1028,24 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 ),
                 if (isLoading)
                   Container(
-                    color: Colors.black.withOpacity(0.7),
+                    color: Colors.black.withOpacity(0.8),
                     child: Center(
                       child: Container(
-                        padding: EdgeInsets.all(24),
-
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF9333EA).withOpacity(0.3),
+                              Color(0xFFDB2777).withOpacity(0.3),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Color(0xFF9333EA).withOpacity(0.3),
+                          ),
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -810,18 +1054,18 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                               height: 50,
                               child: CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.primaryPurple,
+                                  Color(0xFF9333EA),
                                 ),
                                 strokeWidth: 4,
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 20),
                             const Text(
                               'Submitting your request...',
                               style: TextStyle(
-                                color: AppColors.textPrimary,
+                                color: Colors.white,
                                 fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -837,22 +1081,37 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildAppBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
           Container(
             decoration: BoxDecoration(
-              color: AppColors.primaryPurple.withOpacity(0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF9333EA).withOpacity(0.3),
+                  Color(0xFFDB2777).withOpacity(0.3),
+                ],
+              ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.primaryPurple.withOpacity(0.3),
+                color: Color(0xFF9333EA).withOpacity(0.3),
               ),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-              onPressed: _handleCancel,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _handleCancel,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -863,15 +1122,18 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 Text(
                   'Book Vaastu Sastri',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Schedule your puja ceremony',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                  'Schedule your Vaastu consultation',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -886,27 +1148,34 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
-            AppColors.deepPurple.withOpacity(0.15),
+            Color(0xFF9333EA),
+            Color(0xFFDB2777),
+            Color(0xFFE44949),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primaryPurple.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0xFFDB2777).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.primaryPurple.withOpacity(0.2),
+              color: Colors.deepOrange,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(
-              Icons.temple_hindu,
-              color: AppColors.primaryPurple,
+            child: const Icon(
+              Icons.home_work_rounded,
+              color: Colors.white,
               size: 28,
             ),
           ),
@@ -916,18 +1185,18 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Expert Pandits Available',
+                  'Expert Vaastu Consultants',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Verified & experienced pandits for all ceremonies',
+                  'Verified & experienced Vaastu experts for all needs',
                   style: TextStyle(
-                    color: AppColors.textMuted,
+                    color: Colors.white,
                     fontSize: 12,
                     height: 1.4,
                   ),
@@ -941,88 +1210,128 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
   }
 
   Widget _buildCategorySection() {
-    final CategoryItem selectedItem = categories.firstWhere(
-      (cat) => cat.name == selectedCategory,
+    final CategoryItem? selectedItem = selectedCategory != null
+        ? categories.firstWhere(
+          (cat) => cat.name == selectedCategory,
       orElse: () => categories.first,
-    );
+    )
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Select Category',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF9333EA), Color(0xFFDB2777)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.category,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Select Category',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Choose the type of ceremony you need',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+        Text(
+          'Choose the type of consultation you need',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 12,
+          ),
         ),
         const SizedBox(height: 12),
         InkWell(
           onTap: _showCategorySelector,
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.primaryPurple.withOpacity(0.08),
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: selectedCategory != null
+                    ? selectedItem!.colors
+                    : [
+                  Color(0xFF9333EA).withOpacity(0.3),
+                  Color(0xFFDB2777).withOpacity(0.3),
+                ],
+              ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.primaryPurple.withOpacity(0.2),
+                color: Color(0xFF9333EA).withOpacity(0.3),
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryPurple.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    selectedCategory != null
-                        ? selectedItem?.icon
-                        : Icons.category,
-                    color: AppColors.primaryPurple,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        selectedCategory ?? 'Select ceremony type',
-                        style: TextStyle(
-                          color: selectedCategory != null
-                              ? AppColors.textPrimary
-                              : AppColors.textMuted,
-                          fontSize: 14,
-                          fontWeight: selectedCategory != null
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                        ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      if (selectedCategory != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          selectedItem!.description,
-                          style: TextStyle(
-                            color: AppColors.primaryPurple.withOpacity(0.8),
-                            fontSize: 11,
+                      child: Icon(
+                        selectedCategory != null
+                            ? selectedItem?.icon
+                            : Icons.category,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            selectedCategory ?? 'Select consultation type',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: selectedCategory != null
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
+                          if (selectedCategory != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              selectedItem!.description,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.white,
+                    ),
+                  ],
                 ),
-                Icon(Icons.chevron_right, color: AppColors.primaryPurple),
-              ],
+              ),
             ),
           ),
         ),
@@ -1034,82 +1343,118 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Preferred Date',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFDB2777), Color(0xFFE44949)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.calendar_today,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Preferred Date',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 4),
-        const Text(
-          'When would you like the ceremony?',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+        Text(
+          'When would you like the consultation?',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 12,
+          ),
         ),
         const SizedBox(height: 12),
         InkWell(
           onTap: () => _selectDate(context),
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.primaryPurple.withOpacity(0.08),
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color(0xFF9333EA).withOpacity(0.3),
+                  Color(0xFFDB2777).withOpacity(0.3),
+                ],
+              ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.primaryPurple.withOpacity(0.2),
+                color: Color(0xFF9333EA).withOpacity(0.3),
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryPurple.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.calendar_today,
-                    color: AppColors.primaryPurple,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        selectedDate == null
-                            ? 'Select Date'
-                            : DateFormat(
-                                'EEEE, MMM dd, yyyy',
-                              ).format(selectedDate!),
-                        style: TextStyle(
-                          color: selectedDate == null
-                              ? AppColors.textMuted
-                              : AppColors.textPrimary,
-                          fontSize: 14,
-                          fontWeight: selectedDate == null
-                              ? FontWeight.normal
-                              : FontWeight.w600,
-                        ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      if (selectedDate != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          _getRelativeDate(selectedDate!),
-                          style: TextStyle(
-                            color: AppColors.primaryPurple.withOpacity(0.8),
-                            fontSize: 11,
+                      child: const Icon(
+                        Icons.calendar_month,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            selectedDate == null
+                                ? 'Select Date'
+                                : DateFormat(
+                              'EEEE, MMM dd, yyyy',
+                            ).format(selectedDate!),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: selectedDate == null
+                                  ? FontWeight.w500
+                                  : FontWeight.w700,
+                            ),
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
+                          if (selectedDate != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              _getRelativeDate(selectedDate!),
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.white,
+                    ),
+                  ],
                 ),
-                Icon(Icons.chevron_right, color: AppColors.primaryPurple),
-              ],
+              ),
             ),
           ),
         ),
@@ -1135,63 +1480,95 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
       children: [
         Row(
           children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFF97316), Color(0xFFFB923C)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.edit_note,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
             const Text(
               'Additional Details',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: Colors.white,
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.primaryPurple.withOpacity(0.2),
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF9333EA).withOpacity(0.3),
+                    Color(0xFFDB2777).withOpacity(0.3),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
+              child: Text(
                 'Optional',
                 style: TextStyle(
-                  color: AppColors.textMuted,
+                  color: Colors.white.withOpacity(0.9),
                   fontSize: 10,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Provide specific requirements for your ceremony',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+        Text(
+          'Provide specific requirements for your consultation',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 12,
+          ),
         ),
         const SizedBox(height: 12),
         Container(
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.primaryPurple.withOpacity(0.08),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Color(0xFF9333EA).withOpacity(0.3),
+                Color(0xFFDB2777).withOpacity(0.3),
+              ],
+            ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primaryPurple.withOpacity(0.2)),
+            border: Border.all(
+              color: Color(0xFF9333EA).withOpacity(0.3),
+            ),
           ),
-          child: TextField(
-            controller: detailsController,
-            maxLines: 5,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
-            decoration: InputDecoration(
-              hintText:
-                  'E.g., Address, preferred time, number of people, specific requirements...',
-              hintStyle: const TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 13,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
-              prefixIcon: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Icon(
-                  Icons.edit_note,
-                  color: AppColors.primaryPurple.withOpacity(0.6),
-                  size: 22,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: TextField(
+                controller: detailsController,
+                maxLines: 5,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText:
+                  'E.g., Property type, specific concerns, preferred time...',
+                  hintStyle: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 13,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
                 ),
               ),
             ),
@@ -1203,34 +1580,45 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
 
   Widget _buildInfoCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.blue.shade900.withOpacity(0.2),
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF3B82F6).withOpacity(0.3),
+            Color(0xFF2563EB).withOpacity(0.3),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade700.withOpacity(0.3)),
+        border: Border.all(
+          color: Color(0xFF3B82F6).withOpacity(0.3),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, color: Colors.blue.shade300, size: 22),
+          Icon(
+            Icons.info_outline,
+            color: Color(0xFF60A5FA),
+            size: 22,
+          ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Important Information',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Your request will be reviewed by our admin team. You\'ll receive confirmation once approved. The pandit will contact you for further arrangements.',
+                  'Your request will be reviewed by our admin team. You\'ll receive confirmation once approved. The Vaastu expert will contact you for further arrangements.',
                   style: TextStyle(
-                    color: AppColors.textMuted,
+                    color: Colors.white.withOpacity(0.9),
                     fontSize: 12,
                     height: 1.5,
                   ),
@@ -1247,19 +1635,105 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
     return Row(
       children: [
         Expanded(
-          child: AppButton(
-            title: 'Cancel',
-            gradient: AppColors.cardGradient,
-            icon: Icons.dangerous,
-            onTap: isLoading ? null : _handleCancel,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF9333EA).withOpacity(0.3),
+                  Color(0xFFDB2777).withOpacity(0.3),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: isLoading ? null : _handleCancel,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.close,
+                        color: isLoading ? Colors.white38 : Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: isLoading ? Colors.white38 : Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
-          child: AppButton(
-            title: 'Submit Request',
-            onTap: isLoading ? null : _handleSubmit,
+          child: AnimatedBuilder(
+            animation: _buttonPulseAnimation,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: isLoading ? 1.0 : _buttonPulseAnimation.value,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Color(0xFFE44949),
+                        Color(0xFFF97316),
+                        Color(0xFFFB923C),
+                        Color(0xFFFBBF24),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFFF97316).withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: isLoading ? null : _handleSubmit,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.send,
+                              color: isLoading ? Colors.white38 : Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Submit Request',
+                              style: TextStyle(
+                                color: isLoading ? Colors.white38 : Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -1271,10 +1745,12 @@ class CategoryItem {
   final String name;
   final IconData icon;
   final String description;
+  final List<Color> colors;
 
   CategoryItem({
     required this.name,
     required this.icon,
     required this.description,
+    required this.colors,
   });
 }

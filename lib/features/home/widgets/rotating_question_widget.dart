@@ -131,13 +131,13 @@ class _RotatingQuestionsWidgetState extends State<RotatingQuestionsWidget>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
-            AppColors.deepPurple.withOpacity(0.1),
+            Colors.black.withOpacity(0.5),
+            AppColors.cosmicPink.withOpacity(0.2),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.primaryPurple.withOpacity(0.4),
+          color: AppColors.cosmicPink.withOpacity(0.4),
           width: 1,
         ),
         boxShadow: [
@@ -191,7 +191,7 @@ class _RotatingQuestionsWidgetState extends State<RotatingQuestionsWidget>
                       word: _currentTitleWords[index],
                       index: index,
                       style: const TextStyle(
-                        color: AppColors.textPrimary,
+                        color: gold,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         height: 1.4,
@@ -210,7 +210,7 @@ class _RotatingQuestionsWidgetState extends State<RotatingQuestionsWidget>
                       word: _currentSubtitleWords[index],
                       index: index,
                       style: const TextStyle(
-                        color: AppColors.textMuted,
+                        color: gold,
                         fontSize: 14,
                         height: 1.5,
                       ),
@@ -301,7 +301,7 @@ class _RotatingQuestionsWidgetState extends State<RotatingQuestionsWidget>
                 Text(
                   description,
                   style: const TextStyle(
-                    color: AppColors.textMuted,
+                    color: gold,
                     fontSize: 10,
                     height: 1.3,
                   ),

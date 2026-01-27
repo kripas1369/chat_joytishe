@@ -67,8 +67,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
+  late AnimationController _buttonPulseController;
+  late AnimationController _buttonShineController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _pulseAnimation;
+  late Animation<double> _buttonPulseAnimation;
+  late Animation<double> _buttonShineAnimation;
 
   final String userName = 'Praveen';
   final String userEmail = 'praveen@example.com';
@@ -99,6 +103,23 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    // Button animations
+    _buttonPulseController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+    _buttonPulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _buttonPulseController, curve: Curves.easeInOut),
+    );
+
+    _buttonShineController = AnimationController(
+      duration: const Duration(milliseconds: 2500),
+      vsync: this,
+    )..repeat();
+    _buttonShineAnimation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _buttonShineController, curve: Curves.easeInOut),
+    );
+
     _fadeController.forward();
   }
 
@@ -106,6 +127,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   void dispose() {
     _fadeController.dispose();
     _pulseController.dispose();
+    _buttonPulseController.dispose();
+    _buttonShineController.dispose();
     super.dispose();
   }
 
@@ -153,9 +176,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                             const SizedBox(height: 16),
                             _buildHeader(),
                             const SizedBox(height: 20),
-                            const RotatingQuestionsWidget(),
-                            const SizedBox(height: 24),
                             _buildLiveJyotishSection(),
+                            const SizedBox(height: 24),
+                            const RotatingQuestionsWidget(),
                             const SizedBox(height: 28),
                             _buildDailyFeaturesSection(),
                             const SizedBox(height: 28),
@@ -271,15 +294,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
             ? state.astrologers.where((a) => a.isOnline).toList()
             : <ActiveAstrologerModel>[];
 
+        final onlineCount = astrologers.length;
+
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
               colors: [
-                Colors.black.withOpacity(0.5),
-                AppColors.cosmicPurple.withOpacity(0.2),
+                Color(0xFF9333EA).withOpacity(0.3), // purple-600
+                Color(0xFFDB2777).withOpacity(0.3), // pink-600
+                Color(0xFFDC2626).withOpacity(0.3), // red-600
               ],
             ),
             borderRadius: BorderRadius.circular(20),
@@ -295,123 +321,440 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.cosmicPrimaryGradient,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.sensors,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Live Jyotish',
-                                style: TextStyle(
-                                  color: AppColors.textWhite,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: Colors.greenAccent,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.greenAccent.withOpacity(
-                                            0.5,
-                                          ),
-                                          blurRadius: 6,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '${astrologers.length} Online',
-                                    style: const TextStyle(
-                                      color: Colors.greenAccent,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                  // TOP SECTION: Online Astrologers Status Card
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color(0xFF9333EA), // purple-600
+                          Color(0xFFDB2777), // pink-600
+                          Color(0xFFE44949), // red-600
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFFEC4899).withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header Row
+                        Row(
+                          children: [
+                            // Green Dot
+                            Container(
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFF10B981), // Green
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0xFF10B981).withOpacity(0.8),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      if (isLoading)
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.cosmicPurple,
-                          ),
-                        )
-                      else
-                        IconButton(
-                          onPressed: () => context.read<ChatBloc>().add(
-                            RefreshActiveUsersEvent(),
-                          ),
-                          icon: Icon(
-                            Icons.refresh,
-                            color: AppColors.textGray300,
-                            size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            // Text
+                            Expanded(
+                              child: Text(
+                                '$onlineCount Astrologers Online Now',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            // Sparkle Icon
+                            Icon(
+                              Icons.verified,
+                              color: gold, // Yellow
+                              size: 28,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Response Time
+                        Text(
+                          'Average response time: 30 seconds',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 100,
-                    child: astrologers.isEmpty && !isLoading
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.person_off_outlined,
-                                  color: AppColors.textGray400,
-                                  size: 32,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'No Jyotish online right now',
-                                  style: TextStyle(
-                                    color: AppColors.textGray400,
-                                    fontSize: 13,
+                        const SizedBox(height: 16),
+                        // CTA Button - Attractive animated version
+                        AnimatedBuilder(
+                          animation: Listenable.merge([
+                            _buttonPulseAnimation,
+                            _buttonShineAnimation,
+                          ]),
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: _buttonPulseAnimation.value,
+                              child: GestureDetector(
+                                onTapDown: (_) {
+                                  HapticFeedback.mediumImpact();
+                                },
+                                onTap: () => _handleChatNavigation(),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
                                   ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Color(0xFFE44949),
+                                        Color(0xFFF97316),
+                                        Color(0xFFFB923C),
+                                        Color(0xFFFBBF24),
+                                      ],
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(
+                                          0xFFF97316,
+                                        ).withOpacity(0.6),
+                                        blurRadius: 20,
+                                        spreadRadius: 2,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                      BoxShadow(
+                                        color: Color(
+                                          0xFFE44949,
+                                        ).withOpacity(0.4),
+                                        blurRadius: 30,
+                                        spreadRadius: 0,
+                                        offset: const Offset(0, 10),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      // Animated shine effect
+                                      Positioned.fill(
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          child: Transform.translate(
+                                            offset: Offset(
+                                              _buttonShineAnimation.value * 300,
+                                              0,
+                                            ),
+                                            child: Container(
+                                              width: 50,
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    Colors.transparent,
+                                                    Colors.white.withOpacity(
+                                                      0.3,
+                                                    ),
+                                                    Colors.transparent,
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      // Button content
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            // Animated chat icon
+                                            Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(
+                                                  0.2,
+                                                ),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.chat_bubble_rounded,
+                                                color: Colors.white,
+                                                size: 18,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            // Text with pulsing indicator
+                                            Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  'Start Live Chat with Jyotish',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w800,
+                                                    letterSpacing: 0.5,
+                                                    shadows: [
+                                                      Shadow(
+                                                        color: Colors.black
+                                                            .withOpacity(0.3),
+                                                        blurRadius: 4,
+                                                        offset: Offset(0, 2),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                // Pulsing "Available Now" indicator
+                                                AnimatedBuilder(
+                                                  animation: _pulseController,
+                                                  builder: (context, child) {
+                                                    return Opacity(
+                                                      opacity:
+                                                          0.7 +
+                                                          (_pulseController
+                                                                  .value *
+                                                              0.3),
+                                                      child: Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          Container(
+                                                            width: 6,
+                                                            height: 6,
+                                                            decoration: BoxDecoration(
+                                                              color: Color(
+                                                                0xFF10B981,
+                                                              ),
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              boxShadow: [
+                                                                BoxShadow(
+                                                                  color: Color(
+                                                                    0xFF10B981,
+                                                                  ).withOpacity(0.8),
+                                                                  blurRadius: 8,
+                                                                  spreadRadius:
+                                                                      2,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 4,
+                                                          ),
+                                                          Text(
+                                                            'Available Now',
+                                                            style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 11,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              letterSpacing:
+                                                                  0.3,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(width: 12),
+                                            // Animated arrow
+                                            Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(
+                                                  0.2,
+                                                ),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.arrow_forward_rounded,
+                                                color: Colors.white,
+                                                size: 18,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color(0xFF9333EA), // purple-600
+                          Color(0xFFDB2777), // pink-600
+                          Color(0xFFE44949), // red-600
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.deepOrange,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    Icons.broadcast_on_personal_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Live Jyotish',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFF10B981),
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color(
+                                                  0xFF10B981,
+                                                ).withOpacity(0.6),
+                                                blurRadius: 6,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '$onlineCount Online',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.95,
+                                            ),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          )
-                        : ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: astrologers.length,
-                            itemBuilder: (context, index) {
-                              final astrologer = astrologers[index];
-                              return _buildJyotishCard(astrologer);
-                            },
-                          ),
+                            if (isLoading)
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            else
+                              IconButton(
+                                onPressed: () => context.read<ChatBloc>().add(
+                                  RefreshActiveUsersEvent(),
+                                ),
+                                icon: Icon(
+                                  Icons.refresh,
+                                  color: Colors.white.withOpacity(0.9),
+                                  size: 20,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Astrologer Cards (Horizontal Scroll)
+                        SizedBox(
+                          height: 110,
+                          child: astrologers.isEmpty && !isLoading
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.person_off_outlined,
+                                        color: Colors.white.withOpacity(0.7),
+                                        size: 32,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'No Jyotish online right now',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.7),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount: astrologers.length,
+                                  itemBuilder: (context, index) {
+                                    final astrologer = astrologers[index];
+                                    return _buildJyotishCard(astrologer);
+                                  },
+                                ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -537,28 +880,28 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     );
   }
 
-  // Daily Features Section
+  // Daily Features Section - Updated with vibrant gradient style
   Widget _buildDailyFeaturesSection() {
     final dailyFeatures = [
       {
         'icon': Icons.auto_awesome,
         'title': 'Daily Horoscope',
         'subtitle': 'Your daily celestial guide',
-        'color': AppColors.cosmicPurple,
+        'colors': [Color(0xFF9333EA), Color(0xFFDB2777)],
         'route': '/horoscope_screen',
       },
       {
         'icon': Icons.calendar_today_rounded,
         'title': 'Shubha-Ashubh Sait',
         'subtitle': 'Auspicious timings today',
-        'color': AppColors.cosmicPink,
+        'colors': [Color(0xFFDB2777), Color(0xFFE44949)],
         'route': '/shubha_ashubh',
       },
       {
         'icon': Icons.flight_takeoff_rounded,
         'title': 'Travel Prediction',
         'subtitle': 'Safe travel guidance',
-        'color': AppColors.cosmicRed,
+        'colors': [Color(0xFFE44949), Color(0xFFF97316)],
         'route': '/travel_prediction',
       },
     ];
@@ -567,11 +910,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
           colors: [
-            Colors.black.withOpacity(0.5),
-            AppColors.cosmicPink.withOpacity(0.2),
+            Color(0xFF9333EA).withOpacity(0.3),
+            Color(0xFFDB2777).withOpacity(0.3),
+            Color(0xFFDC2626).withOpacity(0.3),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
@@ -587,55 +931,85 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.cosmicPink, AppColors.cosmicRed],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.wb_sunny_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Daily Insights',
-                        style: TextStyle(
-                          color: AppColors.textWhite,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'Updated every day',
-                        style: TextStyle(
-                          color: AppColors.textGray400,
-                          fontSize: 12,
-                        ),
-                      ),
+              // Header matching Live Jyotish style
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Color(0xFF9333EA),
+                      Color(0xFFDB2777),
+                      Color(0xFFE44949),
                     ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ...dailyFeatures.map(
-                (feature) => _buildDailyFeatureCard(
-                  icon: feature['icon'] as IconData,
-                  title: feature['title'] as String,
-                  subtitle: feature['subtitle'] as String,
-                  color: feature['color'] as Color,
-                  onTap: () => _navigateTo(feature['route'] as String),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFDB2777).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.deepOrange,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.wb_sunny_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Daily Insights',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Updated every day',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 16),
+              // Feature cards
+              ...dailyFeatures.asMap().entries.map((entry) {
+                final index = entry.key;
+                final feature = entry.value;
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index < dailyFeatures.length - 1 ? 12 : 0,
+                  ),
+                  child: _buildDailyFeatureCard(
+                    icon: feature['icon'] as IconData,
+                    title: feature['title'] as String,
+                    subtitle: feature['subtitle'] as String,
+                    colors: feature['colors'] as List<Color>,
+                    onTap: () => _navigateTo(feature['route'] as String),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -647,96 +1021,100 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     required IconData icon,
     required String title,
     required String subtitle,
-    required Color color,
+    required List<Color> colors,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [color.withOpacity(0.15), color.withOpacity(0.05)],
+            colors: colors,
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color, color.withOpacity(0.7)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(icon, color: Colors.white, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: AppColors.textWhite,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: AppColors.textGray400,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: color,
-                size: 16,
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: colors.first.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.95),
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Services Grid
+  // Services Grid - Updated with vibrant gradient style
   Widget _buildServicesGrid() {
     final services = [
       {
         'icon': Icons.chat_bubble_rounded,
         'title': 'Chat with Jyotish',
         'subtitle': 'Instant',
-        'features': ['Verified Jyotish', 'Secure chat & fast replies'],
-        'cta': 'Start Chatting',
-        'gradient': LinearGradient(
-          colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
-        ),
+        'colors': [Color(0xFF9333EA), Color(0xFFDB2777)],
         'route': '/chat_list_screen',
         'isComingSoon': false,
       },
@@ -744,47 +1122,31 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         'icon': Icons.calendar_month_rounded,
         'title': 'Book Appointment',
         'subtitle': 'Full kundali review',
-        'features': ['Detailed analysis', '1:1 consultation slots'],
-        'cta': 'Book Now',
-        'gradient': LinearGradient(
-          colors: [AppColors.cosmicPink, AppColors.cosmicRed],
-        ),
-        'route': '/appointment',
+        'colors': [Color(0xFFDB2777), Color(0xFFE44949)],
+        'route': '/appointment_screen',
         'isComingSoon': false,
       },
       {
         'icon': Icons.person_pin_rounded,
         'title': 'Book Pandit Ji',
         'subtitle': 'Rituals & puja',
-        'features': ['Puja & rituals booking', 'Verified pandit network'],
-        'cta': 'Book Now',
-        'gradient': LinearGradient(
-          colors: [AppColors.cosmicRed, AppColors.cosmicPurple],
-        ),
-        'route': '/book_pandit',
+        'colors': [Color(0xFFE44949), Color(0xFFF97316)],
+        'route': '/book_pandit_screen',
         'isComingSoon': false,
       },
       {
         'icon': Icons.home_work_rounded,
         'title': 'Book Vaastu Sastri',
         'subtitle': 'Home & office vaastu',
-        'features': ['Vastu guidance', 'Home & office remedies'],
-        'cta': 'Book Now',
-        'gradient': LinearGradient(
-          colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
-        ),
-        'route': '/vastustra',
+        'colors': [Color(0xFFF97316), Color(0xFFFB923C)],
+        'route': '/book_vaastu_sastri_screen',
         'isComingSoon': false,
       },
       {
         'icon': Icons.menu_book_rounded,
         'title': 'Katha Vachak',
         'subtitle': 'Events & programs',
-        'features': ['कथा वाचन booking', 'Events & programs'],
-        'cta': 'Book Now',
-        'gradient': LinearGradient(
-          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-        ),
+        'colors': [Color(0xFF9333EA), Color(0xFFDB2777)],
         'route': '/katha_vachak',
         'isComingSoon': false,
       },
@@ -792,11 +1154,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         'icon': Icons.favorite_rounded,
         'title': 'Kundali Match',
         'subtitle': 'Compatibility insights',
-        'features': ['Dosha & remedies', 'Match analysis'],
-        'cta': 'Coming Soon',
-        'gradient': LinearGradient(
-          colors: [Color(0xFF64748B), Color(0xFF475569)],
-        ),
+        'colors': [Color(0xFF64748B), Color(0xFF475569)],
         'route': null,
         'isComingSoon': true,
       },
@@ -804,25 +1162,22 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         'icon': Icons.flight_takeoff_rounded,
         'title': 'Travel Prediction',
         'subtitle': 'Auspicious dates',
-        'features': ['Safe travel guidance', 'Best travel times'],
-        'cta': 'Coming Soon',
-        'gradient': LinearGradient(
-          colors: [Color(0xFF64748B), Color(0xFF475569)],
-        ),
+        'colors': [Color(0xFF64748B), Color(0xFF475569)],
         'route': null,
         'isComingSoon': true,
       },
     ];
 
     return Container(
-      padding: const EdgeInsets.all(19),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
           colors: [
-            Colors.black.withOpacity(0.5),
-            AppColors.cosmicRed.withOpacity(0.2),
+            Color(0xFF9333EA).withOpacity(0.3),
+            Color(0xFFDB2777).withOpacity(0.3),
+            Color(0xFFDC2626).withOpacity(0.3),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
@@ -845,93 +1200,85 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Enhanced Header Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          gradient: AppColors.cosmicPrimaryGradient,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.cosmicPurple.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+              // Enhanced Header Section matching Live Jyotish style
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Color(0xFF9333EA),
+                      Color(0xFFDB2777),
+                      Color(0xFFE44949),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFDB2777).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.deepOrange,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.grid_view_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Our Services',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              'Explore all features',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.95),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                              ),
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.grid_view_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Our Services',
-                            style: TextStyle(
-                              color: AppColors.textWhite,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.5,
-                              height: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Container(
-                                width: 3,
-                                height: 3,
-                                decoration: BoxDecoration(
-                                  color: AppColors.textGray400.withOpacity(0.6),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'Explore all features',
-                                style: TextStyle(
-                                  color: AppColors.textGray400,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  letterSpacing: 0.1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  // Optional Filter/View Toggle
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.textWhite.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: AppColors.textWhite.withOpacity(0.1),
-                        width: 1,
+                      child: Icon(
+                        Icons.tune_rounded,
+                        color: Colors.white,
+                        size: 18,
                       ),
                     ),
-                    child: Icon(
-                      Icons.tune_rounded,
-                      color: AppColors.textGray400,
-                      size: 18,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Enhanced Grid with staggered animations
               GridView.builder(
@@ -939,7 +1286,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                   crossAxisCount: 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  childAspectRatio: 0.85,
+                  childAspectRatio: 0.95, // Adjusted for better content fit
                 ),
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -961,12 +1308,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                       icon: service['icon'] as IconData,
                       title: service['title'] as String,
                       subtitle: service['subtitle'] as String,
-                      gradient: service['gradient'] as LinearGradient,
+                      colors: service['colors'] as List<Color>,
                       isComingSoon: service['isComingSoon'] as bool,
                       onTap: service['route'] != null
                           ? () => _navigateTo(service['route'] as String)
                           : null,
-                      index: index,
                     ),
                   );
                 },
@@ -978,292 +1324,201 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     );
   }
 
-  // Enhanced Service Card Builder
+  // Enhanced Service Card Builder matching the vibrant gradient style
   Widget _buildServiceCard({
     required IconData icon,
     required String title,
     required String subtitle,
-    required LinearGradient gradient,
+    required List<Color> colors,
     required bool isComingSoon,
     VoidCallback? onTap,
-    required int index,
   }) {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
-      tween: Tween(begin: 1.0, end: 1.0),
-      builder: (context, scale, child) {
-        return Transform.scale(scale: scale, child: child);
-      },
-      child: GestureDetector(
-        onTapDown: (_) {
-          // Add haptic feedback for better UX
-          HapticFeedback.lightImpact();
-        },
-        onTap: isComingSoon ? null : onTap,
-        child: AnimatedContainer(
-          height: 400,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isComingSoon
-                  ? [
-                      const Color(0xFF1E293B).withOpacity(0.6),
-                      const Color(0xFF0F172A).withOpacity(0.8),
-                    ]
-                  : [
-                      Colors.white.withOpacity(0.08),
-                      Colors.white.withOpacity(0.03),
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isComingSoon
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.white.withOpacity(0.12),
-              width: 1.5,
-            ),
-            boxShadow: [
-              if (!isComingSoon)
-                BoxShadow(
-                  color: gradient.colors.first.withOpacity(0.15),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                  spreadRadius: -4,
+    return GestureDetector(
+      onTapDown: (_) => HapticFeedback.lightImpact(),
+      onTap: isComingSoon ? null : onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: isComingSoon
+              ? LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color(0xFF64748B).withOpacity(0.4),
+                    Color(0xFF475569).withOpacity(0.4),
+                  ],
+                )
+              : LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: colors,
                 ),
-            ],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(isComingSoon ? 0.05 : 0.12),
+            width: 1.5,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Stack(
+          boxShadow: [
+            if (!isComingSoon)
+              BoxShadow(
+                color: colors.first.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Gradient Accent Line (Top)
-                  if (!isComingSoon)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        height: 3,
-                        decoration: BoxDecoration(gradient: gradient),
+                  // Icon Container
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(
+                            isComingSoon ? 0.1 : 0.2,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(icon, color: Colors.white, size: 24),
                       ),
-                    ),
-
-                  // Main Content
-                  Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Icon Container with Gradient
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                gradient: isComingSoon
-                                    ? LinearGradient(
-                                        colors: [
-                                          const Color(
-                                            0xFF64748B,
-                                          ).withOpacity(0.3),
-                                          const Color(
-                                            0xFF475569,
-                                          ).withOpacity(0.3),
-                                        ],
-                                      )
-                                    : gradient,
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: [
-                                  if (!isComingSoon)
-                                    BoxShadow(
-                                      color: gradient.colors.first.withOpacity(
-                                        0.4,
-                                      ),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                ],
-                              ),
-                              child: Icon(icon, color: Colors.white, size: 24),
+                      // Status Badge
+                      if (isComingSoon)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF64748B).withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: Color(0xFF64748B).withOpacity(0.4),
+                              width: 1,
                             ),
-
-                            // Coming Soon Badge or Status Indicator
-                            if (isComingSoon)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF64748B,
-                                  ).withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: const Color(
-                                      0xFF64748B,
-                                    ).withOpacity(0.3),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Soon',
-                                  style: TextStyle(
-                                    color: Color(0xFF94A3B8),
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              )
-                            else
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: gradient.colors.first.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    gradient: gradient,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: gradient.colors.first
-                                            .withOpacity(0.6),
-                                        blurRadius: 6,
-                                        spreadRadius: 1,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Title
-                        Text(
-                          title,
-                          style: TextStyle(
-                            color: isComingSoon
-                                ? AppColors.textGray400
-                                : AppColors.textWhite,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
-                            height: 1.2,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-
-                        const SizedBox(height: 4),
-
-                        // Subtitle
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            color: isComingSoon
-                                ? AppColors.textGray400.withOpacity(0.6)
-                                : AppColors.textGray400,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 0.1,
-                            height: 1.3,
+                          child: const Text(
+                            'Soon',
+                            style: TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.6),
+                                  blurRadius: 6,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-
-                        const SizedBox(height: 12),
-
-                        // Action Button/Indicator
-                        Row(
-                          children: [
-                            if (!isComingSoon) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: gradient.colors.first.withOpacity(
-                                    0.15,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: gradient.colors.first.withOpacity(
-                                      0.3,
-                                    ),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Explore',
-                                      style: TextStyle(
-                                        color: gradient.colors.first
-                                            .withOpacity(0.9),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: gradient.colors.first.withOpacity(
-                                        0.8,
-                                      ),
-                                      size: 12,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ] else ...[
-                              Icon(
-                                Icons.lock_outline_rounded,
-                                color: AppColors.textGray400.withOpacity(0.4),
-                                size: 16,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
 
-                  // Shimmer effect for coming soon cards
-                  if (isComingSoon)
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.white.withOpacity(0.0),
-                              Colors.white.withOpacity(0.02),
-                              Colors.white.withOpacity(0.0),
-                            ],
-                          ),
+                  const SizedBox(height: 14),
+
+                  // Title
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: isComingSoon
+                          ? AppColors.textGray400
+                          : Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // Subtitle
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: isComingSoon
+                          ? AppColors.textGray400.withOpacity(0.6)
+                          : Colors.white.withOpacity(0.95),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.1,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  const Spacer(),
+
+                  // Action Button
+                  if (!isComingSoon)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1,
                         ),
                       ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Explore',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.lock_outline_rounded,
+                      color: AppColors.textGray400.withOpacity(0.4),
+                      size: 16,
                     ),
                 ],
               ),
@@ -1530,259 +1785,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
-  }
-}
-
-// Service Card Widget
-class _ServiceCardWidget extends StatefulWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final LinearGradient gradient;
-  final bool isComingSoon;
-  final VoidCallback? onTap;
-  final Animation<double> pulseAnimation;
-
-  const _ServiceCardWidget({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.gradient,
-    required this.isComingSoon,
-    this.onTap,
-    required this.pulseAnimation,
-  });
-
-  @override
-  State<_ServiceCardWidget> createState() => _ServiceCardWidgetState();
-}
-
-class _ServiceCardWidgetState extends State<_ServiceCardWidget> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.isComingSoon ? null : widget.onTap,
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.identity()
-          ..scale(_isPressed && !widget.isComingSoon ? 1.02 : 1.0),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.black.withOpacity(0.7),
-              Colors.black.withOpacity(0.5),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: _isPressed && !widget.isComingSoon
-                ? widget.gradient.colors.first.withOpacity(0.6)
-                : widget.gradient.colors.first.withOpacity(0.3),
-            width: _isPressed && !widget.isComingSoon ? 2 : 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _isPressed && !widget.isComingSoon
-                  ? widget.gradient.colors.first.withOpacity(0.4)
-                  : widget.gradient.colors.first.withOpacity(0.2),
-              blurRadius: _isPressed && !widget.isComingSoon ? 30 : 20,
-              spreadRadius: _isPressed && !widget.isComingSoon ? 2 : 0,
-              offset: Offset(0, _isPressed && !widget.isComingSoon ? 12 : 8),
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 15,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Stack(
-            children: [
-              // Animated gradient glow
-              AnimatedBuilder(
-                animation: widget.pulseAnimation,
-                builder: (context, child) {
-                  return Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: Alignment.topRight,
-                          radius: 1.5,
-                          colors: [
-                            widget.gradient.colors.first.withOpacity(
-                              (_isPressed ? 0.25 : 0.15) *
-                                  widget.pulseAnimation.value,
-                            ),
-                            widget.gradient.colors.last.withOpacity(
-                              (_isPressed ? 0.15 : 0.08) *
-                                  widget.pulseAnimation.value,
-                            ),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              // Backdrop filter
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(22),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Icon section
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              gradient: widget.gradient,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: widget.gradient.colors.first
-                                      .withOpacity(_isPressed ? 0.7 : 0.5),
-                                  blurRadius: _isPressed ? 25 : 18,
-                                  spreadRadius: _isPressed ? 3 : 2,
-                                  offset: Offset(0, _isPressed ? 10 : 6),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              widget.icon,
-                              color: Colors.white,
-                              size: _isPressed ? 36 : 34,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          // Title
-                          Text(
-                            widget.title,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: _isPressed ? 21 : 20,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.3,
-                              height: 1.2,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          // Subtitle
-                          Text(
-                            widget.subtitle,
-                            style: TextStyle(
-                              color: AppColors.textGray300,
-                              fontSize: 13,
-                              height: 1.4,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                      // Bottom section with arrow
-                      if (!widget.isComingSoon)
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.only(top: 12),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Explore',
-                                style: TextStyle(
-                                  color: widget.gradient.colors.first,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                transform: Matrix4.identity()
-                                  ..translate(_isPressed ? 4.0 : 0.0, 0.0),
-                                child: Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  color: widget.gradient.colors.first,
-                                  size: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        Container(
-                          margin: const EdgeInsets.only(top: 12),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: Colors.amber.withOpacity(0.5),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.schedule_rounded,
-                                color: Colors.amber,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Soon',
-                                style: TextStyle(
-                                  color: Colors.amber,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              // Coming Soon overlay
-              if (widget.isComingSoon)
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

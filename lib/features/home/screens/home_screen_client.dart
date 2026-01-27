@@ -102,10 +102,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       vsync: this,
     )..repeat();
     _gradientShiftAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _gradientShiftController,
-        curve: Curves.linear,
-      ),
+      CurvedAnimation(parent: _gradientShiftController, curve: Curves.linear),
     );
 
     // Float animation (3s infinite)
@@ -114,10 +111,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       vsync: this,
     )..repeat(reverse: true);
     _floatAnimation = Tween<double>(begin: 0.0, end: -10.0).animate(
-      CurvedAnimation(
-        parent: _floatController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
 
     // Pulse animation (2s infinite)
@@ -126,10 +120,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       vsync: this,
     )..repeat(reverse: true);
     _pulseAnimation = Tween<double>(begin: 0.2, end: 0.3).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
     // Fade in animation
@@ -145,10 +136,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       vsync: this,
     )..repeat(reverse: true);
     _bounceAnimation = Tween<double>(begin: 0.0, end: -10.0).animate(
-      CurvedAnimation(
-        parent: _bounceController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
     );
   }
 
@@ -298,8 +286,8 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         ),
         const SizedBox(width: 8),
         ShaderMask(
-          shaderCallback: (bounds) => AppColors.cosmicPrimaryGradient
-              .createShader(bounds),
+          shaderCallback: (bounds) =>
+              AppColors.cosmicPrimaryGradient.createShader(bounds),
           child: const Text(
             'Jyotish',
             style: TextStyle(
@@ -386,9 +374,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                         shape: BoxShape.circle,
                         color: Colors.white.withOpacity(0.1),
                       ),
-                      child: CustomPaint(
-                        painter: HoroscopeWheelPainter(),
-                      ),
+                      child: CustomPaint(painter: HoroscopeWheelPainter()),
                     ),
                   );
                 },
@@ -449,8 +435,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                                       ],
                                       stops: [
                                         _gradientShiftAnimation.value,
-                                        (_gradientShiftAnimation.value + 0.5) % 1.0,
-                                        (_gradientShiftAnimation.value + 1.0) % 1.0,
+                                        (_gradientShiftAnimation.value + 0.5) %
+                                            1.0,
+                                        (_gradientShiftAnimation.value + 1.0) %
+                                            1.0,
                                       ],
                                     ).createShader(bounds);
                                   },
@@ -532,7 +520,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                           child: Opacity(
                             opacity: value,
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 32),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                              ),
                               child: Text(
                                 'Personalized horoscopes, real-time consultations, and cosmic insights to guide your journey.',
                                 style: TextStyle(
@@ -608,9 +598,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       onTap: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const HomeDashboardScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
         );
       },
       child: Container(
@@ -721,9 +709,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                     ),
                   ],
                 ),
-                child: CustomPaint(
-                  painter: HoroscopeWheelPainter(),
-                ),
+                child: CustomPaint(painter: HoroscopeWheelPainter()),
               ),
             );
           },
@@ -773,16 +759,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    color.withOpacity(0.8),
-                    color.withOpacity(0.6),
-                  ],
+                  colors: [color.withOpacity(0.8), color.withOpacity(0.6)],
                 ),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: color.withOpacity(0.3),
-                  width: 1,
-                ),
+                border: Border.all(color: color.withOpacity(0.3), width: 1),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -827,11 +807,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         const SizedBox(height: 16),
         ShaderMask(
           shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              AppColors.purple300,
-              AppColors.pink300,
-              AppColors.red300,
-            ],
+            colors: [AppColors.purple300, AppColors.pink300, AppColors.red300],
           ).createShader(bounds),
           child: const Text(
             'Personalized Horoscopes',
@@ -859,9 +835,21 @@ class _HomeScreenClientState extends State<HomeScreenClient>
 
   Widget _buildFeatureItem(int index) {
     final features = [
-      {'icon': Icons.stars, 'title': 'Daily Predictions', 'desc': 'Get your daily horoscope'},
-      {'icon': Icons.favorite, 'title': 'Love Compatibility', 'desc': 'Find your perfect match'},
-      {'icon': Icons.work, 'title': 'Career Guidance', 'desc': 'Navigate your career path'},
+      {
+        'icon': Icons.stars,
+        'title': 'Daily Predictions',
+        'desc': 'Get your daily horoscope',
+      },
+      {
+        'icon': Icons.favorite,
+        'title': 'Love Compatibility',
+        'desc': 'Find your perfect match',
+      },
+      {
+        'icon': Icons.work,
+        'title': 'Career Guidance',
+        'desc': 'Navigate your career path',
+      },
     ];
     final feature = features[index];
 
@@ -927,11 +915,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   }
 
   // How It Works Section
-  Widget _buildHowItWorksSection(
-    bool isMobile,
-    bool isTablet,
-    bool isDesktop,
-  ) {
+  Widget _buildHowItWorksSection(bool isMobile, bool isTablet, bool isDesktop) {
     return SliverToBoxAdapter(
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -942,11 +926,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.black,
-              Colors.grey.shade900,
-              Colors.black,
-            ],
+            colors: [Colors.black, Colors.grey.shade900, Colors.black],
           ),
         ),
         child: Column(
@@ -984,12 +964,16 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             // Steps
             isMobile
                 ? Column(
-                    children: List.generate(3, (index) => _buildStepCard(index)),
+                    children: List.generate(
+                      3,
+                      (index) => _buildStepCard(index),
+                    ),
                   )
                 : Row(
-                    children: List.generate(3, (index) => Expanded(
-                      child: _buildStepCard(index),
-                    )),
+                    children: List.generate(
+                      3,
+                      (index) => Expanded(child: _buildStepCard(index)),
+                    ),
                   ),
           ],
         ),
@@ -999,9 +983,21 @@ class _HomeScreenClientState extends State<HomeScreenClient>
 
   Widget _buildStepCard(int index) {
     final steps = [
-      {'number': '1', 'title': 'Sign Up', 'desc': 'Create your account in seconds'},
-      {'number': '2', 'title': 'Connect', 'desc': 'Choose your preferred astrologer'},
-      {'number': '3', 'title': 'Transform', 'desc': 'Get insights and guidance'},
+      {
+        'number': '1',
+        'title': 'Sign Up',
+        'desc': 'Create your account in seconds',
+      },
+      {
+        'number': '2',
+        'title': 'Connect',
+        'desc': 'Choose your preferred astrologer',
+      },
+      {
+        'number': '3',
+        'title': 'Transform',
+        'desc': 'Get insights and guidance',
+      },
     ];
     final step = steps[index];
     final gradients = [
@@ -1029,8 +1025,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          gradients[index].colors.first
-                              .withOpacity(_pulseAnimation.value),
+                          gradients[index].colors.first.withOpacity(
+                            _pulseAnimation.value,
+                          ),
                           Colors.transparent,
                         ],
                       ),
@@ -1084,11 +1081,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   }
 
   // Services Section
-  Widget _buildServicesSection(
-    bool isMobile,
-    bool isTablet,
-    bool isDesktop,
-  ) {
+  Widget _buildServicesSection(bool isMobile, bool isTablet, bool isDesktop) {
     final crossAxisCount = isMobile ? 1 : (isTablet ? 2 : 3);
 
     return SliverToBoxAdapter(
@@ -1220,9 +1213,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           color: Colors.black.withOpacity(0.5),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: (service['gradient'] as LinearGradient)
-                .colors
-                .first
+            color: (service['gradient'] as LinearGradient).colors.first
                 .withOpacity(0.3),
             width: 1,
           ),
@@ -1379,11 +1370,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                   gradient: AppColors.cosmicPrimaryGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1422,10 +1409,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -1433,13 +1417,21 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             children: [
-              _buildStatItem('Total Consultations', '10,000+', AppColors.pink300),
+              _buildStatItem(
+                'Total Consultations',
+                '10,000+',
+                AppColors.pink300,
+              ),
               const SizedBox(height: 24),
               _buildStatItem('Expert Astrologers', '50+', AppColors.purple300),
               const SizedBox(height: 24),
               _buildStatItem('Happy Clients', '8,500+', AppColors.red300),
               const SizedBox(height: 24),
-              _buildStatItem('Satisfaction Rate', '98%', Colors.yellow.shade300),
+              _buildStatItem(
+                'Satisfaction Rate',
+                '98%',
+                Colors.yellow.shade300,
+              ),
             ],
           ),
         ),
@@ -1451,13 +1443,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-          ),
-        ),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
         Text(
           value,
           style: TextStyle(
@@ -1514,10 +1500,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             const SizedBox(height: 24),
             Text(
               'Join thousands who have found clarity and guidance through our platform.',
-              style: TextStyle(
-                color: AppColors.textGray300,
-                fontSize: 24,
-              ),
+              style: TextStyle(color: AppColors.textGray300, fontSize: 24),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
@@ -1589,18 +1572,12 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildAppLogo(),
-                      _buildFooterLinks(isMobile),
-                    ],
+                    children: [_buildAppLogo(), _buildFooterLinks(isMobile)],
                   ),
             const SizedBox(height: 40),
             Text(
               '© 2026 Chat Jyotish. All rights reserved.',
-              style: TextStyle(
-                color: AppColors.textGray400,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: AppColors.textGray400, fontSize: 12),
             ),
           ],
         ),
@@ -1619,10 +1596,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           onTap: () {},
           child: Text(
             link,
-            style: TextStyle(
-              color: AppColors.textGray400,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: AppColors.textGray400, fontSize: 14),
           ),
         );
       }).toList(),
@@ -1699,10 +1673,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           const SizedBox(height: 4),
           Text(
             userEmail,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 13,
-            ),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
           ),
         ],
       ),
@@ -1800,13 +1771,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         MaterialPageRoute(builder: (_) => ChatOptionsScreen()),
       );
     } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => PaymentPage()),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentPage()));
     }
   }
-
 
   void _handleLogout() {
     Navigator.pushReplacement(
