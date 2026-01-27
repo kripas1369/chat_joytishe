@@ -37,6 +37,14 @@ class AppColors {
     ],
   );
 
+  // LinearGradient(
+  // colors: [
+  // Color(0xFFE91E63),
+  // Color(0xFF9C27B0),
+  // Color(0xFF673AB7),
+  // ],
+  // ),
+
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,

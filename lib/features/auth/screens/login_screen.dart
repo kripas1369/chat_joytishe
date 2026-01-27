@@ -1,4 +1,3 @@
-import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -64,10 +63,9 @@ class _LoginScreenContentState extends State<LoginScreenContent>
     return Scaffold(
       body: Stack(
         children: [
-          StarFieldBackground(),
-          // Container(
-          //   decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
-          // ),
+          Container(
+            decoration: BoxDecoration(gradient: AppColors.backgroundGradient),
+          ),
 
           _loginHeader(),
           Center(

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen.dart';
 import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
@@ -151,10 +152,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                             const SizedBox(height: 16),
                             _buildHeader(),
                             const SizedBox(height: 20),
+                            _buildOnlineStatusCard(),
+                            _buildLiveJyotishSection(),
+                            const SizedBox(height: 16),
                             const RotatingQuestionsWidget(),
                             const SizedBox(height: 24),
-                            _buildLiveJyotishSection(),
-                            const SizedBox(height: 28),
                             _buildDailyFeaturesSection(),
                             const SizedBox(height: 28),
                             _buildServicesGrid(),
@@ -186,6 +188,85 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: AppColors.backgroundDark,
+      ),
+    );
+  }
+
+  Widget _buildOnlineStatusCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE91E63), Color(0xFF9C27B0), Color(0xFF673AB7)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF9C27B0).withOpacity(0.5),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, child) {
+                  return Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4CAF50),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4CAF50).withOpacity(0.6),
+                          blurRadius: 10 + (_pulseController.value * 10),
+                          spreadRadius: 2 + (_pulseController.value * 3),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '5 Astrologers Online Now',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Average response time: 30 seconds',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.verified, color: Color(0xFFFFD700), size: 28),
+            ],
+          ),
+          SizedBox(height: 20),
+          AppButton(
+            title: 'Start Live Chat with Jyotish',
+            onTap: () {},
+            icon: Icons.chat_bubble,
+            gradient: LinearGradient(
+              colors: [gold, Colors.deepOrange, Colors.red],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -298,150 +379,167 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             ? state.astrologers.where((a) => a.isOnline).toList()
             : <ActiveAstrologerModel>[];
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: AppColors.buttonGradient,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.purple600.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.sensors,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Live Jyotish',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: Colors.greenAccent,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.greenAccent.withOpacity(
-                                          0.5,
-                                        ),
-                                        blurRadius: 6,
-                                        spreadRadius: 1,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${astrologers.length} Online',
-                                  style: const TextStyle(
-                                    color: Colors.greenAccent,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isLoading)
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.purple600,
-                    ),
-                  )
-                else
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.cardMedium.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: IconButton(
-                      onPressed: () => context.read<ChatBloc>().add(
-                        RefreshActiveUsersEvent(),
-                      ),
-                      icon: Icon(
-                        Icons.refresh,
-                        color: AppColors.textSecondary,
-                        size: 20,
-                      ),
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                    ),
-                  ),
-              ],
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE91E63), Color(0xFF9C27B0), Color(0xFF673AB7)],
             ),
-            const SizedBox(height: 16),
-            // Fixed height container with proper constraints
-            SizedBox(
-              height: 110, // Increased height to prevent overflow
-              child: astrologers.isEmpty && !isLoading
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.person_off_outlined,
-                            color: AppColors.textMuted,
-                            size: 32,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF9C27B0).withOpacity(0.5),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.buttonGradient,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.purple600.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'No Jyotish online right now',
-                            style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 13,
-                            ),
+                          child: const Icon(
+                            Icons.sensors,
+                            color: Colors.white,
+                            size: 18,
                           ),
-                        ],
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Live Jyotish',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: Colors.greenAccent,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.greenAccent.withOpacity(
+                                            0.5,
+                                          ),
+                                          blurRadius: 6,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${astrologers.length} Online',
+                                    style: const TextStyle(
+                                      color: Colors.greenAccent,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isLoading)
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.purple600,
                       ),
                     )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: astrologers.length,
-                      padding: const EdgeInsets.only(bottom: 4),
-                      itemBuilder: (context, index) {
-                        final astrologer = astrologers[index];
-                        return _buildJyotishCard(astrologer);
-                      },
+                  else
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.cardMedium.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: IconButton(
+                        onPressed: () => context.read<ChatBloc>().add(
+                          RefreshActiveUsersEvent(),
+                        ),
+                        icon: Icon(
+                          Icons.refresh,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                        padding: const EdgeInsets.all(8),
+                        constraints: const BoxConstraints(),
+                      ),
                     ),
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Fixed height container with proper constraints
+              SizedBox(
+                height: 110, // Increased height to prevent overflow
+                child: astrologers.isEmpty && !isLoading
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.person_off_outlined,
+                              color: AppColors.textMuted,
+                              size: 32,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'No Jyotish online right now',
+                              style: TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: astrologers.length,
+                        padding: const EdgeInsets.only(bottom: 4),
+                        itemBuilder: (context, index) {
+                          final astrologer = astrologers[index];
+                          return _buildJyotishCard(astrologer);
+                        },
+                      ),
+              ),
+            ],
+          ),
         );
       },
     );

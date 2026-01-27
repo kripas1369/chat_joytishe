@@ -23,6 +23,7 @@ import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
 import 'package:chat_jyotishi/features/setting/screens/change_password_screen.dart';
 import 'package:chat_jyotishi/features/setting/screens/set_password_screen.dart';
 import 'package:chat_jyotishi/features/setting/screens/settings_screen.dart';
+import 'package:chat_jyotishi/features/test_screens/test_home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -118,8 +119,10 @@ class MyApp extends StatelessWidget {
 
         ///History routes
         '/history_screen_client': (context) => HistoryScreenClient(),
+
+        '/test_home_screen': (context) => TestHomeScreen(),
       },
-      initialRoute: '/broadcast_loading_screen',
+      initialRoute: '/home_screen_client',
     );
   }
 }

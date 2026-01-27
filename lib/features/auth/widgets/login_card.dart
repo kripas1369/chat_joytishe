@@ -96,6 +96,7 @@ class _LoginCardState extends State<LoginCard> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
+                // Color(0xFFDC2626).withOpacity(0.5),
                 AppColors.primaryPurple.withOpacity(0.15),
                 AppColors.deepPurple.withOpacity(0.08),
               ],

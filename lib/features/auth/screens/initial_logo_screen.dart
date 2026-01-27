@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:chat_jyotishi/features/auth/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -107,7 +108,7 @@ class _InitialLogoScreenState extends State<InitialLogoScreen>
   void _onGetStarted() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      MaterialPageRoute(builder: (context) => const SplashScreen()),
     );
   }
 }
