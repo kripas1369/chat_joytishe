@@ -166,8 +166,20 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
 
         // Sort by last message time (oldest first, so latest appears at bottom)
         chats.sort((a, b) {
-          final aTime = DateTime.tryParse(a['lastMessageAt']?.toString() ?? a['updatedAt']?.toString() ?? '') ?? DateTime(2000);
-          final bTime = DateTime.tryParse(b['lastMessageAt']?.toString() ?? b['updatedAt']?.toString() ?? '') ?? DateTime(2000);
+          final aTime =
+              DateTime.tryParse(
+                a['lastMessageAt']?.toString() ??
+                    a['updatedAt']?.toString() ??
+                    '',
+              ) ??
+              DateTime(2000);
+          final bTime =
+              DateTime.tryParse(
+                b['lastMessageAt']?.toString() ??
+                    b['updatedAt']?.toString() ??
+                    '',
+              ) ??
+              DateTime(2000);
           return aTime.compareTo(bTime); // Oldest first, latest at bottom
         });
 
@@ -212,7 +224,8 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
         if (mounted) {
           showTopSnackBar(
             context: context,
-            message: 'Please wait for ${_lockedJyotishName ?? "Jyotish"} to reply first.',
+            message:
+                'Please wait for ${_lockedJyotishName ?? "Jyotish"} to reply first.',
             backgroundColor: Colors.orange,
           );
         }
@@ -482,10 +495,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.blue.withAlpha(51),
-            Colors.blueAccent.withAlpha(26),
-          ],
+          colors: [Colors.blue.withAlpha(51), Colors.blueAccent.withAlpha(26)],
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.blue.withAlpha(77)),
@@ -516,10 +526,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                 SizedBox(height: 2),
                 Text(
                   'From ${_lockedJyotishName ?? "Jyotish"}',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
@@ -796,10 +803,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                       SizedBox(width: 4),
                       Text(
                         'Refresh',
-                        style: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 11,
-                        ),
+                        style: TextStyle(color: Colors.white54, fontSize: 11),
                       ),
                     ],
                   ),
@@ -815,7 +819,9 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
             color: AppColors.primaryPurple,
             backgroundColor: AppColors.cardDark,
             child: ListView.builder(
-              physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              physics: AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
               itemCount: _conversations.length,
               reverse: true, // Latest at bottom, scroll starts from bottom
               itemBuilder: (context, index) {
@@ -846,7 +852,8 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
 
     // Fallback to astrologerParticipant or clientParticipant
     if (otherUser == null) {
-      final fallback = chat['astrologerParticipant'] ?? chat['clientParticipant'];
+      final fallback =
+          chat['astrologerParticipant'] ?? chat['clientParticipant'];
       otherUser = fallback != null ? Map<String, dynamic>.from(fallback) : {};
     }
     final Map<String, dynamic> user = otherUser;
@@ -868,13 +875,15 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
     final int unreadCount = chat['unreadCount'] ?? 0;
 
     // Format time
-    final String timeStr = _formatTime(chat['lastMessageAt'] ?? chat['updatedAt']);
+    final String timeStr = _formatTime(
+      chat['lastMessageAt'] ?? chat['updatedAt'],
+    );
 
     // Get image URL
     final String imageUrl = profilePhoto != null && profilePhoto.isNotEmpty
         ? (profilePhoto.startsWith('http')
-            ? profilePhoto
-            : '${ApiEndpoints.socketUrl}$profilePhoto')
+              ? profilePhoto
+              : '${ApiEndpoints.socketUrl}$profilePhoto')
         : '';
 
     return GestureDetector(
@@ -890,17 +899,19 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
             color: unreadCount > 0
                 ? gold.withAlpha(100)
                 : isEnded
-                    ? Colors.grey.withAlpha(40)
-                    : AppColors.primaryPurple.withAlpha(30),
+                ? Colors.grey.withAlpha(40)
+                : AppColors.primaryPurple.withAlpha(30),
             width: unreadCount > 0 ? 1.5 : 1,
           ),
-          boxShadow: unreadCount > 0 ? [
-            BoxShadow(
-              color: gold.withAlpha(20),
-              blurRadius: 8,
-              spreadRadius: 0,
-            ),
-          ] : null,
+          boxShadow: unreadCount > 0
+              ? [
+                  BoxShadow(
+                    color: gold.withAlpha(20),
+                    blurRadius: 8,
+                    spreadRadius: 0,
+                  ),
+                ]
+              : null,
         ),
         child: Material(
           color: Colors.transparent,
@@ -913,7 +924,12 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                 children: [
                   // Profile photo with online indicator
                   GestureDetector(
-                    onTap: () => _showProfileSheet(odtherUserId, name, profilePhoto, isOnline),
+                    onTap: () => _showProfileSheet(
+                      odtherUserId,
+                      name,
+                      profilePhoto,
+                      isOnline,
+                    ),
                     child: Stack(
                       children: [
                         Container(
@@ -923,7 +939,10 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                             shape: BoxShape.circle,
                             gradient: isOnline
                                 ? LinearGradient(
-                                    colors: [Colors.green.shade400, Colors.green.shade600],
+                                    colors: [
+                                      Colors.green.shade400,
+                                      Colors.green.shade600,
+                                    ],
                                   )
                                 : AppColors.primaryGradient,
                           ),
@@ -939,7 +958,8 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                                   ? Image.network(
                                       imageUrl,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => _buildInitials(name),
+                                      errorBuilder: (_, __, ___) =>
+                                          _buildInitials(name),
                                     )
                                   : _buildInitials(name),
                             ),
@@ -953,16 +973,23 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                             width: 14,
                             height: 14,
                             decoration: BoxDecoration(
-                              color: isOnline ? Colors.green : Colors.grey.shade600,
+                              color: isOnline
+                                  ? Colors.green
+                                  : Colors.grey.shade600,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.cardDark, width: 2.5),
-                              boxShadow: isOnline ? [
-                                BoxShadow(
-                                  color: Colors.green.withAlpha(150),
-                                  blurRadius: 4,
-                                  spreadRadius: 1,
-                                ),
-                              ] : null,
+                              border: Border.all(
+                                color: AppColors.cardDark,
+                                width: 2.5,
+                              ),
+                              boxShadow: isOnline
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.green.withAlpha(150),
+                                        blurRadius: 4,
+                                        spreadRadius: 1,
+                                      ),
+                                    ]
+                                  : null,
                             ),
                           ),
                         ),
@@ -986,7 +1013,9 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                                       name,
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
+                                        fontWeight: unreadCount > 0
+                                            ? FontWeight.bold
+                                            : FontWeight.w600,
                                         fontSize: 15,
                                       ),
                                       overflow: TextOverflow.ellipsis,
@@ -1009,7 +1038,9 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                               style: TextStyle(
                                 color: unreadCount > 0 ? gold : Colors.white54,
                                 fontSize: 11,
-                                fontWeight: unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                                fontWeight: unreadCount > 0
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
                               ),
                             ),
                           ],
@@ -1021,7 +1052,11 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                             padding: EdgeInsets.only(bottom: 4),
                             child: Row(
                               children: [
-                                Icon(Icons.auto_awesome, color: AppColors.primaryPurple, size: 12),
+                                Icon(
+                                  Icons.auto_awesome,
+                                  color: AppColors.primaryPurple,
+                                  size: 12,
+                                ),
                                 SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
@@ -1035,7 +1070,11 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                                   ),
                                 ),
                                 if (rating > 0) ...[
-                                  Icon(Icons.star_rounded, color: Colors.amber, size: 12),
+                                  Icon(
+                                    Icons.star_rounded,
+                                    color: Colors.amber,
+                                    size: 12,
+                                  ),
                                   SizedBox(width: 2),
                                   Text(
                                     rating.toStringAsFixed(1),
@@ -1054,7 +1093,10 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                           children: [
                             if (isEnded)
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 margin: EdgeInsets.only(right: 6),
                                 decoration: BoxDecoration(
                                   color: Colors.orange.withAlpha(40),
@@ -1076,11 +1118,17 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: lastMessage != null
-                                      ? (unreadCount > 0 ? Colors.white70 : Colors.white54)
+                                      ? (unreadCount > 0
+                                            ? Colors.white70
+                                            : Colors.white54)
                                       : Colors.white38,
                                   fontSize: 13,
-                                  fontWeight: unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
-                                  fontStyle: lastMessage == null ? FontStyle.italic : FontStyle.normal,
+                                  fontWeight: unreadCount > 0
+                                      ? FontWeight.w500
+                                      : FontWeight.normal,
+                                  fontStyle: lastMessage == null
+                                      ? FontStyle.italic
+                                      : FontStyle.normal,
                                 ),
                               ),
                             ),
@@ -1088,7 +1136,10 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                             if (unreadCount > 0)
                               Container(
                                 margin: EdgeInsets.only(left: 8),
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [gold, gold.withAlpha(220)],
@@ -1102,7 +1153,9 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
                                   ],
                                 ),
                                 child: Text(
-                                  unreadCount > 99 ? '99+' : unreadCount.toString(),
+                                  unreadCount > 99
+                                      ? '99+'
+                                      : unreadCount.toString(),
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 11,
@@ -1141,10 +1194,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colors[colorIndex],
-            colors[colorIndex].withAlpha(180),
-          ],
+          colors: [colors[colorIndex], colors[colorIndex].withAlpha(180)],
         ),
       ),
       alignment: Alignment.center,
@@ -1155,11 +1205,7 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
           fontSize: 22,
           fontWeight: FontWeight.bold,
           shadows: [
-            Shadow(
-              color: Colors.black26,
-              blurRadius: 2,
-              offset: Offset(1, 1),
-            ),
+            Shadow(color: Colors.black26, blurRadius: 2, offset: Offset(1, 1)),
           ],
         ),
       ),
@@ -1191,7 +1237,12 @@ class _ChatListScreenContentState extends State<ChatListScreenContent> {
     return 0.0;
   }
 
-  void _showProfileSheet(String userId, String name, String? photo, bool isOnline) {
+  void _showProfileSheet(
+    String userId,
+    String name,
+    String? photo,
+    bool isOnline,
+  ) {
     showAstrologerProfileSheet(
       context: context,
       astrologerId: userId,
