@@ -1262,7 +1262,7 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                 ],
               ),
               const SizedBox(height: 20),
-              // Services grid - 4 services matching home_screen_client
+              // Services grid - 4 services (gradients with yellow/gold accents)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -1270,13 +1270,14 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                     icon: Icons.person_pin_rounded,
                     name: 'Book Pandit \nJi',
                     gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                       colors: [
-                        Color(0xFFE44949),
-                        Color(0xFFFB923C),
-                        Color(0xFFFBBF24),
+                        AppColors.cosmicPurple,
+                        AppColors.cosmicPink,
+                        gold.withOpacity(0.9),
                       ],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
+                      stops: const [0.0, 0.5, 1.0],
                     ),
                     onTap: () =>
                         Navigator.pushNamed(context, '/book_pandit_screen'),
@@ -1285,7 +1286,14 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                     icon: Icons.calendar_today_rounded,
                     name: 'Daily\nHoroscope',
                     gradient: LinearGradient(
-                      colors: [Color(0xFFE44949), Color(0xFFF97316)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.cosmicPink,
+                        gold.withOpacity(0.95),
+                        AppColors.cosmicRed,
+                      ],
+                      stops: const [0.0, 0.45, 1.0],
                     ),
                     onTap: () =>
                         Navigator.pushNamed(context, '/horoscope_screen'),
@@ -1294,7 +1302,14 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                     icon: Icons.home_work_rounded,
                     name: 'Book Vaastu \nsastri',
                     gradient: LinearGradient(
-                      colors: [AppColors.cosmicRed, AppColors.cosmicPink],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.cosmicRed,
+                        AppColors.cosmicPurple,
+                        gold.withOpacity(0.85),
+                      ],
+                      stops: const [0.0, 0.55, 1.0],
                     ),
                     onTap: () => Navigator.pushNamed(
                       context,
@@ -1305,7 +1320,14 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                     icon: Icons.calendar_month_rounded,
                     name: 'Book\nAppointment',
                     gradient: LinearGradient(
-                      colors: [AppColors.cosmicPink, AppColors.cosmicPurple],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.blue.shade600,
+                        AppColors.cosmicPurple,
+                        gold.withOpacity(0.9),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
                     ),
                     onTap: () =>
                         Navigator.pushNamed(context, '/appointment_screen'),

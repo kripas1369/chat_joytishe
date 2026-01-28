@@ -33,15 +33,14 @@ class BroadcastWaitingPage extends StatefulWidget {
 class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
     with TickerProviderStateMixin {
   final SocketService _socketService = SocketService();
-  final ChatRepository _chatRepository =
-      ChatRepository(ChatService());
-  
+  final ChatRepository _chatRepository = ChatRepository(ChatService());
+
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   late AnimationController _connectionController;
   late AnimationController _rotationController;
   late AnimationController _starController;
-  
+
   bool _isWaiting = true;
   String _statusMessage = 'Sending broadcast to all astrologers...';
   List<ActiveAstrologerModel> _onlineAstrologers = [];
@@ -53,7 +52,7 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
     _initAnimations();
     _setupSocketListeners();
     _loadOnlineAstrologers();
-    
+
     // Refresh online astrologers every 3 seconds
     _refreshTimer = Timer.periodic(Duration(seconds: 3), (_) {
       _loadOnlineAstrologers();
@@ -121,9 +120,14 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
         final astrologer = data['astrologer'];
 
         final astrologerId = astrologer?['id'] ?? data['astrologerId'] ?? '';
-        final astrologerName = astrologer?['name'] ?? data['astrologerName'] ?? 'Astrologer';
-        final astrologerPhoto = astrologer?['profilePhoto'] ?? data['astrologerPhoto'];
-        final chatId = chat?['id'] ?? data['chatId'] ?? 'chat_${widget.currentUserId}_$astrologerId';
+        final astrologerName =
+            astrologer?['name'] ?? data['astrologerName'] ?? 'Astrologer';
+        final astrologerPhoto =
+            astrologer?['profilePhoto'] ?? data['astrologerPhoto'];
+        final chatId =
+            chat?['id'] ??
+            data['chatId'] ??
+            'chat_${widget.currentUserId}_$astrologerId';
 
         setState(() {
           _isWaiting = false;
@@ -174,7 +178,8 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
       if (mounted) {
         setState(() {
           _isWaiting = false;
-          _statusMessage = 'No astrologer accepted your request. Please try again.';
+          _statusMessage =
+              'No astrologer accepted your request. Please try again.';
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -282,11 +287,7 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
   Widget _buildHeader() {
     return ShaderMask(
       shaderCallback: (bounds) => LinearGradient(
-        colors: [
-          AppColors.purple300,
-          AppColors.pink300,
-          AppColors.red300,
-        ],
+        colors: [AppColors.purple300, AppColors.pink300, AppColors.red300],
       ).createShader(bounds),
       child: Text(
         'Connecting to Astrologers',
@@ -301,7 +302,9 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
 
   Widget _buildConnectionAnimation() {
     // Use online astrologers or create placeholder positions
-    final astrologerCount = _onlineAstrologers.isEmpty ? 6 : _onlineAstrologers.length;
+    final astrologerCount = _onlineAstrologers.isEmpty
+        ? 6
+        : _onlineAstrologers.length;
     final displayAstrologers = _onlineAstrologers.isEmpty
         ? List.generate(6, (i) => null)
         : _onlineAstrologers.take(6).toList();
@@ -335,30 +338,32 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
               // 3D moving astrologer avatars - flowing from one to another
               ...List.generate(astrologerCount, (index) {
                 // Create flowing motion - astrologers move in sequence
-                final flowProgress = ((_connectionController.value + index * 0.15) % 1.0);
+                final flowProgress =
+                    ((_connectionController.value + index * 0.15) % 1.0);
                 final baseAngle = (index * 2 * pi / astrologerCount) - (pi / 2);
-                
+
                 // 3D circular path with depth
                 final radius = 140.0;
-                final depthOffset = cos(flowProgress * 2 * pi) * 20; // 3D depth effect
+                final depthOffset =
+                    cos(flowProgress * 2 * pi) * 20; // 3D depth effect
                 final currentRadius = radius + depthOffset;
-                
+
                 // Rotation with flow
                 final rotationOffset = _rotationController.value * 0.3;
                 final angle = baseAngle + rotationOffset + (flowProgress * 0.2);
-                
+
                 final x = cos(angle) * currentRadius;
                 final y = sin(angle) * currentRadius;
-                
+
                 // 3D scale based on depth
                 final zDepth = (1.0 - (depthOffset / 40).abs()).clamp(0.5, 1.0);
                 final scale = (0.7 + zDepth * 0.3) * _pulseAnimation.value;
-                
+
                 // Opacity based on depth
                 final opacity = 0.6 + (zDepth * 0.4);
-                
-                final astrologer = index < displayAstrologers.length 
-                    ? displayAstrologers[index] 
+
+                final astrologer = index < displayAstrologers.length
+                    ? displayAstrologers[index]
                     : null;
 
                 return Positioned(
@@ -387,47 +392,65 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
                               shape: BoxShape.circle,
                               gradient: RadialGradient(
                                 colors: [
-                                  AppColors.cosmicPurple.withOpacity(0.9 * zDepth),
-                                  AppColors.cosmicPink.withOpacity(0.7 * zDepth),
+                                  AppColors.cosmicPurple.withOpacity(
+                                    0.9 * zDepth,
+                                  ),
+                                  AppColors.cosmicPink.withOpacity(
+                                    0.7 * zDepth,
+                                  ),
                                   AppColors.cosmicRed.withOpacity(0.5 * zDepth),
                                 ],
                               ),
                               border: Border.all(
-                                color: AppColors.cosmicPurple.withOpacity(0.9 * zDepth),
+                                color: AppColors.cosmicPurple.withOpacity(
+                                  0.9 * zDepth,
+                                ),
                                 width: 2.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.cosmicPurple.withOpacity(0.7 * zDepth),
+                                  color: AppColors.cosmicPurple.withOpacity(
+                                    0.7 * zDepth,
+                                  ),
                                   blurRadius: 20 * zDepth,
                                   spreadRadius: 4 * zDepth,
                                 ),
                                 BoxShadow(
-                                  color: AppColors.cosmicPink.withOpacity(0.4 * zDepth),
+                                  color: AppColors.cosmicPink.withOpacity(
+                                    0.4 * zDepth,
+                                  ),
                                   blurRadius: 30 * zDepth,
                                   spreadRadius: 2 * zDepth,
                                 ),
                               ],
                             ),
                             child: ClipOval(
-                              child: astrologer?.profilePhoto != null &&
+                              child:
+                                  astrologer?.profilePhoto != null &&
                                       astrologer!.profilePhoto.isNotEmpty
                                   ? Image.network(
                                       astrologer.profilePhoto,
                                       fit: BoxFit.cover,
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded /
-                                                    loadingProgress.expectedTotalBytes!
-                                                : null,
-                                            color: AppColors.cosmicPurple,
-                                            strokeWidth: 2,
-                                          ),
-                                        );
-                                      },
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                            if (loadingProgress == null)
+                                              return child;
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value:
+                                                    loadingProgress
+                                                            .expectedTotalBytes !=
+                                                        null
+                                                    ? loadingProgress
+                                                              .cumulativeBytesLoaded /
+                                                          loadingProgress
+                                                              .expectedTotalBytes!
+                                                    : null,
+                                                color: AppColors.cosmicPurple,
+                                                strokeWidth: 2,
+                                              ),
+                                            );
+                                          },
                                       errorBuilder: (_, __, ___) => Icon(
                                         Icons.person,
                                         color: Colors.white,
@@ -448,33 +471,87 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
                 );
               }),
 
-              // Center pulsing connection hub
+              // Center pulsing 3D Earth hub
               Transform.scale(
                 scale: _pulseAnimation.value,
-                child: Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.cosmicPrimaryGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.cosmicPurple.withOpacity(0.7),
-                        blurRadius: 35,
-                        spreadRadius: 10,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Glow behind earth
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.cosmicPrimaryGradient,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.cosmicPurple.withOpacity(0.7),
+                            blurRadius: 35,
+                            spreadRadius: 10,
+                          ),
+                          BoxShadow(
+                            color: AppColors.cosmicPink.withOpacity(0.5),
+                            blurRadius: 50,
+                            spreadRadius: 5,
+                          ),
+                        ],
                       ),
-                      BoxShadow(
-                        color: AppColors.cosmicPink.withOpacity(0.5),
-                        blurRadius: 50,
-                        spreadRadius: 5,
+                    ),
+                    // Rotating 3D-style earth (icon + gradients)
+                    Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.001)
+                        ..rotateY(_rotationController.value * 2 * pi),
+                      child: Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              Colors.blue.shade900,
+                              Colors.blue.shade600,
+                              Colors.lightBlue.shade300,
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blueAccent.withOpacity(0.6),
+                              blurRadius: 20,
+                              spreadRadius: 4,
+                            ),
+                          ],
+                          border: Border.all(
+                            color: Colors.cyanAccent.withOpacity(0.7),
+                            width: 2,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.public,
+                          color: Colors.white.withOpacity(0.95),
+                          size: 46,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: Icon(
-                    _isWaiting ? Icons.wifi_find_rounded : Icons.check_circle_rounded,
-                    color: Colors.white,
-                    size: 50,
-                  ),
+                    ),
+                    // Check icon overlay when connected
+                    if (!_isWaiting)
+                      const Positioned(
+                        bottom: 8,
+                        right: 14,
+                        child: CircleAvatar(
+                          radius: 14,
+                          backgroundColor: Colors.green,
+                          child: Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -484,17 +561,12 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
     );
   }
 
-
   Widget _buildStatusText() {
     return Column(
       children: [
         ShaderMask(
           shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              AppColors.purple300,
-              AppColors.pink300,
-              AppColors.red300,
-            ],
+            colors: [AppColors.purple300, AppColors.pink300, AppColors.red300],
           ).createShader(bounds),
           child: Text(
             _statusMessage,
@@ -506,10 +578,7 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
             textAlign: TextAlign.center,
           ),
         ),
-        if (_isWaiting) ...[
-          SizedBox(height: 16),
-          _buildLoadingDots(),
-        ],
+        if (_isWaiting) ...[SizedBox(height: 16), _buildLoadingDots()],
       ],
     );
   }
@@ -524,7 +593,7 @@ class _BroadcastWaitingPageState extends State<BroadcastWaitingPage>
             final delay = index * 0.3;
             final value = ((_connectionController.value + delay) % 1.0);
             final opacity = (sin(value * pi)).clamp(0.0, 1.0);
-            
+
             return Container(
               margin: EdgeInsets.symmetric(horizontal: 4),
               width: 10,
@@ -650,7 +719,8 @@ class EnhancedSpiderWebPainter extends CustomPainter {
     for (int ring = 1; ring <= rings; ring++) {
       final ringRadius = (maxRadius / rings) * ring;
       final ringProgress = (progress + ring * 0.08) % 1.0;
-      final opacity = (0.15 + (ringProgress * 0.25)).clamp(0.0, 0.4) * pulseValue;
+      final opacity =
+          (0.15 + (ringProgress * 0.25)).clamp(0.0, 0.4) * pulseValue;
 
       final paint = Paint()
         ..style = PaintingStyle.stroke
@@ -687,7 +757,7 @@ class EnhancedSpiderWebPainter extends CustomPainter {
       final baseAngle2 = (nextIndex * 2 * pi / nodeCount) - (pi / 2);
       final angle1 = baseAngle1 + (rotation * 0.3);
       final angle2 = baseAngle2 + (rotation * 0.3);
-      
+
       final nodeRadius = maxRadius * 0.9;
       final node1 = Offset(
         center.dx + nodeRadius * cos(angle1),
@@ -700,7 +770,8 @@ class EnhancedSpiderWebPainter extends CustomPainter {
 
       // Animated connection line with flowing effect
       final connectionProgress = (progress + i * 0.2) % 1.0;
-      final opacity = (0.3 + (connectionProgress * 0.5)).clamp(0.0, 0.8) * pulseValue;
+      final opacity =
+          (0.3 + (connectionProgress * 0.5)).clamp(0.0, 0.8) * pulseValue;
 
       final paint = Paint()
         ..style = PaintingStyle.stroke
@@ -713,11 +784,11 @@ class EnhancedSpiderWebPainter extends CustomPainter {
       final particleT = connectionProgress;
       final particleX = node1.dx + (node2.dx - node1.dx) * particleT;
       final particleY = node1.dy + (node2.dy - node1.dy) * particleT;
-      
+
       final particlePaint = Paint()
         ..style = PaintingStyle.fill
         ..color = AppColors.cosmicPink.withOpacity(opacity * 0.8);
-      
+
       canvas.drawCircle(
         Offset(particleX, particleY),
         4 * pulseValue,
@@ -742,7 +813,8 @@ class EnhancedSpiderWebPainter extends CustomPainter {
         final distance = (nodes[i] - nodes[j]).distance;
         if (distance < maxRadius * 1.3) {
           final lineProgress = (progress + (i + j) * 0.08) % 1.0;
-          final opacity = (0.1 + (lineProgress * 0.2)).clamp(0.0, 0.3) * pulseValue;
+          final opacity =
+              (0.1 + (lineProgress * 0.2)).clamp(0.0, 0.3) * pulseValue;
 
           final paint = Paint()
             ..style = PaintingStyle.stroke

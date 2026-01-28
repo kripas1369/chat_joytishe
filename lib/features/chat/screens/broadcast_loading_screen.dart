@@ -1,16 +1,38 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:flutter/material.dart';
+import '../../../constants/constant.dart';
+import '../../app_widgets/show_top_snackBar.dart';
+import '../../app_widgets/star_field_background.dart';
+import '../models/active_user_model.dart';
+import '../repository/chat_repository.dart';
+import '../service/chat_service.dart';
+import '../service/socket_service.dart';
+import 'chat_screen.dart';
 
+/// Model class for astrologer nodes in the network animation
+class AstrologerNode {
+  final String name;
+  final String avatar;
+  final String specialty;
+  final Offset position;
+
+  AstrologerNode(this.name, this.avatar, this.specialty, this.position);
+}
+
+/// Broadcast Loading Screen - Shows animated waiting view while connecting to astrologers
 class BroadcastLoadingScreen extends StatefulWidget {
   final String message;
-  final VoidCallback? onComplete;
+  final String currentUserId;
+  final String? accessToken;
+  final String? refreshToken;
 
   const BroadcastLoadingScreen({
     super.key,
-    this.message = 'Broadcasting your query...',
-    this.onComplete,
+    required this.message,
+    required this.currentUserId,
+    this.accessToken,
+    this.refreshToken,
   });
 
   @override
@@ -19,42 +41,39 @@ class BroadcastLoadingScreen extends StatefulWidget {
 
 class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     with TickerProviderStateMixin {
-  late List<AstrologerNode> _astrologers;
-  final List<int> _connected = [];
-  final Map<int, AnimationController> _lineAnimations = {};
+  final SocketService _socketService = SocketService();
+  final ChatRepository _chatRepository = ChatRepository(ChatService());
 
+  DateTime? _expiresAt;
+  Timer? _countdownTimer;
+  Timer? _refreshTimer;
+  Timer? _replayTimer;
+  int _remainingSeconds = 300; // 5 minutes
+
+  // Animation controllers
   late AnimationController _pulseController;
   late AnimationController _rotationController;
   late AnimationController _rippleController;
+  final Map<int, AnimationController> _lineAnimations = {};
+  final List<int> _connected = [];
+  static const double particleRadiusRatio = 0.35;
 
-  Timer? _replayTimer;
+  // Randomly generated astrologer nodes
+  late List<AstrologerNode> _astrologers;
 
-  // Configurable particle radius (0.0 to 1.0, where 1.0 is half the screen width)
-  final double particleRadiusRatio = 0.35;
+  List<ActiveAstrologerModel> _onlineAstrologers = [];
 
   @override
   void initState() {
     super.initState();
-
     _astrologers = _generateRandomAstrologers();
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
-    _rotationController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 20),
-    )..repeat();
-
-    _rippleController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 2),
-    )..repeat();
-
-    // Start broadcasting to all astrologers immediately
+    _setupAnimations();
+    _setupSocketListeners();
     _startBroadcast();
+    _loadOnlineAstrologers();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _loadOnlineAstrologers();
+    });
   }
 
   List<AstrologerNode> _generateRandomAstrologers() {
@@ -78,9 +97,6 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
       'Numerology',
       'Palmistry',
       'Spiritual',
-      'Horoscope',
-      'Tarot',
-      'Astrology',
       'Vastu',
       'Gemology',
       'Kundli',
@@ -92,10 +108,10 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     final positions = <Offset>[];
 
     // Create 7 astrologers with random positions
-    final count = 7; // 7 astrologers
-    final minDistance = 0.15; // Minimum distance between astrologers
-    final minDistanceFromCenter = 0.28; // Minimum distance from center
-    final maxAttempts = 100; // Maximum attempts to find valid position
+    const count = 7;
+    const minDistance = 0.15; // Minimum distance between astrologers
+    const minDistanceFromCenter = 0.28; // Minimum distance from center
+    const maxAttempts = 100;
 
     for (int i = 0; i < count; i++) {
       double x = 0.5;
@@ -131,7 +147,6 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
         }
       }
 
-      // If we couldn't find a valid position after max attempts, use the last generated position
       final position = Offset(x, y);
       positions.add(position);
 
@@ -148,12 +163,149 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     return astrologers;
   }
 
+  void _setupAnimations() {
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 20),
+      vsync: this,
+    )..repeat();
+
+    _rippleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  Future<void> _loadOnlineAstrologers() async {
+    try {
+      final astrologers = await _chatRepository.getActiveAstrologers();
+      if (mounted) {
+        setState(() {
+          _onlineAstrologers = astrologers
+              .where((a) => a.isOnline)
+              .take(7)
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading online astrologers: $e');
+    }
+  }
+
+  void _setupSocketListeners() {
+    // Listen for broadcast sent confirmation
+    _socketService.onBroadcastSent((data) {
+      debugPrint('Broadcast sent: $data');
+      if (mounted) {
+        setState(() {
+          if (data['message']?['expiresAt'] != null) {
+            _expiresAt = DateTime.parse(data['message']['expiresAt']);
+            _startCountdown();
+          }
+        });
+      }
+    });
+
+    // Listen for broadcast accepted by astrologer
+    _socketService.onBroadcastAccepted((data) {
+      debugPrint('Broadcast accepted: $data');
+      _countdownTimer?.cancel();
+      _refreshTimer?.cancel();
+      _replayTimer?.cancel();
+
+      final chat = data['chat'];
+      final astrologer = data['astrologer'];
+
+      if (chat != null && astrologer != null && mounted) {
+        // Navigate to chat screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              chatId: chat['id'],
+              otherUserId: astrologer['id'],
+              otherUserName: astrologer['name'] ?? 'Astrologer',
+              otherUserPhoto: astrologer['profilePhoto'],
+              currentUserId: widget.currentUserId,
+              accessToken: widget.accessToken,
+              refreshToken: widget.refreshToken,
+              isOnline: true,
+            ),
+          ),
+        );
+      }
+    });
+
+    // Listen for broadcast expired
+    _socketService.onBroadcastExpired((data) {
+      debugPrint('Broadcast expired: $data');
+      _countdownTimer?.cancel();
+      _refreshTimer?.cancel();
+      _replayTimer?.cancel();
+      if (mounted) {
+        showTopSnackBar(
+          context: context,
+          message: 'No astrologer accepted your request. Please try again.',
+          backgroundColor: AppColors.error,
+        );
+        Navigator.pop(context);
+      }
+    });
+
+    // Listen for broadcast errors
+    _socketService.onBroadcastError((data) {
+      debugPrint('Broadcast error: $data');
+      _countdownTimer?.cancel();
+      _refreshTimer?.cancel();
+      _replayTimer?.cancel();
+      if (mounted) {
+        final errorMessage = data['message'] ?? 'An error occurred';
+        showTopSnackBar(
+          context: context,
+          message: errorMessage,
+          backgroundColor: AppColors.error,
+        );
+        Navigator.pop(context);
+      }
+    });
+  }
+
+  void _startCountdown() {
+    if (_expiresAt == null) {
+      _remainingSeconds = 300;
+    } else {
+      _remainingSeconds = _expiresAt!.difference(DateTime.now()).inSeconds;
+    }
+
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _remainingSeconds--;
+          if (_remainingSeconds <= 0) {
+            timer.cancel();
+          }
+        });
+      }
+    });
+  }
+
+  String _formatTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
   void _startBroadcast() {
     // Connect to all astrologers at once
     _connectToAllAstrologers();
 
     // Replay every 10 seconds
-    _replayTimer = Timer.periodic(Duration(seconds: 10), (timer) {
+    _replayTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       _connectToAllAstrologers();
     });
   }
@@ -163,7 +315,9 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
       _connected.clear();
 
       // Dispose old controllers
-      _lineAnimations.forEach((_, controller) => controller.dispose());
+      for (var controller in _lineAnimations.values) {
+        controller.dispose();
+      }
       _lineAnimations.clear();
 
       // Create new connections for all astrologers
@@ -172,7 +326,7 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
 
         final lineController = AnimationController(
           vsync: this,
-          duration: Duration(seconds: 10), // 10 seconds connection time
+          duration: const Duration(seconds: 10), // 10 seconds connection time
         );
 
         _lineAnimations[i] = lineController;
@@ -183,83 +337,120 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     });
   }
 
+  void _cancelBroadcast() {
+    _countdownTimer?.cancel();
+    _refreshTimer?.cancel();
+    _replayTimer?.cancel();
+    Navigator.pop(context);
+  }
+
   @override
   void dispose() {
+    _countdownTimer?.cancel();
+    _refreshTimer?.cancel();
+    _replayTimer?.cancel();
     _pulseController.dispose();
     _rotationController.dispose();
     _rippleController.dispose();
-    _lineAnimations.forEach((_, controller) => controller.dispose());
-    _replayTimer?.cancel();
+    for (var controller in _lineAnimations.values) {
+      controller.dispose();
+    }
+
+    // Remove listeners
+    _socketService.offBroadcastSent();
+    _socketService.offBroadcastAccepted();
+    _socketService.offBroadcastExpired();
+    _socketService.offBroadcastError();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final broadcastHeight = size.height * 0.7; // 70% for broadcast animation
+    final broadcastHeight = size.height * 0.6;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0A0E27), Color(0xFF1A1A3E), Color(0xFF2E1A47)],
-          ),
-        ),
-        child: Column(
-          children: [
-            // Top 70% - Broadcast Animation Area
-            SizedBox(
-              height: broadcastHeight,
-              child: Stack(
-                children: [
-                  // Background grid pattern
-                  CustomPaint(
-                    size: Size(size.width, broadcastHeight),
-                    painter: GridPainter(),
-                  ),
-
-                  // 7 Particles within circular radius
-                  ...List.generate(
-                    7,
-                    (index) => _buildParticle(index, broadcastHeight),
-                  ),
-
-                  // Connection lines
-                  CustomPaint(
-                    size: Size(size.width, broadcastHeight),
-                    painter: NetworkPainter(
-                      astrologers: _astrologers,
-                      connected: _connected,
-                      lineAnimations: _lineAnimations,
-                      pulse: _pulseController.value,
-                      containerHeight: broadcastHeight,
-                    ),
-                  ),
-
-                  // Astrologer nodes
-                  ..._buildAstrologers(size.width, broadcastHeight),
-
-                  // Center node with Earth
-                  _centerNode(broadcastHeight),
-
-                  // Top header
-                  _topHeader(),
+      backgroundColor: AppColors.primaryBlack,
+      body: Stack(
+        children: [
+          // Star field background
+          const StarFieldBackground(),
+          // Gradient overlay
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.7),
+                  AppColors.cosmicPurple.withValues(alpha: 0.3),
+                  AppColors.cosmicPink.withValues(alpha: 0.2),
+                  Colors.black.withValues(alpha: 0.9),
                 ],
+                stops: const [0.0, 0.3, 0.6, 1.0],
               ),
             ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // Top 60% - Broadcast Animation Area
+                SizedBox(
+                  height: broadcastHeight,
+                  child: Stack(
+                    children: [
+                      // Background grid pattern
+                      CustomPaint(
+                        size: Size(size.width, broadcastHeight),
+                        painter: GridPainter(),
+                      ),
 
-            Expanded(child: _bottomTextArea()),
-          ],
-        ),
+                      // 7 Particles within circular radius
+                      ...List.generate(
+                        7,
+                        (index) => _buildParticle(index, broadcastHeight),
+                      ),
+
+                      // Connection lines
+                      AnimatedBuilder(
+                        animation: _pulseController,
+                        builder: (context, _) => CustomPaint(
+                          size: Size(size.width, broadcastHeight),
+                          painter: NetworkPainter(
+                            astrologers: _astrologers,
+                            connected: _connected,
+                            lineAnimations: _lineAnimations,
+                            pulse: _pulseController.value,
+                            containerHeight: broadcastHeight,
+                          ),
+                        ),
+                      ),
+
+                      // Astrologer nodes
+                      ..._buildAstrologers(size.width, broadcastHeight),
+
+                      // Center node with Earth
+                      _centerNode(broadcastHeight),
+
+                      // Top header
+                      _topHeader(),
+                    ],
+                  ),
+                ),
+
+                Expanded(child: _bottomTextArea()),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _topHeader() {
     return Positioned(
-      top: 50,
+      top: 20,
       left: 0,
       right: 0,
       child: Column(
@@ -267,17 +458,17 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
           Text(
             'GLOBAL BROADCAST',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 3,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Container(
             height: 2,
             width: 80,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
                   Colors.transparent,
@@ -297,7 +488,6 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
       left: 0,
       right: 0,
       top: (containerHeight - 100) / 2,
-      // Center the 100px node vertically in the broadcast area
       child: Center(
         child: SizedBox(
           width: 100,
@@ -314,8 +504,9 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Color(0xFF667EEA).withOpacity(
-                        (1 - _rippleController.value).clamp(0.0, 1.0) * 0.5,
+                      color: const Color(0xFF667EEA).withValues(
+                        alpha:
+                            (1 - _rippleController.value).clamp(0.0, 1.0) * 0.5,
                       ),
                       width: 2,
                     ),
@@ -334,9 +525,9 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Color(
+                        color: const Color(
                           0xFF667EEA,
-                        ).withOpacity((1 - offset).clamp(0.0, 1.0) * 0.5),
+                        ).withValues(alpha: (1 - offset).clamp(0.0, 1.0) * 0.5),
                         width: 2,
                       ),
                     ),
@@ -344,7 +535,7 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
                 },
               ),
 
-              // Main node with glow and Earth icon (NO rotation - still)
+              // Main node with glow and Earth icon
               AnimatedBuilder(
                 animation: _pulseController,
                 builder: (_, __) => Container(
@@ -352,7 +543,7 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: RadialGradient(
+                    gradient: const RadialGradient(
                       colors: [
                         Color(0xFF667EEA),
                         Color(0xFF764BA2),
@@ -361,13 +552,13 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Color(0xFF667EEA).withOpacity(0.6),
+                        color: const Color(0xFF667EEA).withValues(alpha: 0.6),
                         blurRadius: 30 + (_pulseController.value * 10),
                         spreadRadius: 5 + (_pulseController.value * 3),
                       ),
                     ],
                   ),
-                  child: Center(
+                  child: const Center(
                     child: Text('🌍', style: TextStyle(fontSize: 50)),
                   ),
                 ),
@@ -383,8 +574,15 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     return _astrologers.asMap().entries.map((e) {
       final index = e.key;
       final astrologer = e.value;
-      final connected = _connected.contains(index);
       final isConnecting = _lineAnimations[index]?.isAnimating ?? false;
+
+      // Check if there's an online astrologer at this index with a profile photo
+      final onlineAstrologer = index < _onlineAstrologers.length
+          ? _onlineAstrologers[index]
+          : null;
+      final hasProfilePhoto =
+          onlineAstrologer?.profilePhoto != null &&
+          onlineAstrologer!.profilePhoto.isNotEmpty;
 
       return Positioned(
         left: screenWidth * astrologer.position.dx - 30,
@@ -397,57 +595,95 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
               height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: isConnecting
-                      ? [Color(0xFFE53935), Color(0xFFFF8C00)]
-                      : [Color(0xFF2A2A4C), Color(0xFF1A1A3E)],
-                ),
+                gradient: hasProfilePhoto
+                    ? null
+                    : LinearGradient(
+                        colors: isConnecting
+                            ? [const Color(0xFFE53935), const Color(0xFFFF8C00)]
+                            : [
+                                const Color(0xFF2A2A4C),
+                                const Color(0xFF1A1A3E),
+                              ],
+                      ),
                 border: Border.all(
-                  color: isConnecting ? Color(0xFFFFD700) : Color(0xFF4A4A6A),
+                  color: isConnecting
+                      ? const Color(0xFFFFD700)
+                      : const Color(0xFF4A4A6A),
                   width: isConnecting ? 3 : 2,
                 ),
                 boxShadow: isConnecting
                     ? [
                         BoxShadow(
-                          color: Color(0xFFFFD700).withOpacity(0.7),
+                          color: const Color(0xFFFFD700).withValues(alpha: 0.7),
                           blurRadius: 20,
                           spreadRadius: 1,
                         ),
                       ]
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 8,
                         ),
                       ],
               ),
-              child: Center(
-                child: Text(astrologer.avatar, style: TextStyle(fontSize: 28)),
+              child: ClipOval(
+                child: hasProfilePhoto
+                    ? Image.network(
+                        onlineAstrologer.profilePhoto,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Text(
+                            astrologer.avatar,
+                            style: const TextStyle(fontSize: 28),
+                          ),
+                        ),
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: Text(
+                              astrologer.avatar,
+                              style: const TextStyle(fontSize: 28),
+                            ),
+                          );
+                        },
+                      )
+                    : Center(
+                        child: Text(
+                          astrologer.avatar,
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                      ),
               ),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: isConnecting
-                    ? Color(0xFFFFD700).withOpacity(0.2)
+                    ? const Color(0xFFFFD700).withValues(alpha: 0.2)
                     : Colors.black26,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isConnecting
-                      ? Color(0xFFFFD700).withOpacity(0.3)
+                      ? const Color(0xFFFFD700).withValues(alpha: 0.3)
                       : Colors.transparent,
                   width: 1,
                 ),
               ),
               child: Text(
-                astrologer.specialty,
+                onlineAstrologer?.name ?? astrologer.specialty,
                 style: TextStyle(
-                  color: isConnecting ? Color(0xFFFFD700) : Colors.white60,
+                  color: isConnecting
+                      ? const Color(0xFFFFD700)
+                      : Colors.white60,
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -457,13 +693,11 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
   }
 
   Widget _buildParticle(int index, double containerHeight) {
-    final rand = Random(index + 100); // Different seed for better randomness
+    final rand = Random(index + 100);
 
-    // Generate random angle and distance within the circular radius
     final angle = rand.nextDouble() * 2 * pi;
     final distance = rand.nextDouble() * particleRadiusRatio;
 
-    // Convert polar coordinates to cartesian
     final dx = 0.5 + (distance * cos(angle));
     final dy = 0.5 + (distance * sin(angle));
 
@@ -485,11 +719,11 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
               width: size,
               height: size,
               decoration: BoxDecoration(
-                color: Color(0xFF667EEA),
+                color: const Color(0xFF667EEA),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFF667EEA).withOpacity(0.5),
+                    color: const Color(0xFF667EEA).withValues(alpha: 0.5),
                     blurRadius: 4,
                   ),
                 ],
@@ -502,66 +736,146 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
   }
 
   Widget _bottomTextArea() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (_, __) => Opacity(
-              opacity: (0.5 + _pulseController.value * 0.5).clamp(0.0, 1.0),
-              child: Text(
-                widget.message,
-                textAlign: TextAlign.center,
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 16),
+            // Status info
+            Text(
+              _onlineAstrologers.isEmpty
+                  ? 'Finding Online Astrologers...'
+                  : 'Connecting to ${_onlineAstrologers.length} Online Astrologers',
+              style: const TextStyle(
+                color: AppColors.textGray300,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Main status text
+            ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [
+                  AppColors.purple300,
+                  AppColors.pink300,
+                  AppColors.red300,
+                ],
+              ).createShader(bounds),
+              child: const Text(
+                'Waiting for an astrologer...',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-          ),
-          SizedBox(height: 12),
-          Text(
-            'Connecting to Astrologers...',
-            style: TextStyle(color: Colors.white60, fontSize: 12),
-          ),
-          SizedBox(height: 4),
-          Text(
-            'Please be Patient',
-            style: TextStyle(color: Colors.white60, fontSize: 12),
-          ),
-        ],
+            const SizedBox(height: 8),
+            const Text(
+              'Connecting to astrologers...',
+              style: TextStyle(
+                color: AppColors.textGray300,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Please be patient',
+              style: TextStyle(
+                color: AppColors.textGray300.withValues(alpha: 0.9),
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            // Timer display
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppColors.cosmicPurple.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.timer,
+                    color: _remainingSeconds < 60
+                        ? AppColors.cosmicRed
+                        : AppColors.cosmicPurple,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Expires in ${_formatTime(_remainingSeconds)}',
+                    style: TextStyle(
+                      color: _remainingSeconds < 60
+                          ? AppColors.cosmicRed
+                          : Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Cancel button
+            GestureDetector(
+              onTap: _cancelBroadcast,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.cosmicPurple.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: AppColors.textGray300,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
 }
 
-class AstrologerNode {
-  final String name;
-  final String avatar;
-  final String specialty;
-  final Offset position;
-
-  AstrologerNode(this.name, this.avatar, this.specialty, this.position);
-}
-
+/// Custom painter for grid background pattern
 class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
+      ..color = Colors.white.withValues(alpha: 0.03)
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
 
-    // Draw horizontal lines
     for (double i = 0; i < size.height; i += 50) {
       canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
     }
 
-    // Draw vertical lines
     for (double i = 0; i < size.width; i += 50) {
       canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
     }
@@ -571,6 +885,7 @@ class GridPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+/// Custom painter for network connection lines
 class NetworkPainter extends CustomPainter {
   final List<AstrologerNode> astrologers;
   final List<int> connected;
@@ -591,6 +906,8 @@ class NetworkPainter extends CustomPainter {
     final center = Offset(size.width * 0.5, containerHeight * 0.5);
 
     for (final i in connected) {
+      if (i >= astrologers.length) continue;
+
       final astrologer = astrologers[i];
       final astroPoint = Offset(
         size.width * astrologer.position.dx,
@@ -602,44 +919,38 @@ class NetworkPainter extends CustomPainter {
 
       final currentEnd = Offset.lerp(center, astroPoint, lineProgress)!;
 
-      // Draw glow effect for animating line
       if (isAnimating || lineProgress >= 1.0) {
         final glowPaint = Paint()
-          ..color = Color(0xFFFFD700).withOpacity(0.3)
+          ..color = const Color(0xFFFFD700).withValues(alpha: 0.3)
           ..strokeWidth = 5
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8);
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
         canvas.drawLine(center, currentEnd, glowPaint);
       }
 
-      // Main thin line
       final linePaint = Paint()
         ..strokeWidth = 1.5
         ..strokeCap = StrokeCap.round
-        ..color = Color(0xFFFFD700).withOpacity(0.7);
+        ..color = const Color(0xFFFFD700).withValues(alpha: 0.7);
 
       canvas.drawLine(center, currentEnd, linePaint);
 
-      // Draw connection dot at the end of animating line
       if (isAnimating && lineProgress > 0.05) {
-        // Outer glow
         final outerGlowPaint = Paint()
-          ..color = Color(0xFFFFD700).withOpacity(0.6)
+          ..color = const Color(0xFFFFD700).withValues(alpha: 0.6)
           ..style = PaintingStyle.fill
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8);
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
         canvas.drawCircle(currentEnd, 8, outerGlowPaint);
 
-        // Main dot
         final dotPaint = Paint()
-          ..color = Color(0xFFFFD700)
+          ..color = const Color(0xFFFFD700)
           ..style = PaintingStyle.fill;
 
         canvas.drawCircle(currentEnd, 5, dotPaint);
 
-        // Inner bright dot
         final brightDotPaint = Paint()
           ..color = Colors.white
           ..style = PaintingStyle.fill;
@@ -647,7 +958,6 @@ class NetworkPainter extends CustomPainter {
         canvas.drawCircle(currentEnd, 2.5, brightDotPaint);
       }
 
-      // Draw pulsing particles at completed connections
       if (lineProgress >= 1.0) {
         _drawPulsingParticle(canvas, astroPoint, pulse);
       }
@@ -658,9 +968,9 @@ class NetworkPainter extends CustomPainter {
     final size = 4 + (pulse * 3);
 
     final particlePaint = Paint()
-      ..color = Color(0xFFFFD700).withOpacity(0.8)
+      ..color = const Color(0xFFFFD700).withValues(alpha: 0.8)
       ..style = PaintingStyle.fill
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     canvas.drawCircle(position, size, particlePaint);
   }
