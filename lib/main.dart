@@ -100,9 +100,8 @@ class MyApp extends StatelessWidget {
 
         ///Notification service route
         '/notification_screen': (context) => NotificationScreen(),
-
       },
-      initialRoute: '/broadcast_loading_screen',
+      initialRoute: '/splash_screen',
     );
   }
 }

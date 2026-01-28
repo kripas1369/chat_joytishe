@@ -1,11 +1,10 @@
 import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/home/screens/home_dashboard_screen.dart';
-import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import '../../../constants/constant.dart';
-import '../../app_widgets/app_background_gradient.dart';
 import '../../app_widgets/glass_icon_button.dart';
 
 class AppointmentScreen extends StatefulWidget {
@@ -52,11 +51,24 @@ class _AppointmentScreenState extends State<AppointmentScreen>
     _setSystemUIOverlay();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: AppColors.primaryBlack,
       body: Stack(
         children: [
-          // buildGradientBackground(),
-          StarFieldBackground(),
+          const StarFieldBackground(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.primaryBlack,
+                  AppColors.cosmicPurple.withOpacity(0.15),
+                  AppColors.primaryBlack,
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -81,40 +93,50 @@ class _AppointmentScreenState extends State<AppointmentScreen>
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppColors.backgroundDark,
+        systemNavigationBarColor: AppColors.primaryBlack,
       ),
     );
   }
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
           GlassIconButton(
-            icon: Icons.arrow_back_rounded,
+            icon: Icons.arrow_back_ios_new_rounded,
             onTap: () => Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => HomeDashboardScreen()),
+              MaterialPageRoute(builder: (context) => const HomeDashboardScreen()),
             ),
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Appointment',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [AppColors.purple300, AppColors.pink300, AppColors.red300],
+                  ).createShader(bounds),
+                  child: const Text(
+                    'Appointment',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Connect with expert astrologers',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  style: TextStyle(
+                    color: AppColors.textGray300,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ],
             ),
@@ -127,7 +149,7 @@ class _AppointmentScreenState extends State<AppointmentScreen>
   Widget _buildFilterChips() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       physics: const BouncingScrollPhysics(),
       child: Row(
         children: filters.map((filter) {
@@ -139,38 +161,51 @@ class _AppointmentScreenState extends State<AppointmentScreen>
                 setState(() {
                   selectedFilter = filter;
                 });
+                HapticFeedback.lightImpact();
               },
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
                   gradient: isSelected
-                      ? AppColors.cosmicHeroGradient
+                      ? const LinearGradient(
+                          colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
+                        )
                       : LinearGradient(
                           colors: [
-                            AppColors.cardDark.withOpacity(0.5),
-                            AppColors.cardMedium.withOpacity(0.3),
+                            Colors.white.withOpacity(0.08),
+                            Colors.white.withOpacity(0.05),
                           ],
                         ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.primaryPurple.withOpacity(0.5)
-                        : Colors.white.withOpacity(0.08),
-                    width: 1,
+                        ? AppColors.cosmicPink.withOpacity(0.5)
+                        : Colors.white.withOpacity(0.1),
+                    width: 1.5,
                   ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.cosmicPink.withOpacity(0.3),
+                            blurRadius: 12,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Text(
                   filter,
                   style: TextStyle(
-                    color: isSelected
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                    color: isSelected ? Colors.white : AppColors.textGray300,
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ),
@@ -185,7 +220,7 @@ class _AppointmentScreenState extends State<AppointmentScreen>
     final astrologers = _getFilteredAstrologers();
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       physics: const BouncingScrollPhysics(),
       itemCount: astrologers.length,
       itemBuilder: (context, index) {
@@ -206,40 +241,56 @@ class _AppointmentScreenState extends State<AppointmentScreen>
             child: Opacity(opacity: value, child: child),
           );
         },
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.cardDark.withOpacity(0.8),
-                AppColors.cardMedium.withOpacity(0.4),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildAstrologerAvatar(astrologer),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildAstrologerInfo(astrologer)),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.cosmicPurple.withOpacity(0.15),
+                    AppColors.cosmicPink.withOpacity(0.1),
+                    AppColors.cosmicRed.withOpacity(0.08),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.cosmicPurple.withOpacity(0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.cosmicPurple.withOpacity(0.2),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
                 ],
               ),
-              const SizedBox(height: 16),
-              _buildAstrologerActions(astrologer),
-            ],
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildAstrologerAvatar(astrologer),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildAstrologerInfo(astrologer)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildAstrologerActions(astrologer),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -254,24 +305,31 @@ class _AppointmentScreenState extends State<AppointmentScreen>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: _getTierGradient(astrologer['tier']),
+            boxShadow: [
+              BoxShadow(
+                color: _getTierGradient(astrologer['tier']).colors.first.withOpacity(0.4),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ],
           ),
           child: Container(
             padding: const EdgeInsets.all(2),
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.cardDark,
+              color: AppColors.primaryBlack,
             ),
             child: CircleAvatar(
-              radius: 36,
-              backgroundColor: AppColors.cardMedium,
+              radius: 38,
+              backgroundColor: AppColors.cosmicPurple.withOpacity(0.2),
               backgroundImage: astrologer['image'] != null
                   ? AssetImage(astrologer['image'])
                   : null,
               child: astrologer['image'] == null
-                  ? const Icon(
+                  ? Icon(
                       Icons.person_rounded,
-                      color: AppColors.textSecondary,
-                      size: 36,
+                      color: AppColors.textGray300,
+                      size: 40,
                     )
                   : null,
             ),
@@ -282,12 +340,19 @@ class _AppointmentScreenState extends State<AppointmentScreen>
             bottom: 2,
             right: 2,
             child: Container(
-              width: 14,
-              height: 14,
+              width: 16,
+              height: 16,
               decoration: BoxDecoration(
-                color: Colors.green,
+                color: Colors.greenAccent,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.cardDark, width: 2),
+                border: Border.all(color: AppColors.primaryBlack, width: 2.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.greenAccent.withOpacity(0.6),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
             ),
           ),
@@ -305,9 +370,10 @@ class _AppointmentScreenState extends State<AppointmentScreen>
               child: Text(
                 astrologer['name'],
                 style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
                 ),
               ),
             ),
@@ -317,7 +383,11 @@ class _AppointmentScreenState extends State<AppointmentScreen>
         const SizedBox(height: 4),
         Text(
           astrologer['specialization'],
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          style: TextStyle(
+            color: AppColors.textGray300,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
         ),
         const SizedBox(height: 8),
         Row(
@@ -397,22 +467,34 @@ class _AppointmentScreenState extends State<AppointmentScreen>
 
   Widget _buildInfoChip(IconData icon, String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 6,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
           Text(
             text,
             style: TextStyle(
               color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -451,45 +533,57 @@ class _AppointmentScreenState extends State<AppointmentScreen>
     VoidCallback onTap,
   ) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           gradient: isPrimary
-              ? AppColors.cosmicHeroGradient
+              ? const LinearGradient(
+                  colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
+                )
               : LinearGradient(
                   colors: [
-                    AppColors.cardDark.withOpacity(0.6),
-                    AppColors.cardMedium.withOpacity(0.4),
+                    Colors.white.withOpacity(0.1),
+                    Colors.white.withOpacity(0.05),
                   ],
                 ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isPrimary
-                ? AppColors.primaryPurple.withOpacity(0.5)
-                : Colors.white.withOpacity(0.08),
-            width: 1,
+                ? AppColors.cosmicPink.withOpacity(0.5)
+                : Colors.white.withOpacity(0.15),
+            width: 1.5,
           ),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: AppColors.cosmicPink.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 16,
-              color: isPrimary
-                  ? AppColors.textPrimary
-                  : AppColors.textSecondary,
+              size: 18,
+              color: isPrimary ? Colors.white : AppColors.textGray300,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Text(
               text,
               style: TextStyle(
-                color: isPrimary
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                color: isPrimary ? Colors.white : AppColors.textGray300,
+                fontSize: 15,
+                fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w600,
+                letterSpacing: 0.3,
               ),
             ),
           ],
@@ -631,61 +725,103 @@ class _AppointmentScreenState extends State<AppointmentScreen>
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: AppColors.backgroundGradient,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primaryPurple.withOpacity(0.2),
-                  AppColors.deepPurple.withOpacity(0.1),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.cosmicPurple.withOpacity(0.3),
+                    AppColors.cosmicPink.withOpacity(0.2),
+                    AppColors.cosmicRed.withOpacity(0.15),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppColors.cosmicPink.withOpacity(0.4),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.cosmicPurple.withOpacity(0.3),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 8),
+                  ),
                 ],
               ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.calendar_today_rounded,
-                  size: 48,
-                  color: AppColors.primaryPurple,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Book Appointment',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.cosmicPink.withOpacity(0.4),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 40,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'with ${astrologer['name']}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
+                  const SizedBox(height: 20),
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [AppColors.purple300, AppColors.pink300],
+                    ).createShader(bounds),
+                    child: const Text(
+                      'Book Appointment',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Are you sure !',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
-                ),
-                const SizedBox(height: 24),
-                AppButton(
-                  title: 'Book Now',
-                  onTap: () => Navigator.pop(context),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'with ${astrologer['name']}',
+                    style: TextStyle(
+                      color: AppColors.textGray300,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Are you sure you want to book?',
+                    style: TextStyle(
+                      color: AppColors.textGray400,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
+                  AppButton(
+                    title: 'Book Now',
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),

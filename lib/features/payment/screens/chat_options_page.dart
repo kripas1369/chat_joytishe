@@ -1,7 +1,8 @@
 import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
-import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
+import 'package:chat_jyotishi/features/payment/screens/broadcast_page.dart';
+import 'package:chat_jyotishi/features/payment/screens/jyotish_list_screen.dart';
 import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_bloc.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_events.dart';
@@ -9,6 +10,7 @@ import 'package:chat_jyotishi/features/chat/bloc/chat_states.dart';
 import 'package:chat_jyotishi/features/chat/models/active_user_model.dart';
 import 'package:chat_jyotishi/features/chat/repository/chat_repository.dart';
 import 'package:chat_jyotishi/features/chat/service/chat_service.dart';
+import 'package:chat_jyotishi/features/chat/screens/broadcast_chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -45,7 +47,7 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => ChatListScreen()),
+          MaterialPageRoute(builder: (_) => const BroadcastChatScreen()),
         );
       }
     } else {
@@ -557,7 +559,7 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
             if (hasEnoughCoins) {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ChatListScreen()),
+                MaterialPageRoute(builder: (_) => const JyotishListScreen()),
               );
             } else {
               _showInsufficientCoinsDialog(200);
