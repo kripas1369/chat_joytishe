@@ -87,7 +87,6 @@ class _InitialLogoScreenState extends State<InitialLogoScreen>
                         child: Image.asset(
                           'assets/image/splash_image1.webp',
                           width: screenWidth * 0.65,
-
                           fit: BoxFit.cover,
                         ),
                       ),

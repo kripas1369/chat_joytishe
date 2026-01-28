@@ -306,7 +306,7 @@ class _JyotishListScreenState extends State<JyotishListScreen>
           return;
         }
 
-        // Navigate to ChatScreen
+        // Navigate to ChatScreen for one-to-one chat
         if (mounted) {
           Navigator.push(
             context,

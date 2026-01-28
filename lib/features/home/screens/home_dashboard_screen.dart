@@ -12,6 +12,7 @@ import 'package:chat_jyotishi/features/chat/service/chat_service.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/home/screens/welcome_screen.dart';
+import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -161,9 +162,23 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
             _buildAppLogo(),
           ],
         ),
-        NotificationButton(
-          notificationCount: notificationCount,
-          onTap: () => _navigateTo('/notification_screen'),
+        Row(
+          children: [
+            GlassIconButton(
+              icon: Icons.history_rounded,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ChatListScreen()),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            NotificationButton(
+              notificationCount: notificationCount,
+              onTap: () => _navigateTo('/notification_screen'),
+            ),
+          ],
         ),
       ],
     );

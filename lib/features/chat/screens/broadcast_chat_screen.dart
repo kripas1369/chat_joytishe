@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import '../../../constants/api_endpoints.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants/constant.dart';
 import '../../app_widgets/glass_icon_button.dart';
@@ -16,6 +18,7 @@ import '../repository/chat_repository.dart';
 import '../service/chat_service.dart';
 import '../service/socket_service.dart';
 import 'chat_screen.dart';
+import 'broadcast_loading_screen.dart';
 
 /// Topic with subtopics structure
 class TopicModel {
@@ -220,11 +223,28 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
   late Animation<double> _waveAnimation;
   final Map<int, AnimationController> _subtopicAnimationControllers = {};
 
+  // New animation controllers for broadcast waiting view
+  late AnimationController _rippleController;
+  final Map<int, AnimationController> _lineAnimations = {};
+  final List<int> _connected = [];
+  static const double particleRadiusRatio = 0.35;
+
+  // Astrologer nodes for the network animation
+  final List<AstrologerNode> _astrologers = [
+    AstrologerNode('Vedic', '🔮', 'Vedic', Offset(0.15, 0.25)),
+    AstrologerNode('Tarot', '🃏', 'Tarot', Offset(0.85, 0.25)),
+    AstrologerNode('Numerology', '🔢', 'Numbers', Offset(0.08, 0.55)),
+    AstrologerNode('Palmistry', '✋', 'Palmist', Offset(0.92, 0.55)),
+    AstrologerNode('Vastu', '🏠', 'Vastu', Offset(0.22, 0.82)),
+    AstrologerNode('Horoscope', '⭐', 'Horoscope', Offset(0.78, 0.82)),
+  ];
+
   List<ActiveAstrologerModel> _onlineAstrologers = [];
 
   String? _currentUserId;
   String? _accessToken;
   String? _refreshToken;
+  bool _isResolvingActiveChat = false;
 
   @override
   void initState() {
@@ -271,6 +291,12 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
     _waveAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _waveController, curve: Curves.easeInOut),
     );
+
+    // Ripple controller for center node
+    _rippleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
   }
 
   Future<void> _loadOnlineAstrologers() async {
@@ -348,31 +374,11 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
     });
 
     // Listen for broadcast accepted by astrologer
+    // Note: Navigation is handled by BroadcastLoadingScreen
     _socketService.onBroadcastAccepted((data) {
-      debugPrint('Broadcast accepted: $data');
+      debugPrint('Broadcast accepted (BroadcastChatScreen): $data');
       _countdownTimer?.cancel();
-
-      final chat = data['chat'];
-      final astrologer = data['astrologer'];
-
-      if (chat != null && astrologer != null && mounted) {
-        // Navigate to chat screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ChatScreen(
-              chatId: chat['id'],
-              otherUserId: astrologer['id'],
-              otherUserName: astrologer['name'] ?? 'Astrologer',
-              otherUserPhoto: astrologer['profilePhoto'],
-              currentUserId: _currentUserId!,
-              accessToken: _accessToken,
-              refreshToken: _refreshToken,
-              isOnline: true,
-            ),
-          ),
-        );
-      }
+      // BroadcastLoadingScreen handles the navigation to ChatScreen
     });
 
     // Listen for broadcast expired
@@ -429,8 +435,10 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         }
 
         if (errorCode == 'ACTIVE_CHAT_EXISTS') {
-          errorMessage =
-              'You already have an active chat. Please end it first.';
+          // Show a popup that lets the user end the current active chat
+          // (via API) and then re-send this broadcast automatically.
+          _showActiveChatExistsDialog();
+          return;
         } else if (errorCode == 'NO_ASTROLOGERS_ONLINE') {
           errorMessage = 'No astrologers are available at the moment.';
         }
@@ -442,6 +450,298 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         );
       }
     });
+  }
+
+  /// Show dialog when backend reports an existing active chat
+  void _showActiveChatExistsDialog() {
+    if (_isResolvingActiveChat) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.cosmicPurple.withOpacity(0.32),
+                    AppColors.cosmicPink.withOpacity(0.22),
+                    Colors.black.withOpacity(0.85),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.orange.withOpacity(0.45),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withOpacity(0.35),
+                          blurRadius: 18,
+                          spreadRadius: 3,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.info_outline,
+                      color: Colors.orange,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
+                    ).createShader(bounds),
+                    child: const Text(
+                      'Active chat detected',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'You already have an active chat.\n'
+                    'Do you want to end it and send this broadcast now?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textGray300,
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                              ),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'No, cancel',
+                                style: TextStyle(
+                                  color: AppColors.textGray300,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            Navigator.pop(context);
+                            await _endActiveChatAndResendBroadcast();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  AppColors.cosmicPurple,
+                                  AppColors.cosmicPink,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.cosmicPurple.withOpacity(
+                                    0.4,
+                                  ),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'End chat & broadcast',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// End the currently active chat via API, then re-send the broadcast.
+  Future<void> _endActiveChatAndResendBroadcast() async {
+    if (_isResolvingActiveChat) return;
+    if (_accessToken == null || _refreshToken == null) {
+      if (mounted) {
+        showTopSnackBar(
+          context: context,
+          message: 'Please login again to manage chats.',
+          backgroundColor: AppColors.error,
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isResolvingActiveChat = true;
+      _isSending = true;
+    });
+
+    try {
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: ApiEndpoints.baseUrl,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'cookie': 'accessToken=$_accessToken; refreshToken=$_refreshToken',
+          },
+        ),
+      );
+
+      // 1) Fetch conversations from API only (no local state)
+      final response = await dio.get(ApiEndpoints.chatConversations);
+      if (response.statusCode != 200) {
+        if (mounted) {
+          setState(() {
+            _isResolvingActiveChat = false;
+            _isSending = false;
+          });
+          showTopSnackBar(
+            context: context,
+            message: 'Could not load chats. Please try again.',
+            backgroundColor: AppColors.error,
+          );
+        }
+        return;
+      }
+
+      final raw = response.data;
+      List<dynamic> list = [];
+      if (raw is List) {
+        list = raw;
+      } else if (raw is Map) {
+        list = raw['chats'] ?? raw['conversations'] ?? raw['data'] ?? [];
+      }
+      final chats = list
+          .where((e) => e is Map)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+
+      // 2) Find first chat with status ACTIVE (from API only)
+      Map<String, dynamic>? activeChat;
+      for (final chat in chats) {
+        final status = (chat['status']?.toString() ?? '').toUpperCase();
+        if (status == 'ACTIVE') {
+          activeChat = chat;
+          break;
+        }
+      }
+
+      if (activeChat == null || activeChat.isEmpty) {
+        // No ACTIVE chat in API – still try sending broadcast
+        if (mounted) {
+          setState(() {
+            _isResolvingActiveChat = false;
+          });
+          showTopSnackBar(
+            context: context,
+            message: 'No active chat to end. Sending broadcast...',
+            backgroundColor: Colors.green,
+          );
+        }
+        _sendBroadcast();
+        return;
+      }
+
+      // 3) Get chat id from API response
+      String? chatId = activeChat['id']?.toString();
+      if (chatId == null || chatId.isEmpty) {
+        chatId = activeChat['chat']?['id']?.toString();
+      }
+      if (chatId == null || chatId.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _isResolvingActiveChat = false;
+            _isSending = false;
+          });
+          showTopSnackBar(
+            context: context,
+            message: 'Could not identify chat. Sending broadcast...',
+            backgroundColor: Colors.orange,
+          );
+        }
+        _sendBroadcast();
+        return;
+      }
+
+      // 4) End chat via API
+      await dio.put('${ApiEndpoints.chatEnd}/$chatId/end');
+
+      if (mounted) {
+        setState(() {
+          _isResolvingActiveChat = false;
+        });
+        showTopSnackBar(
+          context: context,
+          message: 'Active chat ended. Sending your broadcast now...',
+          backgroundColor: Colors.green,
+        );
+      }
+      _sendBroadcast();
+    } catch (e) {
+      debugPrint('Error ending active chat before broadcast: $e');
+      if (mounted) {
+        setState(() {
+          _isResolvingActiveChat = false;
+          _isSending = false;
+        });
+        showTopSnackBar(
+          context: context,
+          message: 'Failed to end active chat. Please try again.',
+          backgroundColor: AppColors.error,
+        );
+      }
+    }
   }
 
   void _startCountdown() {
@@ -517,24 +817,29 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
 
     setState(() {
       _isSending = true;
-      _isWaiting = true;
-      _selectedMessage = finalMessage;
-    });
-
-    // Load online astrologers when waiting starts
-    _loadOnlineAstrologers();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      _loadOnlineAstrologers();
     });
 
     try {
+      // Send broadcast message
       _socketService.sendBroadcastMessage(content: finalMessage, type: 'TEXT');
+
       setState(() => _isSending = false);
+
+      // Navigate to loading screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BroadcastLoadingScreen(
+            message: finalMessage,
+            currentUserId: _currentUserId!,
+            accessToken: _accessToken,
+            refreshToken: _refreshToken,
+          ),
+        ),
+      );
     } catch (e) {
-      _refreshTimer?.cancel();
       setState(() {
         _isSending = false;
-        _isWaiting = false;
       });
       showTopSnackBar(
         context: context,
@@ -547,6 +852,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
   void _cancelBroadcast() {
     _countdownTimer?.cancel();
     _refreshTimer?.cancel();
+    _resetConnectionAnimations();
     setState(() {
       _isWaiting = false;
       _selectedMessage = null;
@@ -592,6 +898,52 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
     });
   }
 
+  void _startConnectionAnimations() {
+    // Clear previous state
+    _connected.clear();
+    for (var controller in _lineAnimations.values) {
+      controller.dispose();
+    }
+    _lineAnimations.clear();
+
+    // Create animation controllers for each astrologer line
+    for (int i = 0; i < _astrologers.length; i++) {
+      _lineAnimations[i] = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 800),
+      );
+    }
+
+    // Start sequential connection animations
+    _animateConnections();
+  }
+
+  Future<void> _animateConnections() async {
+    final random = Random();
+    final indices = List.generate(_astrologers.length, (i) => i)..shuffle(random);
+
+    for (final index in indices) {
+      if (!mounted || !_isWaiting) break;
+
+      await Future.delayed(Duration(milliseconds: 500 + random.nextInt(1000)));
+
+      if (!mounted || !_isWaiting) break;
+
+      _connected.add(index);
+      await _lineAnimations[index]?.forward();
+
+      if (mounted) setState(() {});
+    }
+  }
+
+  void _resetConnectionAnimations() {
+    _connected.clear();
+    for (var controller in _lineAnimations.values) {
+      controller.dispose();
+    }
+    _lineAnimations.clear();
+  }
+
   @override
   void dispose() {
     _countdownTimer?.cancel();
@@ -600,9 +952,13 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
     _connectionController.dispose();
     _rotationController.dispose();
     _waveController.dispose();
+    _rippleController.dispose();
     _customTextController.dispose();
     _customTextFocusNode.dispose();
     for (var controller in _subtopicAnimationControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in _lineAnimations.values) {
       controller.dispose();
     }
 
@@ -1046,7 +1402,8 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 20),
-          // Connection animation with spider web and astrologers
+
+          // Connection animation with new network design
           _buildConnectionAnimation(),
           const SizedBox(height: 20),
           // Status info
@@ -1061,7 +1418,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
             ),
           ),
           const SizedBox(height: 40),
-          // Status text
+          // Status text + helper lines (waiting for astrologer)
           ShaderMask(
             shaderCallback: (bounds) => LinearGradient(
               colors: [
@@ -1081,8 +1438,21 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Your message has been sent to all online astrologers',
-            style: TextStyle(color: AppColors.textGray300, fontSize: 14),
+            'Connecting to astrologers...',
+            style: TextStyle(
+              color: AppColors.textGray300,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Please be patient',
+            style: TextStyle(
+              color: AppColors.textGray300.withOpacity(0.9),
+              fontSize: 12,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -1154,233 +1524,422 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
   }
 
   Widget _buildConnectionAnimation() {
-    // Use online astrologers or create placeholder positions
-    final astrologerCount = _onlineAstrologers.isEmpty
-        ? 6
-        : _onlineAstrologers.length;
-    final displayAstrologers = _onlineAstrologers.isEmpty
-        ? List.generate(6, (i) => null)
-        : _onlineAstrologers.take(6).toList();
+    final size = MediaQuery.of(context).size;
+    final containerHeight = 320.0;
 
-    return SizedBox(
-      width: 320,
-      height: 320,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([
-          _pulseAnimation,
-          _connectionController,
-          _rotationController,
-          _waveController,
-        ]),
-        builder: (context, child) {
-          return Stack(
+    return Container(
+      width: size.width,
+      height: containerHeight,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0A0E27), Color(0xFF1A1A3E), Color(0xFF2E1A47)],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Background grid pattern
+          CustomPaint(
+            size: Size(size.width, containerHeight),
+            painter: GridPainter(),
+          ),
+
+          // 7 Particles within circular radius
+          ...List.generate(
+            7,
+            (index) => _buildParticle(index, containerHeight),
+          ),
+
+          // Connection lines
+          CustomPaint(
+            size: Size(size.width, containerHeight),
+            painter: NetworkPainter(
+              astrologers: _astrologers,
+              connected: _connected,
+              lineAnimations: _lineAnimations,
+              pulse: _pulseController.value,
+              containerHeight: containerHeight,
+            ),
+          ),
+
+          // Astrologer nodes
+          ..._buildAstrologers(size.width, containerHeight),
+
+          // Center node with Earth
+          _centerNode(containerHeight),
+        ],
+      ),
+    );
+  }
+
+  Widget _centerNode(double containerHeight) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      top: (containerHeight - 100) / 2,
+      child: Center(
+        child: SizedBox(
+          width: 100,
+          height: 100,
+          child: Stack(
             alignment: Alignment.center,
             children: [
-              // Spider web network
-              CustomPaint(
-                size: const Size(320, 320),
-                painter: SpiderWebPainter(
-                  progress: _connectionController.value,
-                  rotation: _rotationController.value,
-                  color: AppColors.cosmicPurple,
+              // Multiple ripple effects
+              AnimatedBuilder(
+                animation: _rippleController,
+                builder: (_, __) => Container(
+                  width: 120 + (_rippleController.value * 100),
+                  height: 120 + (_rippleController.value * 100),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF667EEA).withOpacity(
+                        (1 - _rippleController.value).clamp(0.0, 1.0) * 0.5,
+                      ),
+                      width: 2,
+                    ),
+                  ),
                 ),
               ),
 
-              // Astrologer avatars positioned around the web
-              ...List.generate(astrologerCount, (index) {
-                final angle = (index * 2 * pi / astrologerCount) - (pi / 2);
-                final radius = 130.0;
-                final waveOffset =
-                    sin((_waveAnimation.value + index * 0.3) * 2 * pi) * 8;
-                final currentRadius = radius + waveOffset;
-
-                final x =
-                    cos(angle + _rotationController.value * 0.5) *
-                    currentRadius;
-                final y =
-                    sin(angle + _rotationController.value * 0.5) *
-                    currentRadius;
-
-                final astrologer = index < displayAstrologers.length
-                    ? displayAstrologers[index]
-                    : null;
-
-                return Positioned(
-                  left: 160 + x - 30,
-                  top: 160 + y - 30,
-                  child: Transform.scale(
-                    scale:
-                        0.8 +
-                        (sin((_waveAnimation.value + index * 0.2) * 2 * pi) *
-                            0.2),
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            AppColors.cosmicPurple.withOpacity(0.8),
-                            AppColors.cosmicPink.withOpacity(0.6),
-                          ],
+              // Second ripple with offset
+              AnimatedBuilder(
+                animation: _rippleController,
+                builder: (_, __) {
+                  final offset = (_rippleController.value + 0.5) % 1.0;
+                  return Container(
+                    width: 120 + (offset * 100),
+                    height: 120 + (offset * 100),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF667EEA).withOpacity(
+                          (1 - offset).clamp(0.0, 1.0) * 0.5,
                         ),
-                        border: Border.all(
-                          color: AppColors.cosmicPurple.withOpacity(0.8),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.cosmicPurple.withOpacity(0.6),
-                            blurRadius: 15,
-                            spreadRadius: 3,
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child:
-                            astrologer?.profilePhoto != null &&
-                                astrologer!.profilePhoto.isNotEmpty
-                            ? Image.network(
-                                astrologer.profilePhoto,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 30,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 30,
-                              ),
+                        width: 2,
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                },
+              ),
 
-              // Center pulsing icon
-              Transform.scale(
-                scale: _pulseAnimation.value,
-                child: Container(
+              // Main node with glow and Earth icon
+              AnimatedBuilder(
+                animation: _pulseController,
+                builder: (_, __) => Container(
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    gradient: AppColors.cosmicPrimaryGradient,
                     shape: BoxShape.circle,
+                    gradient: const RadialGradient(
+                      colors: [
+                        Color(0xFF667EEA),
+                        Color(0xFF764BA2),
+                        Color(0xFF4A148C),
+                      ],
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.cosmicPurple.withOpacity(0.6),
-                        blurRadius: 30,
-                        spreadRadius: 8,
+                        color: const Color(0xFF667EEA).withOpacity(0.6),
+                        blurRadius: 30 + (_pulseController.value * 10),
+                        spreadRadius: 5 + (_pulseController.value * 3),
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.wifi_find_rounded,
-                    color: Colors.white,
-                    size: 45,
+                  child: const Center(
+                    child: Text('🌍', style: TextStyle(fontSize: 50)),
                   ),
                 ),
               ),
             ],
-          );
-        },
+          ),
+        ),
       ),
+    );
+  }
+
+  List<Widget> _buildAstrologers(double screenWidth, double containerHeight) {
+    return _astrologers.asMap().entries.map((e) {
+      final index = e.key;
+      final astrologer = e.value;
+      final isConnecting = _lineAnimations[index]?.isAnimating ?? false;
+
+      // Check if there's an online astrologer at this index with a profile photo
+      final onlineAstrologer = index < _onlineAstrologers.length
+          ? _onlineAstrologers[index]
+          : null;
+      final hasProfilePhoto = onlineAstrologer?.profilePhoto != null &&
+          onlineAstrologer!.profilePhoto.isNotEmpty;
+
+      return Positioned(
+        left: screenWidth * astrologer.position.dx - 30,
+        top: containerHeight * astrologer.position.dy - 30,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: hasProfilePhoto
+                    ? null
+                    : LinearGradient(
+                        colors: isConnecting
+                            ? [const Color(0xFFE53935), const Color(0xFFFF8C00)]
+                            : [const Color(0xFF2A2A4C), const Color(0xFF1A1A3E)],
+                      ),
+                border: Border.all(
+                  color: isConnecting ? const Color(0xFFFFD700) : const Color(0xFF4A4A6A),
+                  width: isConnecting ? 3 : 2,
+                ),
+                boxShadow: isConnecting
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFFFFD700).withOpacity(0.7),
+                          blurRadius: 20,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 8,
+                        ),
+                      ],
+              ),
+              child: ClipOval(
+                child: hasProfilePhoto
+                    ? Image.network(
+                        onlineAstrologer.profilePhoto,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Text(astrologer.avatar, style: const TextStyle(fontSize: 28)),
+                        ),
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: Text(astrologer.avatar, style: const TextStyle(fontSize: 28)),
+                          );
+                        },
+                      )
+                    : Center(
+                        child: Text(astrologer.avatar, style: const TextStyle(fontSize: 28)),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: isConnecting
+                    ? const Color(0xFFFFD700).withOpacity(0.2)
+                    : Colors.black26,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isConnecting
+                      ? const Color(0xFFFFD700).withOpacity(0.3)
+                      : Colors.transparent,
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                // Show astrologer name if available, otherwise show specialty
+                onlineAstrologer?.name ?? astrologer.specialty,
+                style: TextStyle(
+                  color: isConnecting ? const Color(0xFFFFD700) : Colors.white60,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildParticle(int index, double containerHeight) {
+    final rand = Random(index + 100);
+
+    // Generate random angle and distance within the circular radius
+    final angle = rand.nextDouble() * 2 * pi;
+    final distance = rand.nextDouble() * particleRadiusRatio;
+
+    // Convert polar coordinates to cartesian
+    final dx = 0.5 + (distance * cos(angle));
+    final dy = 0.5 + (distance * sin(angle));
+
+    final delay = rand.nextDouble();
+    final size = 2.0 + rand.nextDouble() * 3;
+
+    return AnimatedBuilder(
+      animation: _rotationController,
+      builder: (context, _) {
+        final v = (_rotationController.value + delay) % 1.0;
+        final opacity = (0.1 + sin(v * pi * 2) * 0.2).clamp(0.0, 1.0);
+
+        return Positioned(
+          left: MediaQuery.of(context).size.width * dx,
+          top: containerHeight * dy,
+          child: Opacity(
+            opacity: opacity,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                color: const Color(0xFF667EEA),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF667EEA).withOpacity(0.5),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
 
-/// Custom painter for spider web network animation
-class SpiderWebPainter extends CustomPainter {
-  final double progress;
-  final double rotation;
-  final Color color;
+/// Model class for astrologer nodes in the network animation
+class AstrologerNode {
+  final String name;
+  final String avatar;
+  final String specialty;
+  final Offset position;
 
-  SpiderWebPainter({
-    required this.progress,
-    required this.rotation,
-    required this.color,
+  AstrologerNode(this.name, this.avatar, this.specialty, this.position);
+}
+
+/// Custom painter for grid background pattern
+class GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.03)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    // Draw horizontal lines
+    for (double i = 0; i < size.height; i += 50) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
+
+    // Draw vertical lines
+    for (double i = 0; i < size.width; i += 50) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Custom painter for network connection lines
+class NetworkPainter extends CustomPainter {
+  final List<AstrologerNode> astrologers;
+  final List<int> connected;
+  final Map<int, AnimationController> lineAnimations;
+  final double pulse;
+  final double containerHeight;
+
+  NetworkPainter({
+    required this.astrologers,
+    required this.connected,
+    required this.lineAnimations,
+    required this.pulse,
+    required this.containerHeight,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final maxRadius = size.width / 2 - 20;
-    const nodeCount = 8; // Number of astrologer positions
+    final center = Offset(size.width * 0.5, containerHeight * 0.5);
 
-    // Create concentric circles (spider web rings)
-    final rings = 4;
-    for (int ring = 1; ring <= rings; ring++) {
-      final ringRadius = (maxRadius / rings) * ring;
-      final ringProgress = (progress + ring * 0.1) % 1.0;
-      final opacity = (0.2 + (ringProgress * 0.3)).clamp(0.0, 0.5);
-
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..color = color.withOpacity(opacity);
-
-      canvas.drawCircle(center, ringRadius, paint);
-    }
-
-    // Draw radial lines (spider web spokes)
-    for (int i = 0; i < nodeCount; i++) {
-      final angle = (i * 2 * pi / nodeCount) - (pi / 2) + (rotation * 0.3);
-      final lineProgress = (progress + i * 0.15) % 1.0;
-      final opacity = (0.3 + (lineProgress * 0.4)).clamp(0.0, 0.7);
-
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..color = color.withOpacity(opacity);
-
-      final endPoint = Offset(
-        center.dx + maxRadius * cos(angle),
-        center.dy + maxRadius * sin(angle),
+    for (final i in connected) {
+      final astrologer = astrologers[i];
+      final astroPoint = Offset(
+        size.width * astrologer.position.dx,
+        containerHeight * astrologer.position.dy,
       );
 
-      canvas.drawLine(center, endPoint, paint);
-    }
+      final lineProgress = lineAnimations[i]?.value ?? 0.0;
+      final isAnimating = lineAnimations[i]?.isAnimating ?? false;
 
-    // Draw connecting lines between nodes (web pattern)
-    final nodes = List.generate(nodeCount, (index) {
-      final angle = (index * 2 * pi / nodeCount) - (pi / 2) + (rotation * 0.3);
-      final nodeRadius = maxRadius * 0.85;
-      return Offset(
-        center.dx + nodeRadius * cos(angle),
-        center.dy + nodeRadius * sin(angle),
-      );
-    });
+      final currentEnd = Offset.lerp(center, astroPoint, lineProgress)!;
 
-    // Draw web connections
-    for (int i = 0; i < nodes.length; i++) {
-      for (int j = i + 1; j < nodes.length; j++) {
-        final distance = (nodes[i] - nodes[j]).distance;
-        if (distance < maxRadius * 1.2) {
-          final lineProgress = (progress + (i + j) * 0.1) % 1.0;
-          final opacity = (0.15 + (lineProgress * 0.25)).clamp(0.0, 0.4);
+      // Draw glow effect for animating line
+      if (isAnimating || lineProgress >= 1.0) {
+        final glowPaint = Paint()
+          ..color = const Color(0xFFFFD700).withOpacity(0.3)
+          ..strokeWidth = 5
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-          final paint = Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1
-            ..color = color.withOpacity(opacity);
+        canvas.drawLine(center, currentEnd, glowPaint);
+      }
 
-          canvas.drawLine(nodes[i], nodes[j], paint);
-        }
+      // Main thin line
+      final linePaint = Paint()
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round
+        ..color = const Color(0xFFFFD700).withOpacity(0.7);
+
+      canvas.drawLine(center, currentEnd, linePaint);
+
+      // Draw connection dot at the end of animating line
+      if (isAnimating && lineProgress > 0.05) {
+        // Outer glow
+        final outerGlowPaint = Paint()
+          ..color = const Color(0xFFFFD700).withOpacity(0.6)
+          ..style = PaintingStyle.fill
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+
+        canvas.drawCircle(currentEnd, 8, outerGlowPaint);
+
+        // Main dot
+        final dotPaint = Paint()
+          ..color = const Color(0xFFFFD700)
+          ..style = PaintingStyle.fill;
+
+        canvas.drawCircle(currentEnd, 5, dotPaint);
+
+        // Inner bright dot
+        final brightDotPaint = Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.fill;
+
+        canvas.drawCircle(currentEnd, 2.5, brightDotPaint);
+      }
+
+      // Draw pulsing particles at completed connections
+      if (lineProgress >= 1.0) {
+        _drawPulsingParticle(canvas, astroPoint, pulse);
       }
     }
+  }
 
-    // Draw pulsing center node
-    final centerPaint = Paint()
+  void _drawPulsingParticle(Canvas canvas, Offset position, double pulse) {
+    final size = 4 + (pulse * 3);
+
+    final particlePaint = Paint()
+      ..color = const Color(0xFFFFD700).withOpacity(0.8)
       ..style = PaintingStyle.fill
-      ..color = color.withOpacity(0.4 + (progress * 0.3));
-    canvas.drawCircle(center, 6, centerPaint);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    canvas.drawCircle(position, size, particlePaint);
   }
 
   @override
-  bool shouldRepaint(covariant SpiderWebPainter oldDelegate) {
-    return progress != oldDelegate.progress || rotation != oldDelegate.rotation;
-  }
+  bool shouldRepaint(covariant NetworkPainter old) => true;
 }

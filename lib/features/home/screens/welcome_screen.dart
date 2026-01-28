@@ -1262,43 +1262,75 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                 ],
               ),
               const SizedBox(height: 20),
-              // Services grid - 4 services matching home_screen_client
+              // Services grid - 4 services (gradients with yellow/gold accents)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildServiceItem(
-                    icon: Icons.chat_bubble_rounded,
-                    name: 'Real-Time\nChat',
+                    icon: Icons.person_pin_rounded,
+                    name: 'Book Pandit \nJi',
                     gradient: LinearGradient(
-                      colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.cosmicPurple,
+                        AppColors.cosmicPink,
+                        gold.withOpacity(0.9),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
                     ),
-                    onTap: () => _handleChatNavigation(),
+                    onTap: () =>
+                        Navigator.pushNamed(context, '/book_pandit_screen'),
                   ),
                   _buildServiceItem(
                     icon: Icons.calendar_today_rounded,
                     name: 'Daily\nHoroscope',
                     gradient: LinearGradient(
-                      colors: [AppColors.cosmicPink, AppColors.cosmicRed],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.cosmicPink,
+                        gold.withOpacity(0.95),
+                        AppColors.cosmicRed,
+                      ],
+                      stops: const [0.0, 0.45, 1.0],
                     ),
                     onTap: () =>
                         Navigator.pushNamed(context, '/horoscope_screen'),
                   ),
                   _buildServiceItem(
-                    icon: Icons.people_rounded,
-                    name: 'Consultations',
+                    icon: Icons.home_work_rounded,
+                    name: 'Book Vaastu \nsastri',
                     gradient: LinearGradient(
-                      colors: [AppColors.cosmicRed, AppColors.cosmicPurple],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.cosmicRed,
+                        AppColors.cosmicPurple,
+                        gold.withOpacity(0.85),
+                      ],
+                      stops: const [0.0, 0.55, 1.0],
                     ),
-                    onTap: () => _handleChatNavigation(),
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      '/book_vaastu_sastri_screen',
+                    ),
                   ),
                   _buildServiceItem(
-                    icon: Icons.stars_rounded,
-                    name: 'Birth\nChart',
+                    icon: Icons.calendar_month_rounded,
+                    name: 'Book\nAppointment',
                     gradient: LinearGradient(
-                      colors: [Colors.blue.shade600, AppColors.cosmicPurple],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.blue.shade600,
+                        AppColors.cosmicPurple,
+                        gold.withOpacity(0.9),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
                     ),
                     onTap: () =>
-                        Navigator.pushNamed(context, '/birth_chart_screen'),
+                        Navigator.pushNamed(context, '/appointment_screen'),
                   ),
                 ],
               ),
@@ -1475,6 +1507,7 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
             decoration: BoxDecoration(
               gradient: gradient,
               shape: BoxShape.circle,
+              border: Border.all(color: gold, width: 3),
               boxShadow: [
                 BoxShadow(
                   color: gradient.colors.first.withOpacity(0.4),

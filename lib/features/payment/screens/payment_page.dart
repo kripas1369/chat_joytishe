@@ -4,6 +4,7 @@ import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/payment/screens/qr_code_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 
 class PaymentPage extends StatefulWidget {
   const PaymentPage({super.key});
@@ -22,6 +23,16 @@ class _PaymentPageState extends State<PaymentPage> {
     {'coins': 25, 'price': 2500, 'popular': true},
     {'coins': 50, 'price': 5000, 'popular': false},
   ];
+
+  void _setSystemUIOverlay() {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.primaryBlack,
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -71,36 +82,48 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) {
+    _setSystemUIOverlay();
     return Scaffold(
+      backgroundColor: AppColors.primaryBlack,
       body: Stack(
         children: [
-          StarFieldBackground(),
+          const StarFieldBackground(),
           Container(
             decoration: BoxDecoration(
-              gradient: AppColors.backgroundGradient.withOpacity(0.9),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.75),
+                  AppColors.cosmicPurple.withOpacity(0.28),
+                  AppColors.cosmicPink.withOpacity(0.18),
+                  Colors.black.withOpacity(0.92),
+                ],
+                stops: const [0.0, 0.35, 0.65, 1.0],
+              ),
             ),
           ),
           SafeArea(
             child: SingleChildScrollView(
-              physics: BouncingScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _buildHeader(),
-                    SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     _buildTitleSection(),
-                    SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     _buildCustomAmountSection(),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     _buildPackagesSection(),
-                    SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     _buildSummaryCard(),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 18),
                     _buildPayButton(),
-                    SizedBox(height: 40),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -118,74 +141,131 @@ class _PaymentPageState extends State<PaymentPage> {
           onTap: () => Navigator.pop(context),
           icon: Icons.arrow_back,
         ),
-        SizedBox(width: 16),
-        Text(
-          'Add Coins',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 14),
+        ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [
+              AppColors.purple300,
+              AppColors.pink300,
+              AppColors.red300,
+            ],
+          ).createShader(bounds),
+          child: const Text(
+            'Add Coins',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.3,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTitleSection() {
-    return Container(
-      padding: EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
-            AppColors.deepPurple.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.primaryPurple.withOpacity(0.3),
-          width: 1,
+  Widget _glassCard({
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(18),
+    BorderRadiusGeometry borderRadius = const BorderRadius.all(
+      Radius.circular(20),
+    ),
+    List<Color>? gradientColors,
+  }) {
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradientColors ??
+                  [
+                    Colors.white.withOpacity(0.10),
+                    Colors.white.withOpacity(0.05),
+                    Colors.black.withOpacity(0.20),
+                  ],
+            ),
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: AppColors.cosmicPurple.withOpacity(0.25),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.cosmicPurple.withOpacity(0.18),
+                blurRadius: 24,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: child,
         ),
       ),
+    );
+  }
+
+  Widget _buildTitleSection() {
+    return _glassCard(
+      padding: const EdgeInsets.all(20),
+      borderRadius: BorderRadius.circular(22),
+      gradientColors: [
+        AppColors.cosmicPurple.withOpacity(0.22),
+        AppColors.cosmicPink.withOpacity(0.14),
+        Colors.black.withOpacity(0.28),
+      ],
       child: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.cosmicPrimaryGradient,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.cosmicPurple.withOpacity(0.45),
+                  blurRadius: 18,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: Icon(
               Icons.monetization_on_rounded,
               color: Colors.white,
-              size: 40,
+              size: 38,
             ),
           ),
-          SizedBox(height: 16),
-          Text(
-            'Add Coins for Chat',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          const SizedBox(height: 14),
+          ShaderMask(
+            shaderCallback: (bounds) => AppColors.cosmicPrimaryGradient
+                .createShader(bounds),
+            child: const Text(
+              'Add Coins for Chat',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '1 Coin = Rs 100',
             style: TextStyle(
               color: gold,
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Purchase coins to chat with astrologers',
             style: TextStyle(
-              color: Colors.white60,
+              color: AppColors.textGray300,
               fontSize: 14,
             ),
             textAlign: TextAlign.center,
@@ -199,30 +279,23 @@ class _PaymentPageState extends State<PaymentPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Enter Custom Amount',
           style: TextStyle(
             color: Colors.white,
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        SizedBox(height: 12),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primaryPurple.withOpacity(0.15),
-                AppColors.deepPurple.withOpacity(0.08),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.primaryPurple.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
+        const SizedBox(height: 12),
+        _glassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          borderRadius: BorderRadius.circular(16),
+          gradientColors: [
+            AppColors.cosmicPurple.withOpacity(0.16),
+            AppColors.cosmicPink.withOpacity(0.10),
+            Colors.black.withOpacity(0.20),
+          ],
           child: Row(
             children: [
               Icon(
@@ -230,7 +303,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 color: gold,
                 size: 24,
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: TextField(
                   controller: _coinController,
@@ -263,15 +336,15 @@ class _PaymentPageState extends State<PaymentPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Or Choose a Package',
           style: TextStyle(
             color: Colors.white,
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 14),
         Column(
           children: List.generate(_packages.length, (index) {
             return _buildPackageCard(index);
@@ -288,31 +361,20 @@ class _PaymentPageState extends State<PaymentPage> {
 
     return GestureDetector(
       onTap: () => _selectPackage(index),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12),
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColors.primaryPurple.withOpacity(0.4),
-                    AppColors.deepPurple.withOpacity(0.3),
-                  ]
-                : [
-                    AppColors.primaryPurple.withOpacity(0.15),
-                    AppColors.deepPurple.withOpacity(0.08),
-                  ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primaryPurple
-                : AppColors.primaryPurple.withOpacity(0.3),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
+      child: _glassCard(
+        padding: const EdgeInsets.all(16),
+        borderRadius: BorderRadius.circular(18),
+        gradientColors: isSelected
+            ? [
+                AppColors.cosmicPurple.withOpacity(0.30),
+                AppColors.cosmicPink.withOpacity(0.20),
+                Colors.black.withOpacity(0.22),
+              ]
+            : [
+                Colors.white.withOpacity(0.08),
+                Colors.white.withOpacity(0.04),
+                Colors.black.withOpacity(0.20),
+              ],
         child: Row(
           children: [
             Container(
@@ -321,18 +383,17 @@ class _PaymentPageState extends State<PaymentPage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primaryPurple : Colors.white38,
+                  color:
+                      isSelected ? AppColors.cosmicPurple : Colors.white38,
                   width: 2,
                 ),
-                color: isSelected
-                    ? AppColors.primaryPurple
-                    : Colors.transparent,
+                color: isSelected ? AppColors.cosmicPurple : Colors.transparent,
               ),
               child: isSelected
                   ? Icon(Icons.check, color: Colors.white, size: 16)
                   : null,
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Container(
               padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -345,7 +406,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 size: 28,
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,14 +422,14 @@ class _PaymentPageState extends State<PaymentPage> {
                         ),
                       ),
                       if (isPopular) ...[
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            gradient: AppColors.primaryGradient,
+                            gradient: AppColors.cosmicHeroGradient,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -407,16 +468,14 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Widget _buildSummaryCard() {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
+    return _glassCard(
+      padding: const EdgeInsets.all(18),
+      borderRadius: BorderRadius.circular(20),
+      gradientColors: [
+        Colors.white.withOpacity(0.10),
+        AppColors.cosmicPurple.withOpacity(0.10),
+        Colors.black.withOpacity(0.22),
+      ],
       child: Column(
         children: [
           Row(
@@ -479,10 +538,10 @@ class _PaymentPageState extends State<PaymentPage> {
       onTap: _selectedCoins > 0 ? _proceedToPayment : null,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 18),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: _selectedCoins > 0
-              ? AppColors.primaryGradient
+              ? AppColors.cosmicHeroGradient
               : LinearGradient(
                   colors: [Colors.grey, Colors.grey.shade700],
                 ),
@@ -490,9 +549,15 @@ class _PaymentPageState extends State<PaymentPage> {
           boxShadow: _selectedCoins > 0
               ? [
                   BoxShadow(
-                    color: AppColors.primaryPurple.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: Offset(0, 6),
+                    color: AppColors.cosmicRed.withOpacity(0.45),
+                    blurRadius: 18,
+                    offset: const Offset(0, 10),
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: AppColors.cosmicPurple.withOpacity(0.35),
+                    blurRadius: 26,
+                    offset: const Offset(0, 14),
                   ),
                 ]
               : null,

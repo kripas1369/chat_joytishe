@@ -117,11 +117,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   /// Skip to the last page
   void _onSkip() {
-    _pageController.animateToPage(
-      _pages.length - 1,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
+    // User chose to skip onboarding – go directly to auth (welcome back / login).
+    _navigateToAuth();
   }
 
   /// Handle next button press
