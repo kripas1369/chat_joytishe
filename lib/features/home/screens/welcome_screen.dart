@@ -1267,38 +1267,48 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildServiceItem(
-                    icon: Icons.chat_bubble_rounded,
-                    name: 'Real-Time\nChat',
+                    icon: Icons.person_pin_rounded,
+                    name: 'Book Pandit \nJi',
                     gradient: LinearGradient(
-                      colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
+                      colors: [
+                        Color(0xFFE44949),
+                        Color(0xFFFB923C),
+                        Color(0xFFFBBF24),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                    onTap: () => _handleChatNavigation(),
+                    onTap: () =>
+                        Navigator.pushNamed(context, '/book_pandit_screen'),
                   ),
                   _buildServiceItem(
                     icon: Icons.calendar_today_rounded,
                     name: 'Daily\nHoroscope',
                     gradient: LinearGradient(
-                      colors: [AppColors.cosmicPink, AppColors.cosmicRed],
+                      colors: [Color(0xFFE44949), Color(0xFFF97316)],
                     ),
                     onTap: () =>
                         Navigator.pushNamed(context, '/horoscope_screen'),
                   ),
                   _buildServiceItem(
-                    icon: Icons.people_rounded,
-                    name: 'Consultations',
+                    icon: Icons.home_work_rounded,
+                    name: 'Book Vaastu \nsastri',
                     gradient: LinearGradient(
-                      colors: [AppColors.cosmicRed, AppColors.cosmicPurple],
+                      colors: [AppColors.cosmicRed, AppColors.cosmicPink],
                     ),
-                    onTap: () => _handleChatNavigation(),
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      '/book_vaastu_sastri_screen',
+                    ),
                   ),
                   _buildServiceItem(
-                    icon: Icons.stars_rounded,
-                    name: 'Birth\nChart',
+                    icon: Icons.calendar_month_rounded,
+                    name: 'Book\nAppointment',
                     gradient: LinearGradient(
-                      colors: [Colors.blue.shade600, AppColors.cosmicPurple],
+                      colors: [AppColors.cosmicPink, AppColors.cosmicPurple],
                     ),
                     onTap: () =>
-                        Navigator.pushNamed(context, '/birth_chart_screen'),
+                        Navigator.pushNamed(context, '/appointment_screen'),
                   ),
                 ],
               ),
@@ -1475,6 +1485,7 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
             decoration: BoxDecoration(
               gradient: gradient,
               shape: BoxShape.circle,
+              border: Border.all(color: gold, width: 3),
               boxShadow: [
                 BoxShadow(
                   color: gradient.colors.first.withOpacity(0.4),

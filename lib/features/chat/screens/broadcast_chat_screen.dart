@@ -306,15 +306,23 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         String errorMessage = data['message'] ?? 'An error occurred';
 
         // Check for insufficient coins error
-        if (InsufficientCoinsException.isInsufficientCoinsError(errorCode, errorMessage)) {
-          final required = InsufficientCoinsException.extractRequiredCoins(errorMessage);
-          final available = InsufficientCoinsException.extractAvailableCoins(errorMessage);
+        if (InsufficientCoinsException.isInsufficientCoinsError(
+          errorCode,
+          errorMessage,
+        )) {
+          final required = InsufficientCoinsException.extractRequiredCoins(
+            errorMessage,
+          );
+          final available = InsufficientCoinsException.extractAvailableCoins(
+            errorMessage,
+          );
 
           showInsufficientCoinsSheet(
             context: context,
             requiredCoins: required > 0 ? required : CoinCosts.broadcastMessage,
             availableCoins: available > 0 ? available : coinProvider.balance,
-            message: 'You need ${CoinCosts.broadcastMessage} coin to send a broadcast message.',
+            message:
+                'You need ${CoinCosts.broadcastMessage} coin to send a broadcast message.',
           ).then((_) => coinProvider.refreshBalance());
           return;
         }
@@ -483,9 +491,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
             Container(
               color: Colors.black54,
               child: const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.cosmicPurple,
-                ),
+                child: CircularProgressIndicator(color: AppColors.cosmicPurple),
               ),
             ),
         ],
@@ -501,37 +507,34 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
           icon: Icons.arrow_back,
         ),
         const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ShaderMask(
-                      shaderCallback: (bounds) => LinearGradient(
-                        colors: [
-                          AppColors.purple300,
-                          AppColors.pink300,
-                          AppColors.red300,
-                        ],
-                      ).createShader(bounds),
-                      child: const Text(
-                        'Everyone Jyotish',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'Broadcast to all astrologers',
-                      style: TextStyle(
-                        color: AppColors.textGray300,
-                        fontSize: 12,
-                      ),
-                    ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [
+                    AppColors.purple300,
+                    AppColors.pink300,
+                    AppColors.red300,
                   ],
+                ).createShader(bounds),
+                child: const Text(
+                  'Everyone Jyotish',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
+              Text(
+                'Broadcast to all astrologers',
+                style: TextStyle(color: AppColors.textGray300, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -543,11 +546,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         // Header text
         ShaderMask(
           shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              AppColors.purple300,
-              AppColors.pink300,
-              AppColors.red300,
-            ],
+            colors: [AppColors.purple300, AppColors.pink300, AppColors.red300],
           ).createShader(bounds),
           child: const Text(
             'What do you need help with?',
@@ -561,10 +560,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         const SizedBox(height: 8),
         Text(
           'Select a topic to broadcast to all online astrologers',
-          style: TextStyle(
-            color: AppColors.textGray300,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: AppColors.textGray300, fontSize: 14),
         ),
         const SizedBox(height: 20),
 
@@ -771,10 +767,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
           const SizedBox(height: 8),
           Text(
             'Your message has been sent to all online astrologers',
-            style: TextStyle(
-              color: AppColors.textGray300,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: AppColors.textGray300, fontSize: 14),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -847,7 +840,9 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
 
   Widget _buildConnectionAnimation() {
     // Use online astrologers or create placeholder positions
-    final astrologerCount = _onlineAstrologers.isEmpty ? 6 : _onlineAstrologers.length;
+    final astrologerCount = _onlineAstrologers.isEmpty
+        ? 6
+        : _onlineAstrologers.length;
     final displayAstrologers = _onlineAstrologers.isEmpty
         ? List.generate(6, (i) => null)
         : _onlineAstrologers.take(6).toList();
@@ -880,21 +875,29 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
               ...List.generate(astrologerCount, (index) {
                 final angle = (index * 2 * pi / astrologerCount) - (pi / 2);
                 final radius = 130.0;
-                final waveOffset = sin((_waveAnimation.value + index * 0.3) * 2 * pi) * 8;
+                final waveOffset =
+                    sin((_waveAnimation.value + index * 0.3) * 2 * pi) * 8;
                 final currentRadius = radius + waveOffset;
-                
-                final x = cos(angle + _rotationController.value * 0.5) * currentRadius;
-                final y = sin(angle + _rotationController.value * 0.5) * currentRadius;
-                
-                final astrologer = index < displayAstrologers.length 
-                    ? displayAstrologers[index] 
+
+                final x =
+                    cos(angle + _rotationController.value * 0.5) *
+                    currentRadius;
+                final y =
+                    sin(angle + _rotationController.value * 0.5) *
+                    currentRadius;
+
+                final astrologer = index < displayAstrologers.length
+                    ? displayAstrologers[index]
                     : null;
 
                 return Positioned(
                   left: 160 + x - 30,
                   top: 160 + y - 30,
                   child: Transform.scale(
-                    scale: 0.8 + (sin((_waveAnimation.value + index * 0.2) * 2 * pi) * 0.2),
+                    scale:
+                        0.8 +
+                        (sin((_waveAnimation.value + index * 0.2) * 2 * pi) *
+                            0.2),
                     child: Container(
                       width: 60,
                       height: 60,
@@ -919,7 +922,8 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
                         ],
                       ),
                       child: ClipOval(
-                        child: astrologer?.profilePhoto != null &&
+                        child:
+                            astrologer?.profilePhoto != null &&
                                 astrologer!.profilePhoto.isNotEmpty
                             ? Image.network(
                                 astrologer.profilePhoto,
@@ -971,7 +975,6 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
       ),
     );
   }
-
 }
 
 /// Custom painter for spider web network animation

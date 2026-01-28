@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -49,21 +47,24 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   // Using network images for astrology/jyotishi theme
   final List<OnboardingData> _pages = [
     OnboardingData(
-      imageUrl: 'https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4f5?w=400&h=400&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4f5?w=400&h=400&fit=crop',
       title: 'Welcome to ChatJyotishi',
       description:
           'Connect with experienced astrologers and discover the wisdom of the stars. Your cosmic journey begins here.',
       icon: Icons.auto_awesome,
     ),
     OnboardingData(
-      imageUrl: 'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=400&h=400&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=400&h=400&fit=crop',
       title: 'Expert Consultations',
       description:
           'Get personalized readings from certified astrologers. Chat, call, or video consult at your convenience.',
       icon: Icons.chat_bubble_outline,
     ),
     OnboardingData(
-      imageUrl: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=400&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=400&fit=crop',
       title: 'Your Cosmic Guide',
       description:
           'Receive daily horoscopes, kundali readings, and life guidance aligned with celestial movements.',
@@ -220,9 +221,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           AnimatedOpacity(
             opacity: _currentPage == _pages.length - 1 ? 0.0 : 1.0,
             duration: const Duration(milliseconds: 200),
-              child: TextButton(
-              onPressed:
-                  _currentPage == _pages.length - 1 ? null : _onSkip,
+            child: TextButton(
+              onPressed: _currentPage == _pages.length - 1 ? null : _onSkip,
               child: Text(
                 'Skip',
                 style: TextStyle(
@@ -246,7 +246,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       LinearGradient(colors: [AppColors.cosmicPink, AppColors.cosmicRed]),
       LinearGradient(colors: [AppColors.cosmicRed, AppColors.cosmicPurple]),
     ];
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(right: 8),
@@ -259,9 +259,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: gradients[index % gradients.length]
-                      .colors
-                      .first
+                  color: gradients[index % gradients.length].colors.first
                       .withOpacity(0.6),
                   blurRadius: 12,
                   spreadRadius: 2,
@@ -300,7 +298,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: _getPageGradient(index).colors.first.withOpacity(0.4),
+                    color: _getPageGradient(
+                      index,
+                    ).colors.first.withOpacity(0.4),
                     blurRadius: 40,
                     spreadRadius: 8,
                   ),
@@ -321,9 +321,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             color: Colors.black.withOpacity(0.3),
                             child: Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
+                                          loadingProgress.expectedTotalBytes!
                                     : null,
                                 color: _getPageGradient(index).colors.first,
                                 strokeWidth: 3,
@@ -360,17 +361,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 gradient: _getPageGradient(index),
                 boxShadow: [
                   BoxShadow(
-                    color: _getPageGradient(index).colors.first.withOpacity(0.5),
+                    color: _getPageGradient(
+                      index,
+                    ).colors.first.withOpacity(0.5),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
                 ],
               ),
-              child: Icon(
-                data.icon,
-                size: 28,
-                color: Colors.white,
-              ),
+              child: Icon(data.icon, size: 28, color: Colors.white),
             ),
             const SizedBox(height: 24),
           ],
@@ -433,11 +432,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         gradient: _getPageGradient(index),
       ),
       child: Center(
-        child: Icon(
-          icon ?? Icons.auto_awesome,
-          size: 100,
-          color: Colors.white,
-        ),
+        child: Icon(icon ?? Icons.auto_awesome, size: 100, color: Colors.white),
       ),
     );
   }
@@ -448,7 +443,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
     return Padding(
       padding: const EdgeInsets.all(24),
-        child: SizedBox(
+      child: SizedBox(
         width: double.infinity,
         height: 56,
         child: DecoratedBox(
@@ -498,4 +493,3 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     );
   }
 }
-

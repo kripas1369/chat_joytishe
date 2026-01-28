@@ -29,6 +29,9 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
 
   Timer? _replayTimer;
 
+  // Configurable particle radius (0.0 to 1.0, where 1.0 is half the screen width)
+  final double particleRadiusRatio = 0.35;
+
   @override
   void initState() {
     super.initState();
@@ -86,35 +89,58 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     ];
 
     final astrologers = <AstrologerNode>[];
+    final positions = <Offset>[];
 
-    // Create 8 astrologers with random positions
-    final count = 8; // 8 astrologers
+    // Create 7 astrologers with random positions
+    final count = 7; // 7 astrologers
+    final minDistance = 0.15; // Minimum distance between astrologers
+    final minDistanceFromCenter = 0.28; // Minimum distance from center
+    final maxAttempts = 100; // Maximum attempts to find valid position
 
     for (int i = 0; i < count; i++) {
-      // Generate random position ensuring they're not too close to center or edges
       double x = 0.5;
       double y = 0.5;
       bool validPosition = false;
+      int attempts = 0;
 
-      while (!validPosition) {
+      while (!validPosition && attempts < maxAttempts) {
+        attempts++;
         x = 0.15 + random.nextDouble() * 0.7; // Between 0.15 and 0.85
         y = 0.15 + random.nextDouble() * 0.7; // Between 0.15 and 0.85
 
         // Check distance from center (0.5, 0.5)
         final distanceFromCenter = sqrt(pow(x - 0.5, 2) + pow(y - 0.5, 2));
 
-        // Ensure not too close to center (minimum distance 0.2)
-        if (distanceFromCenter > 0.25) {
+        // Ensure not too close to center
+        if (distanceFromCenter < minDistanceFromCenter) {
+          continue;
+        }
+
+        // Check distance from all existing positions
+        bool tooClose = false;
+        for (final pos in positions) {
+          final distance = sqrt(pow(x - pos.dx, 2) + pow(y - pos.dy, 2));
+          if (distance < minDistance) {
+            tooClose = true;
+            break;
+          }
+        }
+
+        if (!tooClose) {
           validPosition = true;
         }
       }
+
+      // If we couldn't find a valid position after max attempts, use the last generated position
+      final position = Offset(x, y);
+      positions.add(position);
 
       astrologers.add(
         AstrologerNode(
           'Astrologer ${i + 1}',
           avatars[random.nextInt(avatars.length)],
           specialties[random.nextInt(specialties.length)],
-          Offset(x, y),
+          position,
         ),
       );
     }
@@ -170,6 +196,7 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final broadcastHeight = size.height * 0.7; // 70% for broadcast animation
 
     return Scaffold(
       body: Container(
@@ -180,35 +207,50 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
             colors: [Color(0xFF0A0E27), Color(0xFF1A1A3E), Color(0xFF2E1A47)],
           ),
         ),
-        child: Stack(
+        child: Column(
           children: [
-            // Background grid pattern
-            CustomPaint(size: size, painter: GridPainter()),
+            // Top 70% - Broadcast Animation Area
+            SizedBox(
+              height: broadcastHeight,
+              child: Stack(
+                children: [
+                  // Background grid pattern
+                  CustomPaint(
+                    size: Size(size.width, broadcastHeight),
+                    painter: GridPainter(),
+                  ),
 
-            ...List.generate(30, _buildParticle),
+                  // 7 Particles within circular radius
+                  ...List.generate(
+                    7,
+                    (index) => _buildParticle(index, broadcastHeight),
+                  ),
 
-            // Connection lines
-            CustomPaint(
-              size: size,
-              painter: NetworkPainter(
-                astrologers: _astrologers,
-                connected: _connected,
-                lineAnimations: _lineAnimations,
-                pulse: _pulseController.value,
+                  // Connection lines
+                  CustomPaint(
+                    size: Size(size.width, broadcastHeight),
+                    painter: NetworkPainter(
+                      astrologers: _astrologers,
+                      connected: _connected,
+                      lineAnimations: _lineAnimations,
+                      pulse: _pulseController.value,
+                      containerHeight: broadcastHeight,
+                    ),
+                  ),
+
+                  // Astrologer nodes
+                  ..._buildAstrologers(size.width, broadcastHeight),
+
+                  // Center node with Earth
+                  _centerNode(broadcastHeight),
+
+                  // Top header
+                  _topHeader(),
+                ],
               ),
             ),
 
-            // Astrologer nodes
-            ..._buildAstrologers(size),
-
-            // Center node with Earth
-            _centerNode(),
-
-            // Bottom text
-            _bottomText(),
-
-            // Top header
-            _topHeader(),
+            Expanded(child: _bottomTextArea()),
           ],
         ),
       ),
@@ -250,82 +292,94 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     );
   }
 
-  Widget _centerNode() {
-    return Center(
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Multiple ripple effects
-          AnimatedBuilder(
-            animation: _rippleController,
-            builder: (_, __) => Container(
-              width: 120 + (_rippleController.value * 100),
-              height: 120 + (_rippleController.value * 100),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Color(0xFF667EEA).withOpacity(
-                    (1 - _rippleController.value).clamp(0.0, 1.0) * 0.5,
+  Widget _centerNode(double containerHeight) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      top: (containerHeight - 100) / 2,
+      // Center the 100px node vertically in the broadcast area
+      child: Center(
+        child: SizedBox(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Multiple ripple effects
+              AnimatedBuilder(
+                animation: _rippleController,
+                builder: (_, __) => Container(
+                  width: 120 + (_rippleController.value * 100),
+                  height: 120 + (_rippleController.value * 100),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Color(0xFF667EEA).withOpacity(
+                        (1 - _rippleController.value).clamp(0.0, 1.0) * 0.5,
+                      ),
+                      width: 2,
+                    ),
                   ),
-                  width: 2,
                 ),
               ),
-            ),
-          ),
 
-          // Second ripple with offset
-          AnimatedBuilder(
-            animation: _rippleController,
-            builder: (_, __) {
-              final offset = (_rippleController.value + 0.5) % 1.0;
-              return Container(
-                width: 120 + (offset * 100),
-                height: 120 + (offset * 100),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Color(
-                      0xFF667EEA,
-                    ).withOpacity((1 - offset).clamp(0.0, 1.0) * 0.5),
-                    width: 2,
-                  ),
-                ),
-              );
-            },
-          ),
-
-          // Main node with glow and Earth icon
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (_, __) => Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Color(0xFF667EEA),
-                    Color(0xFF764BA2),
-                    Color(0xFF4A148C),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFF667EEA).withOpacity(0.6),
-                    blurRadius: 30 + (_pulseController.value * 10),
-                    spreadRadius: 5 + (_pulseController.value * 3),
-                  ),
-                ],
+              // Second ripple with offset
+              AnimatedBuilder(
+                animation: _rippleController,
+                builder: (_, __) {
+                  final offset = (_rippleController.value + 0.5) % 1.0;
+                  return Container(
+                    width: 120 + (offset * 100),
+                    height: 120 + (offset * 100),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Color(
+                          0xFF667EEA,
+                        ).withOpacity((1 - offset).clamp(0.0, 1.0) * 0.5),
+                        width: 2,
+                      ),
+                    ),
+                  );
+                },
               ),
-              child: Center(child: Text('🌍', style: TextStyle(fontSize: 50))),
-            ),
+
+              // Main node with glow and Earth icon (NO rotation - still)
+              AnimatedBuilder(
+                animation: _pulseController,
+                builder: (_, __) => Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        Color(0xFF667EEA),
+                        Color(0xFF764BA2),
+                        Color(0xFF4A148C),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFF667EEA).withOpacity(0.6),
+                        blurRadius: 30 + (_pulseController.value * 10),
+                        spreadRadius: 5 + (_pulseController.value * 3),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text('🌍', style: TextStyle(fontSize: 50)),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  List<Widget> _buildAstrologers(Size size) {
+  List<Widget> _buildAstrologers(double screenWidth, double containerHeight) {
     return _astrologers.asMap().entries.map((e) {
       final index = e.key;
       final astrologer = e.value;
@@ -333,8 +387,8 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
       final isConnecting = _lineAnimations[index]?.isAnimating ?? false;
 
       return Positioned(
-        left: size.width * astrologer.position.dx - 30,
-        top: size.height * astrologer.position.dy - 30,
+        left: screenWidth * astrologer.position.dx - 30,
+        top: containerHeight * astrologer.position.dy - 30,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -402,22 +456,29 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     }).toList();
   }
 
-  Widget _buildParticle(int index) {
-    final rand = Random(index);
-    final dx = rand.nextDouble();
-    final dy = rand.nextDouble();
+  Widget _buildParticle(int index, double containerHeight) {
+    final rand = Random(index + 100); // Different seed for better randomness
+
+    // Generate random angle and distance within the circular radius
+    final angle = rand.nextDouble() * 2 * pi;
+    final distance = rand.nextDouble() * particleRadiusRatio;
+
+    // Convert polar coordinates to cartesian
+    final dx = 0.5 + (distance * cos(angle));
+    final dy = 0.5 + (distance * sin(angle));
+
     final delay = rand.nextDouble();
     final size = 2.0 + rand.nextDouble() * 3;
 
     return AnimatedBuilder(
       animation: _rotationController,
-      builder: (_, __) {
+      builder: (context, _) {
         final v = (_rotationController.value + delay) % 1.0;
         final opacity = (0.1 + sin(v * pi * 2) * 0.2).clamp(0.0, 1.0);
 
         return Positioned(
           left: MediaQuery.of(context).size.width * dx,
-          top: MediaQuery.of(context).size.height * dy,
+          top: containerHeight * dy,
           child: Opacity(
             opacity: opacity,
             child: Container(
@@ -440,12 +501,11 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
     );
   }
 
-  Widget _bottomText() {
-    return Positioned(
-      bottom: 100,
-      left: 0,
-      right: 0,
+  Widget _bottomTextArea() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           AnimatedBuilder(
             animation: _pulseController,
@@ -463,27 +523,21 @@ class _BroadcastLoadingScreenState extends State<BroadcastLoadingScreen>
               ),
             ),
           ),
-
+          SizedBox(height: 12),
+          Text(
+            'Connecting to Astrologers...',
+            style: TextStyle(color: Colors.white60, fontSize: 12),
+          ),
           SizedBox(height: 4),
-          Column(
-            children: [
-              Text(
-                'Connecting to Astrologers...',
-                style: TextStyle(color: Colors.white60, fontSize: 12),
-              ),
-              Text(
-                'Please be Patience',
-                style: TextStyle(color: Colors.white60, fontSize: 12),
-              ),
-            ],
+          Text(
+            'Please be Patient',
+            style: TextStyle(color: Colors.white60, fontSize: 12),
           ),
         ],
       ),
     );
   }
 }
-
-// ================= MODELS =================
 
 class AstrologerNode {
   final String name;
@@ -493,8 +547,6 @@ class AstrologerNode {
 
   AstrologerNode(this.name, this.avatar, this.specialty, this.position);
 }
-
-// ================= GRID PAINTER =================
 
 class GridPainter extends CustomPainter {
   @override
@@ -519,30 +571,30 @@ class GridPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ================= NETWORK PAINTER =================
-
 class NetworkPainter extends CustomPainter {
   final List<AstrologerNode> astrologers;
   final List<int> connected;
   final Map<int, AnimationController> lineAnimations;
   final double pulse;
+  final double containerHeight;
 
   NetworkPainter({
     required this.astrologers,
     required this.connected,
     required this.lineAnimations,
     required this.pulse,
+    required this.containerHeight,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width * 0.5, size.height * 0.5);
+    final center = Offset(size.width * 0.5, containerHeight * 0.5);
 
     for (final i in connected) {
       final astrologer = astrologers[i];
       final astroPoint = Offset(
         size.width * astrologer.position.dx,
-        size.height * astrologer.position.dy,
+        containerHeight * astrologer.position.dy,
       );
 
       final lineProgress = lineAnimations[i]?.value ?? 0.0;
