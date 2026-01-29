@@ -103,12 +103,42 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     );
 
     _initializeDio();
-    _registerSocketListeners();
+    _connectSocket();
     _checkLocalEndedState();
     _loadChatHistory();
     _loadLockStatus();
     _loadCoinBalance();
     _startTimeoutChecker();
+  }
+
+  Future<void> _connectSocket() async {
+    try {
+      // Connect socket if not already connected
+      if (!_socketService.connected) {
+        if (widget.accessToken != null && widget.refreshToken != null) {
+          debugPrint('🔌 Connecting socket...');
+          await _socketService.connect(
+            accessToken: widget.accessToken!,
+            refreshToken: widget.refreshToken!,
+          );
+          // Wait for connection to establish
+          await Future.delayed(const Duration(milliseconds: 500));
+          debugPrint('✅ Socket connected: ${_socketService.connected}');
+        } else {
+          debugPrint('⚠️ No tokens available for socket connection');
+        }
+      } else {
+        debugPrint('✅ Socket already connected');
+      }
+
+      // Register listeners after connection
+      _registerSocketListeners();
+
+      // Set active chat to avoid notifications for this chat
+      _socketService.setActiveChat(_actualChatId.isNotEmpty ? _actualChatId : widget.chatId);
+    } catch (e) {
+      debugPrint('❌ Socket connection error: $e');
+    }
   }
 
   Future<void> _checkLocalEndedState() async {
@@ -363,7 +393,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void _registerSocketListeners() {
     _unregisterSocketListeners();
     _socketService.onMessageReceived((message) {
-      final senderId = message['senderId'] ?? message['sender']?['id'];
+      final rawSenderId = message['senderId'] ?? message['sender']?['id'];
+      final senderId = rawSenderId?.toString() ?? '';
+
+      debugPrint('📩 Message received from senderId: $senderId, otherUserId: ${widget.otherUserId}');
+
       if (senderId == widget.otherUserId) {
         final messageId =
             message['id']?.toString() ??
@@ -386,6 +420,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           _scrollToBottom();
           _socketService.markMessagesAsRead([messageId]);
 
+          // Unlock chat when astrologer replies
           Future.delayed(Duration.zero, () {
             _handleJyotishReply(senderId);
           });
@@ -421,14 +456,45 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
 
     _socketService.onTypingIndicator((data) {
-      if (data['senderId'] == widget.otherUserId && mounted) {
+      final rawSenderId = data['senderId'] ?? data['userId'];
+      final senderId = rawSenderId?.toString() ?? '';
+      if (senderId == widget.otherUserId && mounted) {
         setState(() => _isOtherUserTyping = data['isTyping'] ?? false);
       }
     });
 
     _socketService.onUserStatus((data) {
-      if (data['userId'] == widget.otherUserId && mounted) {
+      final rawUserId = data['userId'];
+      final userId = rawUserId?.toString() ?? '';
+      if (userId == widget.otherUserId && mounted) {
         setState(() => _isOtherUserOnline = data['status'] == 'online');
+      }
+    });
+
+    // Listen for read receipts (double tick)
+    _socketService.onMarkedAsRead((data) {
+      debugPrint('✓✓ Messages marked as read: $data');
+      final messageIds = data['messageIds'] ?? data['ids'] ?? [];
+      if (messageIds is List && messageIds.isNotEmpty && mounted) {
+        setState(() {
+          for (final msgId in messageIds) {
+            final id = msgId?.toString() ?? '';
+            final index = _messages.indexWhere((m) => m['id']?.toString() == id);
+            if (index != -1) {
+              _messages[index]['isRead'] = true;
+            }
+          }
+        });
+      }
+      // Also handle single message read
+      final singleMessageId = data['messageId']?.toString();
+      if (singleMessageId != null && singleMessageId.isNotEmpty && mounted) {
+        setState(() {
+          final index = _messages.indexWhere((m) => m['id']?.toString() == singleMessageId);
+          if (index != -1) {
+            _messages[index]['isRead'] = true;
+          }
+        });
       }
     });
 
@@ -481,11 +547,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _handleJyotishReply(String jyotishId) async {
+    final lockedJyotishId = await _chatLockService.getLockedJyotishId();
+    debugPrint('🔓 Checking unlock - jyotishId: $jyotishId, lockedJyotishId: $lockedJyotishId');
+
     final isFromLockedJyotish = await _chatLockService.isReplyFromLockedJyotish(
       jyotishId,
     );
 
+    debugPrint('🔓 isFromLockedJyotish: $isFromLockedJyotish');
+
     if (isFromLockedJyotish) {
+      debugPrint('✅ Unlocking chat - astrologer replied!');
       await _chatLockService.unlockChats();
 
       if (mounted) {
@@ -643,10 +715,14 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
 
     final lastMessage = messages.first;
-    final lastSenderId =
-        lastMessage['senderId'] ?? lastMessage['sender']?['id'];
+    final rawLastSenderId = lastMessage['senderId'] ?? lastMessage['sender']?['id'];
+    final lastSenderId = rawLastSenderId?.toString() ?? '';
+
+    debugPrint('📊 Last message senderId: $lastSenderId, currentUserId: ${widget.currentUserId}, otherUserId: ${widget.otherUserId}');
 
     if (lastSenderId == widget.currentUserId) {
+      // User sent last message - waiting for astrologer reply
+      debugPrint('🔒 User sent last message - locking chat');
       if (mounted) {
         setState(() {
           _canSendMessage = false;
@@ -654,6 +730,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         });
       }
     } else if (lastSenderId == widget.otherUserId) {
+      // Astrologer sent last message - user can reply
+      debugPrint('🔓 Astrologer sent last message - unlocking chat');
       if (mounted) {
         setState(() {
           _canSendMessage = true;
@@ -1092,6 +1170,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _socketService.offMessageSent();
     _socketService.offTypingIndicator();
     _socketService.offUserStatus();
+    _socketService.offMarkedAsRead();
     _socketService.offChatEnded();
     _socketService.offChatError();
   }
@@ -1618,6 +1697,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _typingTimer?.cancel();
     _timeoutCheckTimer?.cancel();
     _unregisterSocketListeners();
+    _socketService.clearActiveChat(); // Clear active chat when leaving
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();

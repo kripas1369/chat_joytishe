@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:chat_jyotishi/constants/constant.dart';
+import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
+import 'package:chat_jyotishi/features/app_widgets/show_top_snackBar.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_bloc.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_events.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_states.dart';
@@ -9,7 +11,9 @@ import 'package:chat_jyotishi/features/chat/models/active_user_model.dart';
 import 'package:chat_jyotishi/features/chat/repository/chat_repository.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_screen.dart';
 import 'package:chat_jyotishi/features/chat/service/chat_service.dart';
-import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
+import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_provider.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -52,12 +56,15 @@ class JyotishListScreen extends StatefulWidget {
 
 class _JyotishListScreenState extends State<JyotishListScreen>
     with TickerProviderStateMixin {
-  final CoinService _coinService = CoinService();
-  int _coinBalance = 0;
   bool _isLoading = true;
   int? _selectedCardIndex;
   late AnimationController _glowController;
   late Animation<double> _glowAnimation;
+
+  // For chat ended check
+  Dio? _dio;
+  String? _currentUserId;
+  final SocketService _socketService = SocketService();
 
   // Default astrologers when no data available
   final List<Map<String, dynamic>> _defaultAstrologers = [
@@ -128,11 +135,354 @@ class _JyotishListScreenState extends State<JyotishListScreen>
   }
 
   Future<void> _loadBalance() async {
-    final balance = await _coinService.getBalance();
-    setState(() {
-      _coinBalance = balance;
-      _isLoading = false;
-    });
+    try {
+      if (!coinProvider.isInitialized) {
+        await coinProvider.initialize();
+      } else {
+        await coinProvider.refreshBalance();
+      }
+    } catch (e) {
+      debugPrint('Error loading balance: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  int get _coinBalance => coinProvider.balance;
+
+  Future<void> _initializeDio() async {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+    final refreshToken = prefs.getString('refreshToken');
+
+    // Get current user ID
+    if (accessToken != null) {
+      final decoded = _decodeJwt(accessToken);
+      _currentUserId = decoded?['id']?.toString();
+      debugPrint('Current user ID: $_currentUserId');
+    }
+
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: ApiEndpoints.baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+          if (accessToken != null && refreshToken != null)
+            'cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      ),
+    );
+  }
+
+  /// Check if chat is ended by querying backend API
+  Future<bool> _checkChatEndedFromBackend(String otherUserId) async {
+    try {
+      if (_dio == null) {
+        await _initializeDio();
+      }
+
+      final response = await _dio!.get(ApiEndpoints.chatConversations);
+      if (response.statusCode == 200) {
+        final raw = response.data;
+        List<dynamic> rawChats = [];
+
+        if (raw is Map) {
+          if (raw['data'] != null) {
+            final data = raw['data'];
+            if (data is List) {
+              rawChats = data;
+            } else if (data is Map && data['chats'] != null) {
+              rawChats = data['chats'] as List;
+            }
+          } else if (raw['chats'] != null) {
+            rawChats = raw['chats'] as List;
+          }
+        } else if (raw is List) {
+          rawChats = raw;
+        }
+
+        final chats = rawChats
+            .where((e) => e is Map)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+
+        final foundChat = chats.firstWhere((chat) {
+          final participant1 = chat['participant1'] ?? chat['clientParticipant'];
+          final participant2 = chat['participant2'] ?? chat['astrologerParticipant'];
+          final String? participant1Id = participant1?['id']?.toString();
+          final String? participant2Id = participant2?['id']?.toString();
+          final String? chatOtherUserId = participant1Id == _currentUserId
+              ? participant2Id
+              : participant1Id;
+          return chatOtherUserId == otherUserId;
+        }, orElse: () => {});
+
+        if (foundChat.isNotEmpty) {
+          final String status = foundChat['status']?.toString() ?? 'ACTIVE';
+          return status == 'ENDED';
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking chat ended status from backend: $e');
+    }
+    return false;
+  }
+
+  Future<String?> _createOrReactivateChat(String otherUserId) async {
+    try {
+      if (_dio == null) {
+        await _initializeDio();
+      }
+
+      debugPrint('🔄 Creating/reactivating chat with user: $otherUserId');
+      debugPrint('📡 Endpoint: ${ApiEndpoints.chatCreate}');
+
+      final response = await _dio!.post(
+        ApiEndpoints.chatCreate,
+        data: {
+          'participantId': otherUserId,
+          'otherUserId': otherUserId,
+        },
+      );
+
+      debugPrint('📥 Response status: ${response.statusCode}');
+      debugPrint('📥 Response data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+
+        String? newChatId;
+        if (data is Map) {
+          if (data['id'] != null) {
+            newChatId = data['id'].toString();
+          } else if (data['chat'] != null && data['chat']['id'] != null) {
+            newChatId = data['chat']['id'].toString();
+          } else if (data['data'] != null) {
+            final chatData = data['data'];
+            if (chatData is Map && chatData['id'] != null) {
+              newChatId = chatData['id'].toString();
+            } else if (chatData is Map && chatData['chat'] != null) {
+              newChatId = chatData['chat']['id']?.toString();
+            }
+          }
+        }
+        debugPrint('✅ New chat ID: $newChatId');
+        return (newChatId != null && newChatId.isNotEmpty) ? newChatId : null;
+      }
+    } on DioException catch (e) {
+      debugPrint('❌ DioException creating/reactivating chat: ${e.message}');
+      debugPrint('❌ Response: ${e.response?.data}');
+      debugPrint('❌ Status code: ${e.response?.statusCode}');
+    } catch (e) {
+      debugPrint('❌ Error creating/reactivating chat: $e');
+    }
+    return null;
+  }
+
+  void _showChatAgainPopup({
+    required String otherUserId,
+    required String otherUserName,
+    required String? otherUserPhoto,
+    required bool isOnline,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.cosmicPurple.withAlpha(82),
+                    AppColors.cosmicPink.withAlpha(56),
+                    Colors.black.withAlpha(217),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.orange.withAlpha(115),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withAlpha(51),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withAlpha(89),
+                          blurRadius: 18,
+                          spreadRadius: 3,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.info_outline,
+                      color: Colors.orange,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [AppColors.cosmicPurple, AppColors.cosmicPink],
+                    ).createShader(bounds),
+                    child: const Text(
+                      'Chat ended',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Do you want to chat again with $otherUserName?',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.textGray300,
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(26),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withAlpha(51),
+                              ),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: AppColors.textGray300,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            Navigator.pop(context);
+
+                            final chatId = await _createOrReactivateChat(otherUserId);
+                            if (chatId == null) {
+                              if (mounted) {
+                                showTopSnackBar(
+                                  context: this.context,
+                                  message: 'Failed to start chat. Please try again.',
+                                  backgroundColor: AppColors.error,
+                                );
+                              }
+                              return;
+                            }
+
+                            // Connect socket if needed
+                            final prefs = await SharedPreferences.getInstance();
+                            final accessToken = prefs.getString('accessToken');
+                            final refreshToken = prefs.getString('refreshToken');
+                            if (accessToken != null &&
+                                refreshToken != null &&
+                                !_socketService.connected) {
+                              await _socketService.connect(
+                                accessToken: accessToken,
+                                refreshToken: refreshToken,
+                              );
+                              await Future.delayed(const Duration(milliseconds: 300));
+                            }
+
+                            if (!mounted) return;
+                            Navigator.push(
+                              this.context,
+                              MaterialPageRoute(
+                                builder: (_) => ChatScreen(
+                                  chatId: chatId,
+                                  otherUserId: otherUserId,
+                                  otherUserName: otherUserName,
+                                  otherUserPhoto: otherUserPhoto,
+                                  currentUserId: _currentUserId ?? '',
+                                  accessToken: accessToken ?? '',
+                                  refreshToken: refreshToken ?? '',
+                                  isOnline: isOnline,
+                                ),
+                              ),
+                            ).then((_) {
+                              _loadBalance();
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  AppColors.cosmicPurple,
+                                  AppColors.cosmicPink,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.cosmicPurple.withAlpha(102),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'Chat Again',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _onCardTap(int index) {
@@ -303,6 +653,23 @@ class _JyotishListScreenState extends State<JyotishListScreen>
               ),
             );
           }
+          return;
+        }
+
+        // Store current user ID for later use
+        _currentUserId = currentUserId;
+
+        // Check if chat is ended with this astrologer
+        final bool isEnded = await _checkChatEndedFromBackend(astrologerId);
+
+        if (isEnded) {
+          // Show "Chat again" popup
+          _showChatAgainPopup(
+            otherUserId: astrologerId,
+            otherUserName: astrologerName,
+            otherUserPhoto: astrologerPhoto,
+            isOnline: isOnline,
+          );
           return;
         }
 

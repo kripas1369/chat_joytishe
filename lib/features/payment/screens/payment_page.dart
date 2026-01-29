@@ -2,6 +2,7 @@ import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/payment/screens/qr_code_page.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -23,6 +24,21 @@ class _PaymentPageState extends State<PaymentPage> {
     {'coins': 25, 'price': 2500, 'popular': true},
     {'coins': 50, 'price': 5000, 'popular': false},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCoinProvider();
+  }
+
+  Future<void> _initializeCoinProvider() async {
+    if (!coinProvider.isInitialized) {
+      await coinProvider.initialize();
+    } else {
+      // Refresh balance if already initialized
+      await coinProvider.refreshBalance();
+    }
+  }
 
   void _setSystemUIOverlay() {
     SystemChrome.setSystemUIOverlayStyle(
@@ -160,7 +176,62 @@ class _PaymentPageState extends State<PaymentPage> {
             ),
           ),
         ),
+        const Spacer(),
+        _buildCurrentBalanceWidget(),
       ],
+    );
+  }
+
+  Widget _buildCurrentBalanceWidget() {
+    return ListenableBuilder(
+      listenable: coinProvider,
+      builder: (context, _) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                gold.withAlpha(51),
+                gold.withAlpha(26),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: gold.withAlpha(77),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.monetization_on,
+                color: gold,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              if (coinProvider.isLoading)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: gold,
+                  ),
+                )
+              else
+                Text(
+                  coinProvider.isUnlimited ? '∞' : '${coinProvider.balance}',
+                  style: const TextStyle(
+                    color: gold,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 

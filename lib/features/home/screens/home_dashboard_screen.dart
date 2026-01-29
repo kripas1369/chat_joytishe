@@ -4,7 +4,7 @@ import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
 import 'package:chat_jyotishi/features/home/widgets/rotating_question_widget.dart';
 import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
 import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
-import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_provider.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_bloc.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_events.dart';
 import 'package:chat_jyotishi/features/chat/repository/chat_repository.dart';
@@ -28,8 +28,6 @@ class HomeDashboardScreen extends StatefulWidget {
 
 class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     with TickerProviderStateMixin {
-  final CoinService _coinService = CoinService();
-
   // Animation Controllers
   late AnimationController _fadeController;
   late AnimationController _pulseController;
@@ -725,11 +723,19 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   }
 
   Future<void> _handleChatNavigation() async {
-    final balance = await _coinService.getBalance();
+    try {
+      if (!coinProvider.isInitialized) {
+        await coinProvider.initialize();
+      } else {
+        await coinProvider.refreshBalance();
+      }
+    } catch (e) {
+      debugPrint('Error loading balance: $e');
+    }
 
     if (!mounted) return;
 
-    if (balance > 0) {
+    if (coinProvider.balance > 0) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ChatOptionsScreen()),

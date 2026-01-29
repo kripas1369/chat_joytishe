@@ -6,7 +6,7 @@ import 'package:chat_jyotishi/constants/constant.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
-import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
@@ -24,8 +24,19 @@ class QRCodePage extends StatefulWidget {
 
 class _QRCodePageState extends State<QRCodePage> {
   final GlobalKey _qrKey = GlobalKey();
-  final CoinService _coinService = CoinService();
   bool _isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCoinProvider();
+  }
+
+  Future<void> _initializeCoinProvider() async {
+    if (!coinProvider.isInitialized) {
+      await coinProvider.initialize();
+    }
+  }
 
   Future<void> _downloadQR() async {
     try {
@@ -105,22 +116,39 @@ class _QRCodePageState extends State<QRCodePage> {
   Future<void> _confirmPayment() async {
     setState(() => _isProcessing = true);
 
-    // Add coins to user balance
-    await _coinService.addCoins(widget.coins);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${widget.coins} coins added to your balance!'),
-          backgroundColor: AppColors.success,
-        ),
+    try {
+      // Add coins via API using CoinProvider
+      final response = await coinProvider.addCoins(
+        amount: widget.coins,
       );
 
-      // Navigate to ChatOptionsPage
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => ChatOptionsScreen()),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.coins} coins added! New balance: ${response.balance}'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+
+        // Navigate to ChatOptionsPage
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => ChatOptionsScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add coins: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 

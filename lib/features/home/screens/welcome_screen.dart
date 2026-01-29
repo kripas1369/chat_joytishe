@@ -17,7 +17,7 @@ import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/home/screens/home_dashboard_screen.dart';
 import 'package:chat_jyotishi/features/payment/screens/chat_options_page.dart';
 import 'package:chat_jyotishi/features/payment/screens/payment_page.dart';
-import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_provider.dart';
 import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_bloc.dart';
@@ -67,7 +67,6 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final SocketService _socketService = SocketService();
   final ChatLockService _chatLockService = ChatLockService();
-  final CoinService _coinService = CoinService();
   String? _userName;
   bool _isLoadingProfile = true;
   bool _isConnecting = false;
@@ -1477,11 +1476,19 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
   }
 
   Future<void> _handleChatNavigation() async {
-    final balance = await _coinService.getBalance();
+    try {
+      if (!coinProvider.isInitialized) {
+        await coinProvider.initialize();
+      } else {
+        await coinProvider.refreshBalance();
+      }
+    } catch (e) {
+      debugPrint('Error loading balance: $e');
+    }
 
     if (!mounted) return;
 
-    if (balance > 0) {
+    if (coinProvider.balance > 0) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ChatOptionsScreen()),

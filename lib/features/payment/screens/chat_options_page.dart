@@ -4,7 +4,7 @@ import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/chat/screens/broadcast_chat_screen.dart';
 import 'package:chat_jyotishi/features/payment/screens/jyotish_list_screen.dart';
 import 'package:chat_jyotishi/features/payment/coin_system.dart';
-import 'package:chat_jyotishi/features/payment/services/coin_service.dart';
+import 'package:chat_jyotishi/features/payment/services/coin_provider.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_bloc.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_events.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_states.dart';
@@ -24,8 +24,6 @@ class ChatOptionsScreen extends StatefulWidget {
 }
 
 class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
-  final CoinService _coinService = CoinService();
-  int _coinBalance = 0;
   bool _isLoading = true;
 
   @override
@@ -35,12 +33,24 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
   }
 
   Future<void> _loadBalance() async {
-    final balance = await _coinService.getBalance();
-    setState(() {
-      _coinBalance = balance;
-      _isLoading = false;
-    });
+    try {
+      if (!coinProvider.isInitialized) {
+        await coinProvider.initialize();
+      } else {
+        await coinProvider.refreshBalance();
+      }
+    } catch (e) {
+      debugPrint('Error loading balance: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
+
+  int get _coinBalance => coinProvider.balance;
 
   Future<void> _handleSingleChat() async {
     if (_coinBalance >= 100) {
@@ -255,25 +265,40 @@ class _ChatOptionsScreenState extends State<ChatOptionsScreen> {
           ),
         ),
         Spacer(),
-        Row(
-          children: [
-            InkWell(
-              child: Icon(Icons.monetization_on, color: gold),
-              onTap: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => PaymentPage()),
-              ),
-            ),
-            SizedBox(width: 4),
-            Text(
-              '$_coinBalance',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        ListenableBuilder(
+          listenable: coinProvider,
+          builder: (context, _) {
+            return Row(
+              children: [
+                InkWell(
+                  child: Icon(Icons.monetization_on, color: gold),
+                  onTap: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => PaymentPage()),
+                  ),
+                ),
+                SizedBox(width: 4),
+                if (coinProvider.isLoading)
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: gold,
+                    ),
+                  )
+                else
+                  Text(
+                    coinProvider.isUnlimited ? '∞' : '${coinProvider.balance}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ],
     );
