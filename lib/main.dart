@@ -101,7 +101,7 @@ class MyApp extends StatelessWidget {
         ///Notification service route
         '/notification_screen': (context) => NotificationScreen(),
       },
-      initialRoute: '/home_screen_client',
+      initialRoute: '/initial_logo_screen',
     );
   }
 }

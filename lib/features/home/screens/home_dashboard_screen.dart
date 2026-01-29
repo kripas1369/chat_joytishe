@@ -118,9 +118,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                       const SizedBox(height: 24),
                       const RotatingQuestionsWidget(),
                       const SizedBox(height: 24),
-                      _buildDailyInsightsSection(),
+                      _buildDailyFeaturesSection(),
                       const SizedBox(height: 24),
-                      _buildServicesSection(),
+                      _buildServicesGrid(),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -231,150 +231,204 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   }
 
   // Services Section - Fixed overflow with better grid
-  Widget _buildServicesSection() {
+  Widget _buildServicesGrid() {
     final services = [
       {
         'icon': Icons.chat_bubble_rounded,
-        'title': 'Chat with\nJyotish',
-        'colors': [const Color(0xFF9333EA), const Color(0xFFDB2777)],
-        'route': '/chat_options_screen',
+        'title': 'Chat with Jyotish',
+        'subtitle': 'Instant',
+        'colors': [Color(0xFF9333EA), Color(0xFFDB2777)],
+        'route': '/chat_list_screen',
+        'isComingSoon': false,
       },
       {
         'icon': Icons.calendar_month_rounded,
-        'title': 'Book\nAppointment',
-        'colors': [const Color(0xFFDB2777), const Color(0xFFE44949)],
+        'title': 'Book Appointment',
+        'subtitle': 'Full kundali review',
+        'colors': [Color(0xFFDB2777), Color(0xFFE44949)],
         'route': '/appointment_screen',
+        'isComingSoon': false,
       },
       {
         'icon': Icons.person_pin_rounded,
-        'title': 'Book\nPandit Ji',
-        'colors': [const Color(0xFFE44949), const Color(0xFFF97316)],
+        'title': 'Book Pandit Ji',
+        'subtitle': 'Rituals & puja',
+        'colors': [Color(0xFFE44949), Color(0xFFF97316)],
         'route': '/book_pandit_screen',
+        'isComingSoon': false,
       },
       {
         'icon': Icons.home_work_rounded,
-        'title': 'Book Vaastu\nSastri',
-        'colors': [const Color(0xFFF97316), const Color(0xFFFB923C)],
+        'title': 'Book Vaastu Sastri',
+        'subtitle': 'Home & office vaastu',
+        'colors': [Color(0xFFF97316), Color(0xFFFB923C)],
         'route': '/book_vaastu_sastri_screen',
+        'isComingSoon': false,
       },
       {
         'icon': Icons.menu_book_rounded,
-        'title': 'Katha\nVachak',
-        'colors': [const Color(0xFF9333EA), const Color(0xFFDB2777)],
+        'title': 'Katha Vachak',
+        'subtitle': 'Events & programs',
+        'colors': [Color(0xFF9333EA), Color(0xFFDB2777)],
         'route': '/katha_vachak',
+        'isComingSoon': false,
       },
       {
         'icon': Icons.favorite_rounded,
-        'title': 'Kundali\nMatch',
-        'colors': [const Color(0xFF64748B), const Color(0xFF475569)],
+        'title': 'Kundali Match',
+        'subtitle': 'Compatibility insights',
+        'colors': [Color(0xFF64748B), Color(0xFF475569)],
         'route': null,
         'isComingSoon': true,
       },
     ];
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.cosmicPurple.withOpacity(0.2),
-                AppColors.cosmicPink.withOpacity(0.15),
-                AppColors.cosmicRed.withOpacity(0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.cosmicPurple.withOpacity(0.3),
-              width: 1,
-            ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Color(0xFF9333EA).withOpacity(0.3),
+            Color(0xFFDB2777).withOpacity(0.3),
+            Color(0xFFDC2626).withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.cosmicRed.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cosmicRed.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(21),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.cosmicPink, AppColors.cosmicRed],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.grid_view_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [
-                            AppColors.purple300,
-                            AppColors.pink300,
-                            AppColors.red300,
-                          ],
-                        ).createShader(bounds),
-                        child: const Text(
-                          'Our Services',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+              // Enhanced Header Section matching Live Jyotish style
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Color(0xFF9333EA),
+                      Color(0xFFDB2777),
+                      Color(0xFFE44949),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFDB2777).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
-                    child: Icon(
-                      Icons.tune_rounded,
-                      color: Colors.white.withOpacity(0.7),
-                      size: 18,
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.deepOrange,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.grid_view_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Our Services',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              'Explore all features',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.95),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.tune_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
-              // Services Grid - Using Wrap for better flexibility
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final itemWidth = (constraints.maxWidth - 16) / 2;
-                  return Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: services.map((service) {
-                      final isComingSoon =
-                          service['isComingSoon'] as bool? ?? false;
-                      return SizedBox(
-                        width: itemWidth,
-                        child: _buildServiceCard(
-                          icon: service['icon'] as IconData,
-                          title: service['title'] as String,
-                          colors: service['colors'] as List<Color>,
-                          isComingSoon: isComingSoon,
-                          onTap: service['route'] != null
-                              ? () => _navigateTo(service['route'] as String)
-                              : null,
-                        ),
+
+              // Enhanced Grid with staggered animations
+              GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.95, // Adjusted for better content fit
+                ),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                itemCount: services.length,
+                itemBuilder: (context, index) {
+                  final service = services[index];
+                  return TweenAnimationBuilder<double>(
+                    duration: Duration(milliseconds: 400 + (index * 80)),
+                    curve: Curves.easeOutCubic,
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: 0.8 + (0.2 * value),
+                        child: Opacity(opacity: value, child: child),
                       );
-                    }).toList(),
+                    },
+                    child: _buildServiceCard(
+                      icon: service['icon'] as IconData,
+                      title: service['title'] as String,
+                      subtitle: service['subtitle'] as String,
+                      colors: service['colors'] as List<Color>,
+                      isComingSoon: service['isComingSoon'] as bool,
+                      onTap: service['route'] != null
+                          ? () => _navigateTo(service['route'] as String)
+                          : null,
+                    ),
                   );
                 },
               ),
@@ -385,235 +439,338 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     );
   }
 
+  // Enhanced Service Card Builder matching the vibrant gradient style
   Widget _buildServiceCard({
     required IconData icon,
     required String title,
+    required String subtitle,
     required List<Color> colors,
     required bool isComingSoon,
     VoidCallback? onTap,
   }) {
     return GestureDetector(
+      onTapDown: (_) => HapticFeedback.lightImpact(),
       onTap: isComingSoon ? null : onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: isComingSoon
               ? LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                   colors: [
-                    colors[0].withOpacity(0.2),
-                    colors[1].withOpacity(0.15),
+                    Color(0xFF64748B).withOpacity(0.4),
+                    Color(0xFF475569).withOpacity(0.4),
                   ],
                 )
               : LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                   colors: colors,
                 ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: Colors.white.withOpacity(isComingSoon ? 0.05 : 0.2),
+            color: Colors.white.withOpacity(isComingSoon ? 0.05 : 0.12),
             width: 1.5,
           ),
-          boxShadow: isComingSoon
-              ? null
-              : [
-                  BoxShadow(
-                    color: colors.first.withOpacity(0.4),
-                    blurRadius: 16,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 4),
-                  ),
-                  BoxShadow(
-                    color: colors.last.withOpacity(0.2),
-                    blurRadius: 8,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+          boxShadow: [
+            if (!isComingSoon)
+              BoxShadow(
+                color: colors.first.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(isComingSoon ? 0.1 : 0.25),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: isComingSoon
-                        ? null
-                        : [
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.1),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isComingSoon ? AppColors.textGray400 : Colors.white,
-                    size: 24,
-                  ),
-                ),
-                if (isComingSoon)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'Soon',
-                      style: TextStyle(
-                        color: AppColors.textGray400,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon Container
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(
+                            isComingSoon ? 0.1 : 0.2,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(icon, color: Colors.white, size: 24),
                       ),
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: Colors.white.withOpacity(0.6),
-                    size: 14,
+                      // Status Badge
+                      if (isComingSoon)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF64748B).withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: Color(0xFF64748B).withOpacity(0.4),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Text(
+                            'Soon',
+                            style: TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.6),
+                                  blurRadius: 6,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(
-                color: isComingSoon ? AppColors.textGray400 : Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                height: 1.3,
-                letterSpacing: 0.2,
+
+                  const SizedBox(height: 14),
+
+                  // Title
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: isComingSoon
+                          ? AppColors.textGray400
+                          : Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // Subtitle
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: isComingSoon
+                          ? AppColors.textGray400.withOpacity(0.6)
+                          : Colors.white.withOpacity(0.95),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.1,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  const Spacer(),
+
+                  // Action Button
+                  if (!isComingSoon)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Explore',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.lock_outline_rounded,
+                      color: AppColors.textGray400.withOpacity(0.4),
+                      size: 16,
+                    ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   // Daily Insights Section
-  Widget _buildDailyInsightsSection() {
-    final insights = [
+  Widget _buildDailyFeaturesSection() {
+    final dailyFeatures = [
       {
         'icon': Icons.auto_awesome,
         'title': 'Daily Horoscope',
-        'subtitle': 'Your celestial guide',
-        'colors': [const Color(0xFF9333EA), const Color(0xFFDB2777)],
+        'subtitle': 'Your daily celestial guide',
+        'colors': [Color(0xFF9333EA), Color(0xFFDB2777)],
         'route': '/horoscope_screen',
       },
       {
         'icon': Icons.calendar_today_rounded,
         'title': 'Shubha-Ashubh Sait',
-        'subtitle': 'Auspicious timings',
-        'colors': [const Color(0xFFDB2777), const Color(0xFFE44949)],
+        'subtitle': 'Auspicious timings today',
+        'colors': [Color(0xFFDB2777), Color(0xFFE44949)],
         'route': '/shubha_ashubh',
       },
       {
         'icon': Icons.flight_takeoff_rounded,
         'title': 'Travel Prediction',
         'subtitle': 'Safe travel guidance',
-        'colors': [const Color(0xFFE44949), const Color(0xFFF97316)],
+        'colors': [Color(0xFFE44949), Color(0xFFF97316)],
         'route': '/travel_prediction',
       },
     ];
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.cosmicPink.withOpacity(0.15),
-                AppColors.cosmicRed.withOpacity(0.1),
-                AppColors.cosmicPurple.withOpacity(0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.cosmicPink.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Color(0xFF9333EA).withOpacity(0.3),
+            Color(0xFFDB2777).withOpacity(0.3),
+            Color(0xFFDC2626).withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.cosmicPink.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFF97316), Color(0xFFFB923C)],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.wb_sunny_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+              // Header matching Live Jyotish style
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Color(0xFF9333EA),
+                      Color(0xFFDB2777),
+                      Color(0xFFE44949),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [AppColors.pink300, AppColors.red300],
-                        ).createShader(bounds),
-                        child: const Text(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFDB2777).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.deepOrange,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.wb_sunny_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
                           'Daily Insights',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ),
-                      Text(
-                        'Updated every day',
-                        style: TextStyle(
-                          color: AppColors.textGray400,
-                          fontSize: 12,
+                        Text(
+                          'Updated every day',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
-              // Insight cards
-              ...insights.asMap().entries.map((entry) {
+              // Feature cards
+              ...dailyFeatures.asMap().entries.map((entry) {
                 final index = entry.key;
-                final insight = entry.value;
+                final feature = entry.value;
                 return Padding(
                   padding: EdgeInsets.only(
-                    bottom: index < insights.length - 1 ? 12 : 0,
+                    bottom: index < dailyFeatures.length - 1 ? 12 : 0,
                   ),
-                  child: _buildInsightCard(
-                    icon: insight['icon'] as IconData,
-                    title: insight['title'] as String,
-                    subtitle: insight['subtitle'] as String,
-                    colors: insight['colors'] as List<Color>,
-                    onTap: () => _navigateTo(insight['route'] as String),
+                  child: _buildDailyFeatureCard(
+                    icon: feature['icon'] as IconData,
+                    title: feature['title'] as String,
+                    subtitle: feature['subtitle'] as String,
+                    colors: feature['colors'] as List<Color>,
+                    onTap: () => _navigateTo(feature['route'] as String),
                   ),
                 );
               }),
@@ -624,7 +781,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     );
   }
 
-  Widget _buildInsightCard({
+  Widget _buildDailyFeatureCard({
     required IconData icon,
     required String title,
     required String subtitle,
@@ -634,92 +791,81 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
             colors: colors,
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: colors.first.withOpacity(0.4),
-              blurRadius: 16,
-              spreadRadius: 2,
+              color: colors.first.withOpacity(0.3),
+              blurRadius: 12,
               offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: colors.last.withOpacity(0.2),
-              blurRadius: 8,
-              spreadRadius: 0,
-              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.1),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ],
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: Colors.white, size: 24),
               ),
-              child: Icon(icon, color: Colors.white, size: 24),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.95),
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.1),
-                    blurRadius: 6,
-                    spreadRadius: 1,
-                  ),
-                ],
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
-              child: const Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

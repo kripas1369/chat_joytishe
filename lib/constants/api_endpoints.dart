@@ -29,7 +29,7 @@ class ApiEndpoints {
 
   static const String socketUrl = 'ws://192.168.0.206:4000';
 
-  // static const String socketUrl = 'ws://jotishapi.autonomoustechnology.net';
+  // static const String socketUrl = 'wss://jotishapi.autonomoustechnology.net';
 
   // API Endpoints (relative to baseUrl)
   static const String loginEndpoint = '/auth/login';
