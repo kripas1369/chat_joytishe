@@ -117,6 +117,14 @@ class AppColors {
   static const LinearGradient standardGradient = LinearGradient(
     colors: [Color(0xFFC0C0C0), Color(0xFF808080)],
   );
+  static const LinearGradient buttonGradient1 = LinearGradient(
+    colors: [
+      Color(0xFFE44949),
+      Color(0xFFF97316),
+      Color(0xFFFB923C),
+      Color(0xFFFBBF24),
+    ],
+  );
 
   static const LinearGradient professionalGradient = LinearGradient(
     colors: [Color(0xFFFFD700), Color(0xFFFFA500)],

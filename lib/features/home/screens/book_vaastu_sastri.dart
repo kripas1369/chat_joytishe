@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:chat_jyotishi/features/app_widgets/app_button.dart';
+import 'package:chat_jyotishi/features/home/screens/home_dashboard_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,37 +43,43 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
     CategoryItem(
       name: 'Home & Residential Vaastu',
       icon: Icons.home_work_rounded,
-      description: 'Vaastu guidance for homes to improve peace, health, and prosperity.',
+      description:
+          'Vaastu guidance for homes to improve peace, health, and prosperity.',
       colors: [Color(0xFF9333EA), Color(0xFFDB2777)],
     ),
     CategoryItem(
       name: 'Property & Construction Vaastu',
       icon: Icons.apartment_rounded,
-      description: 'Vaastu consultation for land selection, construction, and property planning.',
+      description:
+          'Vaastu consultation for land selection, construction, and property planning.',
       colors: [Color(0xFFDB2777), Color(0xFFE44949)],
     ),
     CategoryItem(
       name: 'Office & Business Vaastu',
       icon: Icons.business_rounded,
-      description: 'Vaastu solutions to enhance business growth, stability, and success.',
+      description:
+          'Vaastu solutions to enhance business growth, stability, and success.',
       colors: [Color(0xFFE44949), Color(0xFFF97316)],
     ),
     CategoryItem(
       name: 'Vaastu Dasha & Corrections',
       icon: Icons.tune_rounded,
-      description: 'Analysis of Vaastu doshas with practical correction remedies.',
+      description:
+          'Analysis of Vaastu doshas with practical correction remedies.',
       colors: [Color(0xFFF97316), Color(0xFFFB923C)],
     ),
     CategoryItem(
       name: 'Energy & Directional Remedies',
       icon: Icons.explore_rounded,
-      description: 'Balancing energies and correcting directional imbalances using Vaastu principles.',
+      description:
+          'Balancing energies and correcting directional imbalances using Vaastu principles.',
       colors: [Color(0xFF9333EA), Color(0xFFDB2777)],
     ),
     CategoryItem(
       name: 'Online & Special Consultation',
       icon: Icons.video_call_rounded,
-      description: 'Personalized Vaastu consultations available online or for special cases.',
+      description:
+          'Personalized Vaastu consultations available online or for special cases.',
       colors: [Color(0xFFDB2777), Color(0xFFE44949)],
     ),
   ];
@@ -95,12 +102,10 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
       curve: Curves.easeOut,
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
+        );
 
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
@@ -317,16 +322,16 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                         decoration: BoxDecoration(
                           gradient: isSelected
                               ? LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: category.colors,
-                          )
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  colors: category.colors,
+                                )
                               : LinearGradient(
-                            colors: [
-                              Color(0xFF9333EA).withOpacity(0.15),
-                              Color(0xFFDB2777).withOpacity(0.1),
-                            ],
-                          ),
+                                  colors: [
+                                    Color(0xFF9333EA).withOpacity(0.15),
+                                    Color(0xFFDB2777).withOpacity(0.1),
+                                  ],
+                                ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isSelected
@@ -336,12 +341,14 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                           ),
                           boxShadow: isSelected
                               ? [
-                            BoxShadow(
-                              color: category.colors.first.withOpacity(0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ]
+                                  BoxShadow(
+                                    color: category.colors.first.withOpacity(
+                                      0.3,
+                                    ),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ]
                               : [],
                         ),
                         child: ClipRRect(
@@ -367,7 +374,8 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         category.name,
@@ -546,7 +554,9 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                                 onTap: () => Navigator.pop(context),
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                   alignment: Alignment.center,
                                   child: const Text(
                                     'Continue',
@@ -565,10 +575,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                           child: Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFFE44949),
-                                  Color(0xFFF97316),
-                                ],
+                                colors: [Color(0xFFE44949), Color(0xFFF97316)],
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -587,7 +594,9 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                                 },
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                   alignment: Alignment.center,
                                   child: const Text(
                                     'Discard',
@@ -736,11 +745,6 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                       ),
                       child: Column(
                         children: [
-                          _buildInfoRow('Status', booking.status),
-                          Divider(
-                            color: Colors.white.withOpacity(0.2),
-                            height: 20,
-                          ),
                           _buildInfoRow('Category', booking.category),
                           Divider(
                             color: Colors.white.withOpacity(0.2),
@@ -748,7 +752,9 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                           ),
                           _buildInfoRow(
                             'Date',
-                            DateFormat('MMM dd, yyyy').format(booking.bookingDate),
+                            DateFormat(
+                              'MMM dd, yyyy',
+                            ).format(booking.bookingDate),
                           ),
                         ],
                       ),
@@ -794,41 +800,12 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                       builder: (context, child) {
                         return Transform.scale(
                           scale: _buttonPulseAnimation.value,
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFF10B981),
-                                  Color(0xFF34D399),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0xFF10B981).withOpacity(0.4),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () => Navigator.pop(context),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  alignment: Alignment.center,
-                                  child: const Text(
-                                    'Got It!',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
+                          child: AppButton(
+                            title: 'Got It!',
+                            onTap: () => Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HomeDashboardScreen(),
                               ),
                             ),
                           ),
@@ -859,11 +836,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.place,
-                color: Colors.white,
-                size: 18,
-              ),
+              child: const Icon(Icons.place, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -879,10 +852,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
         const SizedBox(height: 4),
         Text(
           'Where should the Vaastu consultation take place?',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
         ),
         const SizedBox(height: 12),
         Container(
@@ -897,9 +867,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
               ],
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Color(0xFF9333EA).withOpacity(0.3),
-            ),
+            border: Border.all(color: Color(0xFF9333EA).withOpacity(0.3)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -977,9 +945,9 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                         decoration: BoxDecoration(
                           gradient: RadialGradient(
                             colors: [
-                              Color(0xFF9333EA).withOpacity(
-                                0.15 * _pulseAnimation.value,
-                              ),
+                              Color(
+                                0xFF9333EA,
+                              ).withOpacity(0.15 * _pulseAnimation.value),
                               Colors.transparent,
                             ],
                           ),
@@ -1095,9 +1063,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Color(0xFF9333EA).withOpacity(0.3),
-              ),
+              border: Border.all(color: Color(0xFF9333EA).withOpacity(0.3)),
             ),
             child: Material(
               color: Colors.transparent,
@@ -1106,10 +1072,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   padding: const EdgeInsets.all(12),
-                  child: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                  ),
+                  child: const Icon(Icons.arrow_back, color: Colors.white),
                 ),
               ),
             ),
@@ -1130,10 +1093,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 SizedBox(height: 2),
                 Text(
                   'Schedule your Vaastu consultation',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
@@ -1150,11 +1110,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [
-            Color(0xFF9333EA),
-            Color(0xFFDB2777),
-            Color(0xFFE44949),
-          ],
+          colors: [Color(0xFF9333EA), Color(0xFFDB2777), Color(0xFFE44949)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -1212,9 +1168,9 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
   Widget _buildCategorySection() {
     final CategoryItem? selectedItem = selectedCategory != null
         ? categories.firstWhere(
-          (cat) => cat.name == selectedCategory,
-      orElse: () => categories.first,
-    )
+            (cat) => cat.name == selectedCategory,
+            orElse: () => categories.first,
+          )
         : null;
 
     return Column(
@@ -1230,11 +1186,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.category,
-                color: Colors.white,
-                size: 18,
-              ),
+              child: const Icon(Icons.category, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -1250,10 +1202,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
         const SizedBox(height: 4),
         Text(
           'Choose the type of consultation you need',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
         ),
         const SizedBox(height: 12),
         InkWell(
@@ -1268,14 +1217,12 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 colors: selectedCategory != null
                     ? selectedItem!.colors
                     : [
-                  Color(0xFF9333EA).withOpacity(0.3),
-                  Color(0xFFDB2777).withOpacity(0.3),
-                ],
+                        Color(0xFF9333EA).withOpacity(0.3),
+                        Color(0xFFDB2777).withOpacity(0.3),
+                      ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Color(0xFF9333EA).withOpacity(0.3),
-              ),
+              border: Border.all(color: Color(0xFF9333EA).withOpacity(0.3)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1325,10 +1272,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                         ],
                       ),
                     ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                    ),
+                    Icon(Icons.chevron_right, color: Colors.white),
                   ],
                 ),
               ),
@@ -1373,10 +1317,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
         const SizedBox(height: 4),
         Text(
           'When would you like the consultation?',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
         ),
         const SizedBox(height: 12),
         InkWell(
@@ -1394,9 +1335,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Color(0xFF9333EA).withOpacity(0.3),
-              ),
+              border: Border.all(color: Color(0xFF9333EA).withOpacity(0.3)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1425,8 +1364,8 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                             selectedDate == null
                                 ? 'Select Date'
                                 : DateFormat(
-                              'EEEE, MMM dd, yyyy',
-                            ).format(selectedDate!),
+                                    'EEEE, MMM dd, yyyy',
+                                  ).format(selectedDate!),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 14,
@@ -1448,10 +1387,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                         ],
                       ),
                     ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                    ),
+                    Icon(Icons.chevron_right, color: Colors.white),
                   ],
                 ),
               ),
@@ -1488,11 +1424,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.edit_note,
-                color: Colors.white,
-                size: 18,
-              ),
+              child: const Icon(Icons.edit_note, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -1529,10 +1461,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
         const SizedBox(height: 4),
         Text(
           'Provide specific requirements for your consultation',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
         ),
         const SizedBox(height: 12),
         Container(
@@ -1547,9 +1476,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
               ],
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Color(0xFF9333EA).withOpacity(0.3),
-            ),
+            border: Border.all(color: Color(0xFF9333EA).withOpacity(0.3)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -1561,7 +1488,7 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                 style: const TextStyle(color: Colors.white, fontSize: 14),
                 decoration: InputDecoration(
                   hintText:
-                  'E.g., Property type, specific concerns, preferred time...',
+                      'E.g., Property type, specific concerns, preferred time...',
                   hintStyle: TextStyle(
                     color: Colors.white.withOpacity(0.5),
                     fontSize: 13,
@@ -1589,18 +1516,12 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Color(0xFF3B82F6).withOpacity(0.3),
-        ),
+        border: Border.all(color: Color(0xFF3B82F6).withOpacity(0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.info_outline,
-            color: Color(0xFF60A5FA),
-            size: 22,
-          ),
+          Icon(Icons.info_outline, color: Color(0xFF60A5FA), size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1707,27 +1628,10 @@ class _BookVaastuSastriScreenState extends State<BookVaastuSastriScreen>
                     child: InkWell(
                       onTap: isLoading ? null : _handleSubmit,
                       borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.send,
-                              color: isLoading ? Colors.white38 : Colors.white,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Submit Request',
-                              style: TextStyle(
-                                color: isLoading ? Colors.white38 : Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
+                      child: AppButton(
+                        gradient: AppColors.buttonGradient1,
+                        title: 'Submit Request',
+                        onTap: isLoading ? null : _handleSubmit,
                       ),
                     ),
                   ),
