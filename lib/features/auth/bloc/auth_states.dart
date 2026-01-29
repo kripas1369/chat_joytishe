@@ -45,6 +45,33 @@ class AuthAstrologerPasswordLoginSuccessState extends AuthState {
   List<Object?> get props => [loginResponse];
 }
 
+class AuthLogoutSuccessState extends AuthState {
+  final String message;
+
+  const AuthLogoutSuccessState({this.message = 'Logged out successfully'});
+
+  @override
+  List<Object?> get props => [message];
+}
+
+// class AuthUserLoggedInState extends AuthState {
+//   final bool isLoggedIn;
+//
+//   const AuthUserLoggedInState({required this.isLoggedIn});
+//
+//   @override
+//   List<Object?> get props => [isLoggedIn];
+// }
+//
+// class AuthAstrologerLoggedInState extends AuthState {
+//   final bool isLoggedIn;
+//
+//   const AuthAstrologerLoggedInState({required this.isLoggedIn});
+//
+//   @override
+//   List<Object?> get props => [isLoggedIn];
+// }
+
 class AuthErrorState extends AuthState {
   final String message;
 

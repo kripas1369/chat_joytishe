@@ -124,4 +124,90 @@ class AuthService {
       throw Exception('Failed to login with password');
     }
   }
+
+  Future<void> logoutUser() async {
+    try {
+      final url = Uri.parse(ApiEndpoints.userLogout);
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('accessToken');
+      final refreshToken = prefs.getString('refreshToken');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      debugPrint('@@@@ User Logout Response @@@@');
+      debugPrint('Status: ${response.statusCode}');
+      debugPrint('Body: ${response.body}');
+
+      // Clear user tokens from local storage regardless of API response
+      await prefs.remove('accessToken');
+      await prefs.remove('refreshToken');
+
+      if (response.statusCode != 200) {
+        debugPrint('Logout API call failed but tokens cleared locally');
+      }
+    } catch (e) {
+      debugPrint('Logout error: $e');
+      // Clear tokens even if API call fails
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('accessToken');
+      await prefs.remove('refreshToken');
+      rethrow;
+    }
+  }
+
+  // Future<void> logoutAstrologer() async {
+  //   try {
+  //     final url = Uri.parse(ApiEndpoints.astrologerLogout);
+  //     final prefs = await SharedPreferences.getInstance();
+  //     final accessToken = prefs.getString('astrologerAccessToken');
+  //     final refreshToken = prefs.getString('astrologerRefreshToken');
+  //
+  //     final response = await http.post(
+  //       url,
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+  //       },
+  //     );
+  //
+  //     debugPrint('@@@@ Astrologer Logout Response @@@@');
+  //     debugPrint('Status: ${response.statusCode}');
+  //     debugPrint('Body: ${response.body}');
+  //
+  //     // Clear astrologer tokens from local storage regardless of API response
+  //     await prefs.remove('astrologerAccessToken');
+  //     await prefs.remove('astrologerRefreshToken');
+  //     await prefs.remove('astrologerId');
+  //
+  //     if (response.statusCode != 200) {
+  //       debugPrint('Logout API call failed but tokens cleared locally');
+  //     }
+  //   } catch (e) {
+  //     debugPrint('Astrologer logout error: $e');
+  //     // Clear tokens even if API call fails
+  //     final prefs = await SharedPreferences.getInstance();
+  //     await prefs.remove('astrologerAccessToken');
+  //     await prefs.remove('astrologerRefreshToken');
+  //     await prefs.remove('astrologerId');
+  //     rethrow;
+  //   }
+  // }
+
+  Future<bool> isUserLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+    return accessToken != null && accessToken.isNotEmpty;
+  }
+
+  Future<bool> isAstrologerLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('astrologerAccessToken');
+    return accessToken != null && accessToken.isNotEmpty;
+  }
 }

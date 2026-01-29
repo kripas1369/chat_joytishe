@@ -40,3 +40,24 @@ class AstrologerLoginWithPasswordEvent extends AuthEvent {
   @override
   List<Object?> get props => [identifier, password];
 }
+
+class LogoutUserEvent extends AuthEvent {
+  const LogoutUserEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class LogoutAstrologerEvent extends AuthEvent {
+  const LogoutAstrologerEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class CheckLoginStatusEvent extends AuthEvent {
+  const CheckLoginStatusEvent();
+
+  @override
+  List<Object?> get props => [];
+}

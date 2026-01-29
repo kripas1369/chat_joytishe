@@ -3,6 +3,11 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
+import 'package:chat_jyotishi/features/auth/bloc/auth_bloc.dart';
+import 'package:chat_jyotishi/features/auth/bloc/auth_events.dart';
+import 'package:chat_jyotishi/features/auth/bloc/auth_states.dart';
+import 'package:chat_jyotishi/features/auth/repository/auth_repository.dart';
+import 'package:chat_jyotishi/features/auth/service/auth_service.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_bloc.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_events.dart';
 import 'package:chat_jyotishi/features/chat/bloc/chat_states.dart';
@@ -39,6 +44,10 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider(
+          create: (context) =>
+              AuthBloc(authRepository: AuthRepository(AuthService())),
+        ),
         BlocProvider(
           create: (context) =>
               ChatBloc(chatRepository: ChatRepository(ChatService()))
@@ -1689,15 +1698,49 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
   }
 
   Widget _buildDrawerLogout() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: DrawerItem(
-        icon: Icons.logout_rounded,
-        title: 'Logout',
-        isDestructive: true,
-        onTap: () {
-          Navigator.pushReplacementNamed(context, '/login_screen');
-        },
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthLogoutSuccessState) {
+          showTopSnackBar(context: context, message: 'Logout Successfully!');
+          Navigator.pushReplacementNamed(context, '/splash_screen');
+        }
+        // No need to handle AuthErrorState here since logout handles it gracefully
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: DrawerItem(
+          icon: Icons.logout_rounded,
+          title: 'Logout',
+          isDestructive: true,
+          onTap: () {
+            _showLogoutConfirmationDialog(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext); // Close dialog
+
+              // Use the ORIGINAL context, not dialogContext
+              context.read<AuthBloc>().add(LogoutUserEvent());
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }

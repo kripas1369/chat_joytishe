@@ -7,7 +7,7 @@ class ApiEndpoints {
   // static const String baseUrl =
   // 'https://jotishapi.autonomoustechnology.net/api/v1';
   // static const String serverUrl = 'https://jotishapi.autonomoustechnology.net';
-
+  static const String userLogout = '$baseUrl/auth/logout';
   static const String sendOtp = '$baseUrl/auth/send-otp';
   static const String verifyOtp = '$baseUrl/auth/verify-otp';
   static const String setPassword = '$baseUrl/auth/set-password';

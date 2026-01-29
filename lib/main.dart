@@ -61,8 +61,8 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       routes: {
         '/initial_logo_screen': (context) => InitialLogoScreen(),
-        '/welcome_screen': (context) => WelcomeScreen(),
         '/splash_screen': (context) => SplashScreen(),
+        '/welcome_screen': (context) => WelcomeScreen(),
         '/onboarding_screen': (context) => OnboardingScreen(),
         '/login_screen': (context) => LoginScreen(),
         '/login_screen_astrologer': (context) => LoginScreenAstrologer(),
@@ -99,7 +99,7 @@ class MyApp extends StatelessWidget {
         ///Notification service route
         '/notification_screen': (context) => NotificationScreen(),
       },
-      initialRoute: '/initial_logo_screen',
+      initialRoute: '/splash_screen',
     );
   }
 }

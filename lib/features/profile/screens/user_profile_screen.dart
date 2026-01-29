@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:chat_jyotishi/constants/constant.dart';
+import 'package:chat_jyotishi/features/home/screens/welcome_screen.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_bloc.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_events.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_states.dart';
@@ -135,10 +136,14 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
           );
           // Reload profile to get fresh data from server
           _profileBloc.add(LoadCurrentUserProfileEvent());
+          Future.delayed(const Duration(milliseconds: 600), () {});
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => WelcomeScreen()),
+          );
         } else if (state is BirthDetailsUpdatedState) {
           showTopSnackBar(
             context: context,
-            message: 'Birth details updated successfully!',
+            message: 'Profile updated successfully!',
             backgroundColor: AppColors.success,
             icon: Icons.check_circle,
           );

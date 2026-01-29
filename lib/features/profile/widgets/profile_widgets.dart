@@ -89,7 +89,7 @@ class ProfileAvatar extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppColors.primaryPurple.withOpacity(
+                          AppColors.cosmicPink.withOpacity(
                             0.3 * pulseAnimation.value,
                           ),
                           Colors.transparent,
@@ -103,7 +103,7 @@ class ProfileAvatar extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: AppColors.primaryGradient,
+                  gradient: AppColors.cosmicHeroGradient,
                 ),
                 child: Container(
                   padding: const EdgeInsets.all(4),
@@ -124,7 +124,7 @@ class ProfileAvatar extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    gradient: AppColors.cosmicHeroGradient,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -804,6 +804,7 @@ class ProfileCompletionCard extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryPurple.withOpacity(0.2),
+
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -834,7 +835,7 @@ class ProfileCompletionCard extends StatelessWidget {
                 child: Container(
                   height: 8,
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    gradient: AppColors.cosmicPrimaryGradient,
                     borderRadius: BorderRadius.circular(4),
                     boxShadow: [
                       BoxShadow(

@@ -38,6 +38,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthErrorState(message: e.toString()));
       }
     });
+
     on<AstrologerLoginWithPasswordEvent>((event, emit) async {
       emit(AuthLoadingState());
       try {
@@ -53,5 +54,44 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthErrorState(message: e.toString()));
       }
     });
+
+    on<LogoutUserEvent>((event, emit) async {
+      emit(AuthLoadingState());
+      try {
+        await authRepository.logoutUser();
+        emit(const AuthLogoutSuccessState(message: 'User logged out successfully'));
+      } catch (e) {
+        // Even if API fails, local tokens are cleared in service
+        emit(const AuthLogoutSuccessState(message: 'Logged out successfully'));
+      }
+    });
+
+    // on<LogoutAstrologerEvent>((event, emit) async {
+    //   emit(AuthLoadingState());
+    //   try {
+    //     await authRepository.logoutAstrologer();
+    //     emit(const AuthLogoutSuccessState(message: 'Astrologer logged out successfully'));
+    //   } catch (e) {
+    //     // Even if API fails, local tokens are cleared in service
+    //     emit(const AuthLogoutSuccessState(message: 'Logged out successfully'));
+    //   }
+    // });
+
+    // on<CheckLoginStatusEvent>((event, emit) async {
+    //   try {
+    //     final isUserLoggedIn = await authRepository.isUserLoggedIn();
+    //     final isAstrologerLoggedIn = await authRepository.isAstrologerLoggedIn();
+    //
+    //     if (isUserLoggedIn) {
+    //       emit(const AuthUserLoggedInState(isLoggedIn: true));
+    //     } else if (isAstrologerLoggedIn) {
+    //       emit(const AuthAstrologerLoggedInState(isLoggedIn: true));
+    //     } else {
+    //       emit(AuthInitialState());
+    //     }
+    //   } catch (e) {
+    //     emit(AuthErrorState(message: e.toString()));
+    //   }
+    // });
   }
 }

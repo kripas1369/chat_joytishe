@@ -39,4 +39,20 @@ class AuthRepository {
 
     return LoginPasswordResponseModel.fromJson(data);
   }
+
+  Future<void> logoutUser() async {
+    await authService.logoutUser();
+  }
+
+  // Future<void> logoutAstrologer() async {
+  //   await authService.logoutAstrologer();
+  // }
+
+  Future<bool> isUserLoggedIn() async {
+    return await authService.isUserLoggedIn();
+  }
+
+  Future<bool> isAstrologerLoggedIn() async {
+    return await authService.isAstrologerLoggedIn();
+  }
 }
