@@ -771,7 +771,7 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
     return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
-  void _sendBroadcast() {
+  Future<void> _sendBroadcast() async {
     // Build message from selected topic, subtopics, and custom text
     String finalMessage = '';
 
@@ -819,6 +819,43 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
       _isSending = true;
     });
 
+    // Refresh coin balance first
+    try {
+      await coinProvider.refreshBalance();
+    } catch (e) {
+      debugPrint('Error refreshing coin balance: $e');
+    }
+
+    // Check coin balance BEFORE sending broadcast
+    final currentBalance = coinProvider.balance;
+    final requiredCoins = CoinCosts.broadcastMessage;
+
+    if (currentBalance < requiredCoins) {
+      setState(() {
+        _isSending = false;
+      });
+      if (mounted) {
+        showInsufficientCoinsSheet(
+          context: context,
+          requiredCoins: requiredCoins,
+          availableCoins: currentBalance,
+          message: 'You need $requiredCoins coin to send a broadcast message.',
+        ).then((_) => coinProvider.refreshBalance());
+      }
+      return;
+    }
+
+    // Check for active chat BEFORE sending broadcast
+    final hasActiveChat = await _checkForActiveChat();
+
+    if (hasActiveChat) {
+      setState(() {
+        _isSending = false;
+      });
+      _showActiveChatExistsDialog();
+      return;
+    }
+
     try {
       // Send broadcast message
       _socketService.sendBroadcastMessage(content: finalMessage, type: 'TEXT');
@@ -846,6 +883,79 @@ class _BroadcastChatScreenState extends State<BroadcastChatScreen>
         message: 'Failed to send broadcast: $e',
         backgroundColor: AppColors.error,
       );
+    }
+  }
+
+  /// Check if user has an active chat before sending broadcast
+  Future<bool> _checkForActiveChat() async {
+    if (_accessToken == null || _refreshToken == null) {
+      return false;
+    }
+
+    try {
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: ApiEndpoints.baseUrl,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'cookie': 'accessToken=$_accessToken; refreshToken=$_refreshToken',
+          },
+        ),
+      );
+
+      // First try the active-chat endpoint
+      try {
+        final response = await dio.get(ApiEndpoints.chatActiveChat);
+        if (response.statusCode == 200) {
+          final data = response.data;
+          // Check if there's an active chat returned
+          if (data != null) {
+            if (data is Map && data.isNotEmpty) {
+              final status = data['status']?.toString().toUpperCase();
+              if (status == 'ACTIVE') {
+                return true;
+              }
+            }
+            if (data is List && data.isNotEmpty) {
+              for (final chat in data) {
+                final status = chat['status']?.toString().toUpperCase();
+                if (status == 'ACTIVE') {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Active chat endpoint check failed: $e');
+      }
+
+      // Fallback: check conversations endpoint
+      final response = await dio.get(ApiEndpoints.chatConversations);
+      if (response.statusCode == 200) {
+        final raw = response.data;
+        List<dynamic> list = [];
+        if (raw is List) {
+          list = raw;
+        } else if (raw is Map) {
+          list = raw['chats'] ?? raw['conversations'] ?? raw['data'] ?? [];
+        }
+
+        for (final chat in list) {
+          if (chat is Map) {
+            final status = (chat['status']?.toString() ?? '').toUpperCase();
+            if (status == 'ACTIVE') {
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('Error checking for active chat: $e');
+      return false;
     }
   }
 
