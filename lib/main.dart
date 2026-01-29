@@ -4,7 +4,6 @@ import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart
 import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/chat_list_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
-import 'package:chat_jyotishi/features/chat_astrologer/screens/broadcast_messages_screen.dart';
 import 'package:chat_jyotishi/features/history_client/screens/history_screen_client.dart';
 import 'package:chat_jyotishi/features/home/screens/about_us_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/book_pandit_screen.dart';
@@ -32,7 +31,6 @@ import 'package:flutter/material.dart';
 import 'features/auth/screens/login_screen.dart';
 
 import 'features/auth/screens/splash_screen.dart';
-import 'features/chat/screens/broadcast_loading_screen.dart';
 import 'features/profile/screens/user_profile_screen.dart';
 
 /// Global navigator key for navigation from notification service

@@ -1,7 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../constants/constant.dart';
-import '../../app_widgets/app_background_gradient.dart';
+import '../../app_widgets/star_field_background.dart';
 import '../../app_widgets/glass_icon_button.dart';
 
 class NotificationScreen extends StatefulWidget {
@@ -50,10 +51,25 @@ class _NotificationScreenState extends State<NotificationScreen>
     _setSystemUIOverlay();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: AppColors.primaryBlack,
       body: Stack(
         children: [
-          buildGradientBackground(),
+          // Background matching home dashboard
+          const StarFieldBackground(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.primaryBlack,
+                  AppColors.cosmicPurple.withOpacity(0.15),
+                  AppColors.primaryBlack,
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -78,7 +94,7 @@ class _NotificationScreenState extends State<NotificationScreen>
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppColors.backgroundDark,
+        systemNavigationBarColor: AppColors.primaryBlack,
       ),
     );
   }
@@ -136,50 +152,78 @@ class _NotificationScreenState extends State<NotificationScreen>
   Widget _buildFilterChips() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       physics: const BouncingScrollPhysics(),
       child: Row(
-        children: filters.map((filter) {
+        children: filters.asMap().entries.map((entry) {
+          final index = entry.key;
+          final filter = entry.value;
           final isSelected = selectedFilter == filter;
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectedFilter = filter;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? AppColors.cosmicHeroGradient
-                      : LinearGradient(
-                          colors: [
-                            AppColors.cardDark.withOpacity(0.5),
-                            AppColors.cardMedium.withOpacity(0.3),
-                          ],
-                        ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.primaryPurple.withOpacity(0.5)
-                        : Colors.white.withOpacity(0.08),
-                    width: 1,
+
+          return TweenAnimationBuilder<double>(
+            duration: Duration(milliseconds: 300 + (index * 50)),
+            curve: Curves.easeOutCubic,
+            tween: Tween(begin: 0.0, end: 1.0),
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: 0.8 + (0.2 * value),
+                child: Opacity(opacity: value, child: child),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    selectedFilter = filter;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
                   ),
-                ),
-                child: Text(
-                  filter,
-                  style: TextStyle(
-                    color: isSelected
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                  decoration: BoxDecoration(
+                    gradient: isSelected
+                        ? LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              const Color(0xFF9333EA),
+                              const Color(0xFFDB2777),
+                            ],
+                          )
+                        : null,
+                    color: isSelected ? null : Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? Colors.white.withOpacity(0.2)
+                          : Colors.white.withOpacity(0.08),
+                      width: 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFDB2777).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    filter,
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.6),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
               ),
@@ -198,7 +242,7 @@ class _NotificationScreenState extends State<NotificationScreen>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       physics: const BouncingScrollPhysics(),
       itemCount: notifications.length,
       itemBuilder: (context, index) {
@@ -213,35 +257,44 @@ class _NotificationScreenState extends State<NotificationScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
                 colors: [
-                  AppColors.primaryPurple.withOpacity(0.2),
-                  AppColors.deepPurple.withOpacity(0.1),
+                  const Color(0xFF9333EA).withOpacity(0.2),
+                  const Color(0xFFDB2777).withOpacity(0.2),
                 ],
               ),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1,
+              ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.notifications_none_rounded,
               size: 64,
-              color: AppColors.textMuted,
+              color: Colors.white.withOpacity(0.5),
             ),
           ),
           const SizedBox(height: 24),
           const Text(
             'No notifications yet',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'You\'re all caught up!',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 14,
+            ),
           ),
         ],
       ),
@@ -254,11 +307,12 @@ class _NotificationScreenState extends State<NotificationScreen>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TweenAnimationBuilder(
-        duration: Duration(milliseconds: 300 + (index * 50)),
+        duration: Duration(milliseconds: 400 + (index * 80)),
+        curve: Curves.easeOutCubic,
         tween: Tween<double>(begin: 0, end: 1),
         builder: (context, double value, child) {
-          return Transform.translate(
-            offset: Offset(20 * (1 - value), 0),
+          return Transform.scale(
+            scale: 0.8 + (0.2 * value),
             child: Opacity(opacity: value, child: child),
           );
         },
@@ -270,9 +324,11 @@ class _NotificationScreenState extends State<NotificationScreen>
             padding: const EdgeInsets.only(right: 20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Colors.red, Colors.redAccent],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(
               Icons.delete_rounded,
@@ -284,100 +340,129 @@ class _NotificationScreenState extends State<NotificationScreen>
             _handleDeleteNotification(notification);
           },
           child: GestureDetector(
-            onTap: () => _handleNotificationTap(notification),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              _handleNotificationTap(notification);
+            },
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.cardDark.withOpacity(isUnread ? 0.9 : 0.6),
-                    AppColors.cardMedium.withOpacity(isUnread ? 0.5 : 0.3),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
+                gradient: isUnread
+                    ? LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          const Color(0xFF9333EA).withOpacity(0.25),
+                          const Color(0xFFDB2777).withOpacity(0.25),
+                        ],
+                      )
+                    : null,
+                color: isUnread ? null : Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isUnread
-                      ? AppColors.primaryPurple.withOpacity(0.3)
+                      ? Colors.white.withOpacity(0.15)
                       : Colors.white.withOpacity(0.08),
                   width: 1,
                 ),
                 boxShadow: isUnread
                     ? [
                         BoxShadow(
-                          color: AppColors.primaryPurple.withOpacity(0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          color: const Color(0xFFDB2777).withOpacity(0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
                       ]
                     : null,
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildNotificationIcon(notification['type']),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildNotificationIcon(notification['type']),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                notification['title'],
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 15,
-                                  fontWeight: isUnread
-                                      ? FontWeight.w700
-                                      : FontWeight.w600,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    notification['title'],
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: isUnread
+                                          ? FontWeight.w700
+                                          : FontWeight.w600,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (isUnread)
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFF9333EA),
+                                          Color(0xFFDB2777),
+                                        ],
+                                      ),
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFFDB2777,
+                                          ).withOpacity(0.5),
+                                          blurRadius: 6,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
-                            if (isUnread)
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.primaryPurple,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          notification['message'],
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.access_time_rounded,
-                              size: 12,
-                              color: AppColors.textMuted,
-                            ),
-                            const SizedBox(width: 4),
+                            const SizedBox(height: 6),
                             Text(
-                              notification['time'],
-                              style: const TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 11,
+                              notification['message'],
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 13,
+                                height: 1.4,
+                                fontWeight: FontWeight.w400,
                               ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time_rounded,
+                                  size: 12,
+                                  color: Colors.white.withOpacity(0.5),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  notification['time'],
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.5),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -421,7 +506,7 @@ class _NotificationScreenState extends State<NotificationScreen>
       decoration: BoxDecoration(
         color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
       ),
       child: Icon(icon, size: 20, color: color),
     );
@@ -594,10 +679,14 @@ class _NotificationScreenState extends State<NotificationScreen>
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('All notifications marked as read'),
-        backgroundColor: AppColors.primaryPurple,
+        content: const Text(
+          'All notifications marked as read',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: const Color(0xFF9333EA),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -612,13 +701,17 @@ class _NotificationScreenState extends State<NotificationScreen>
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Notification deleted'),
-        backgroundColor: AppColors.cardDark,
+        content: const Text(
+          'Notification deleted',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Colors.white.withOpacity(0.1),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
         action: SnackBarAction(
           label: 'Undo',
-          textColor: AppColors.primaryPurple,
+          textColor: const Color(0xFFDB2777),
           onPressed: () {
             debugPrint('Undo delete notification');
           },
