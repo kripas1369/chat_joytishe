@@ -28,6 +28,7 @@ class ApiEndpoints {
   static const String removeProfilePhoto = '$baseUrl/users/remove-photo';
 
   static const String socketUrl = 'ws://192.168.0.206:4000';
+
   // static const String socketUrl = 'ws://jotishapi.autonomoustechnology.net';
 
   // API Endpoints (relative to baseUrl)

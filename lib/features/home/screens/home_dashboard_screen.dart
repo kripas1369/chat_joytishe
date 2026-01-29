@@ -320,7 +320,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                       const SizedBox(width: 12),
                       ShaderMask(
                         shaderCallback: (bounds) => const LinearGradient(
-                          colors: [AppColors.purple300, AppColors.pink300, AppColors.red300],
+                          colors: [
+                            AppColors.purple300,
+                            AppColors.pink300,
+                            AppColors.red300,
+                          ],
                         ).createShader(bounds),
                         child: const Text(
                           'Our Services',
@@ -356,7 +360,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                     spacing: 16,
                     runSpacing: 16,
                     children: services.map((service) {
-                      final isComingSoon = service['isComingSoon'] as bool? ?? false;
+                      final isComingSoon =
+                          service['isComingSoon'] as bool? ?? false;
                       return SizedBox(
                         width: itemWidth,
                         child: _buildServiceCard(
@@ -389,43 +394,43 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   }) {
     return GestureDetector(
       onTap: isComingSoon ? null : onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: isComingSoon
-                ? LinearGradient(
-                    colors: [
-                      colors[0].withOpacity(0.2),
-                      colors[1].withOpacity(0.15),
-                    ],
-                  )
-                : LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: colors,
-                  ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withOpacity(isComingSoon ? 0.05 : 0.2),
-              width: 1.5,
-            ),
-            boxShadow: isComingSoon
-                ? null
-                : [
-                    BoxShadow(
-                      color: colors.first.withOpacity(0.4),
-                      blurRadius: 16,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 4),
-                    ),
-                    BoxShadow(
-                      color: colors.last.withOpacity(0.2),
-                      blurRadius: 8,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 2),
-                    ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: isComingSoon
+              ? LinearGradient(
+                  colors: [
+                    colors[0].withOpacity(0.2),
+                    colors[1].withOpacity(0.15),
                   ],
+                )
+              : LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: colors,
+                ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(isComingSoon ? 0.05 : 0.2),
+            width: 1.5,
           ),
+          boxShadow: isComingSoon
+              ? null
+              : [
+                  BoxShadow(
+                    color: colors.first.withOpacity(0.4),
+                    blurRadius: 16,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  ),
+                  BoxShadow(
+                    color: colors.last.withOpacity(0.2),
+                    blurRadius: 8,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -456,7 +461,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                 ),
                 if (isComingSoon)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -597,7 +605,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
                 final index = entry.key;
                 final insight = entry.value;
                 return Padding(
-                  padding: EdgeInsets.only(bottom: index < insights.length - 1 ? 12 : 0),
+                  padding: EdgeInsets.only(
+                    bottom: index < insights.length - 1 ? 12 : 0,
+                  ),
                   child: _buildInsightCard(
                     icon: insight['icon'] as IconData,
                     title: insight['title'] as String,
@@ -623,30 +633,30 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
   }) {
     return GestureDetector(
       onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: colors,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: colors.first.withOpacity(0.4),
-                blurRadius: 16,
-                spreadRadius: 2,
-                offset: const Offset(0, 4),
-              ),
-              BoxShadow(
-                color: colors.last.withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 0,
-                offset: const Offset(0, 2),
-              ),
-            ],
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: colors,
           ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: colors.first.withOpacity(0.4),
+              blurRadius: 16,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: colors.last.withOpacity(0.2),
+              blurRadius: 8,
+              spreadRadius: 0,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Row(
           children: [
             Container(
