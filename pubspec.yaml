@@ -57,6 +57,7 @@ dependencies:
   nepali_calendar_plus: ^0.0.7
   image: ^4.7.2
   intl: ^0.20.2
+  timeago: ^3.7.1
 
 dev_dependencies:
   flutter_test:

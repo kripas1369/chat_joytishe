@@ -20,7 +20,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 /// Handles Firebase Cloud Messaging and local notifications
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
+
   factory NotificationService() => _instance;
+
   NotificationService._internal();
 
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -35,35 +37,35 @@ class NotificationService {
   // Android notification channel for broadcast requests
   static const AndroidNotificationChannel _broadcastChannel =
       AndroidNotificationChannel(
-    'broadcast_channel',
-    'Broadcast Requests',
-    description: 'Notifications for incoming broadcast chat requests',
-    importance: Importance.high,
-    playSound: true,
-    enableVibration: true,
-  );
+        'broadcast_channel',
+        'Broadcast Requests',
+        description: 'Notifications for incoming broadcast chat requests',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      );
 
   // Android notification channel for instant chat requests
   static const AndroidNotificationChannel _instantChatChannel =
       AndroidNotificationChannel(
-    'instant_chat_channel',
-    'Chat Requests',
-    description: 'Notifications for incoming instant chat requests',
-    importance: Importance.high,
-    playSound: true,
-    enableVibration: true,
-  );
+        'instant_chat_channel',
+        'Chat Requests',
+        description: 'Notifications for incoming instant chat requests',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      );
 
   // Android notification channel for chat messages
   static const AndroidNotificationChannel _chatMessageChannel =
       AndroidNotificationChannel(
-    'chat_message_channel',
-    'Chat Messages',
-    description: 'Notifications for new chat messages',
-    importance: Importance.high,
-    playSound: true,
-    enableVibration: true,
-  );
+        'chat_message_channel',
+        'Chat Messages',
+        description: 'Notifications for new chat messages',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      );
 
   /// Initialize notification service
   Future<void> initialize() async {
@@ -104,7 +106,9 @@ class NotificationService {
   /// Initialize local notifications plugin
   Future<void> _initializeLocalNotifications() async {
     // Android settings
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
 
     // iOS settings
     const iosSettings = DarwinInitializationSettings(
@@ -125,9 +129,10 @@ class NotificationService {
 
     // Create notification channels for Android
     if (Platform.isAndroid) {
-      final androidPlugin =
-          _localNotifications.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
       await androidPlugin?.createNotificationChannel(_broadcastChannel);
       await androidPlugin?.createNotificationChannel(_instantChatChannel);
@@ -159,7 +164,9 @@ class NotificationService {
 
     // Handle notification tap when app is in background
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      debugPrint('Background notification tapped: ${message.notification?.title}');
+      debugPrint(
+        'Background notification tapped: ${message.notification?.title}',
+      );
       _handleMessageOpen(message);
     });
 
@@ -388,16 +395,8 @@ class NotificationService {
       category: AndroidNotificationCategory.message,
       fullScreenIntent: true,
       actions: <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'accept',
-          'Accept',
-          showsUserInterface: true,
-        ),
-        AndroidNotificationAction(
-          'reject',
-          'Reject',
-          showsUserInterface: true,
-        ),
+        AndroidNotificationAction('accept', 'Accept', showsUserInterface: true),
+        AndroidNotificationAction('reject', 'Reject', showsUserInterface: true),
       ],
     );
 
@@ -452,16 +451,8 @@ class NotificationService {
       category: AndroidNotificationCategory.message,
       fullScreenIntent: true,
       actions: <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'accept',
-          'Accept',
-          showsUserInterface: true,
-        ),
-        AndroidNotificationAction(
-          'reject',
-          'Reject',
-          showsUserInterface: true,
-        ),
+        AndroidNotificationAction('accept', 'Accept', showsUserInterface: true),
+        AndroidNotificationAction('reject', 'Reject', showsUserInterface: true),
       ],
     );
 
@@ -548,5 +539,158 @@ class NotificationService {
   /// Cancel all notifications
   Future<void> cancelAllNotifications() async {
     await _localNotifications.cancelAll();
+  }
+
+  Future<Map<String, dynamic>> getNotifications({
+    int limit = 5,
+    int offset = 0,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('accessToken');
+      final refreshToken = prefs.getString('refreshToken');
+
+      if (accessToken == null || refreshToken == null) {
+        throw Exception('Authentication tokens not found');
+      }
+
+      final url = Uri.parse(
+        '${ApiEndpoints.baseUrl}/notifications?limit=$limit&offset=$offset',
+      );
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized - Please login again');
+      } else {
+        throw Exception(
+          'Failed to fetch notifications: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error fetching notifications: $e');
+    }
+  }
+
+  // Mark notification as read
+  Future<Map<String, dynamic>> markAsRead(String notificationId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('accessToken');
+      final refreshToken = prefs.getString('refreshToken');
+
+      if (accessToken == null || refreshToken == null) {
+        throw Exception('Authentication tokens not found');
+      }
+
+      final url = Uri.parse(
+        '${ApiEndpoints.baseUrl}/notifications/$notificationId/read',
+      );
+
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception(
+          'Failed to mark notification as read: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error marking notification as read: $e');
+    }
+  }
+
+  // Mark all notifications as read
+  Future<Map<String, dynamic>> markAllAsRead() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('accessToken');
+      final refreshToken = prefs.getString('refreshToken');
+
+      if (accessToken == null || refreshToken == null) {
+        throw Exception('Authentication tokens not found');
+      }
+
+      final url = Uri.parse('${ApiEndpoints.baseUrl}/notifications/read-all');
+
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception(
+          'Failed to mark all notifications as read: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error marking all notifications as read: $e');
+    }
+  }
+
+  // Delete notification
+  Future<Map<String, dynamic>> deleteNotification(String notificationId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('accessToken');
+      final refreshToken = prefs.getString('refreshToken');
+
+      if (accessToken == null || refreshToken == null) {
+        throw Exception('Authentication tokens not found');
+      }
+
+      final url = Uri.parse(
+        '${ApiEndpoints.baseUrl}/notifications/$notificationId',
+      );
+
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'accessToken=$accessToken; refreshToken=$refreshToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception(
+          'Failed to delete notification: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error deleting notification: $e');
+    }
+  }
+
+  // Get unread count
+  Future<int> getUnreadCount() async {
+    try {
+      final response = await getNotifications(limit: 1, offset: 0);
+      final data = response['data'] as Map<String, dynamic>? ?? {};
+      return data['unreadCount'] ?? 0;
+    } catch (e) {
+      throw Exception('Error getting unread count: $e');
+    }
   }
 }
