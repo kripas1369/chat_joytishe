@@ -142,7 +142,7 @@ class _HoroscopeGridScreenState extends State<HoroscopeScreen>
       child: Container(
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          gradient: AppColors.cosmicHeroGradient.withOpacity(0.8),
+          gradient: AppColors.cosmicHeroGradient.withOpacity(0.9),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
           boxShadow: [
@@ -391,12 +391,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
         ),
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primaryPurple.withOpacity(0.3),
-                AppColors.primaryPurple.withOpacity(0.1),
-              ],
-            ),
+            gradient: AppColors.cosmicPrimaryGradient.withOpacity(0.65),
             borderRadius: BorderRadius.circular(24),
           ),
           child: SingleChildScrollView(
@@ -483,12 +478,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
                         child: Container(
                           padding: EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.primaryPurple.withOpacity(0.3),
-                                AppColors.primaryPurple.withOpacity(0.15),
-                              ],
-                            ),
+                            gradient: AppColors.cosmicPrimaryGradient,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: AppColors.primaryPurple.withOpacity(0.4),
@@ -512,12 +502,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppColors.primaryPurple.withOpacity(0.4),
-                                      AppColors.primaryPurple.withOpacity(0.2),
-                                    ],
-                                  ),
+                                  gradient: AppColors.cosmicPrimaryGradient,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: AppColors.primaryPurple.withOpacity(
@@ -557,12 +542,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
                         child: Container(
                           padding: EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.primaryPurple.withOpacity(0.3),
-                                AppColors.primaryPurple.withOpacity(0.15),
-                              ],
-                            ),
+                            gradient: AppColors.cosmicPrimaryGradient,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: AppColors.primaryPurple.withOpacity(0.4),
@@ -599,12 +579,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
                     Container(
                       padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primaryPurple.withOpacity(0.2),
-                            AppColors.deepPurple.withOpacity(0.1),
-                          ],
-                        ),
+                        gradient: AppColors.cosmicPrimaryGradient,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: AppColors.primaryPurple.withOpacity(0.3),
@@ -635,8 +610,8 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
 
                   SizedBox(height: 28),
 
-                  // Close Button
                   AppButton(
+                    // gradient: AppColors.buttonGradient1,
                     title: 'Close',
                     onTap: () => Navigator.pop(context),
                     icon: Icons.close,
@@ -662,11 +637,7 @@ class _HoroscopeDetailPopupState extends State<HoroscopeDetailPopup> {
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            gradient: isSelected
-                ? LinearGradient(
-                    colors: [AppColors.primaryPurple, AppColors.deepPurple],
-                  )
-                : null,
+            gradient: isSelected ? AppColors.cosmicPrimaryGradient : null,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(

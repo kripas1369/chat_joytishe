@@ -247,7 +247,7 @@ class ProfileSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  gradient: AppColors.cosmicHeroGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: Colors.white, size: 20),
@@ -338,7 +338,7 @@ class _AppTextFieldState extends State<AppTextField> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _hasFocus
-                ? AppColors.primaryPurple.withOpacity(0.5)
+                ? AppColors.cosmicPink.withOpacity(0.5)
                 : Colors.white.withOpacity(0.08),
             width: _hasFocus ? 1.5 : 1,
           ),
@@ -368,7 +368,7 @@ class _AppTextFieldState extends State<AppTextField> {
             labelText: widget.label,
             hintText: widget.hint,
             labelStyle: TextStyle(
-              color: _hasFocus ? AppColors.primaryPurple : AppColors.textMuted,
+              color: _hasFocus ? AppColors.cosmicPink : AppColors.textMuted,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -377,9 +377,7 @@ class _AppTextFieldState extends State<AppTextField> {
               padding: const EdgeInsets.only(left: 16, right: 12),
               child: Icon(
                 widget.icon,
-                color: _hasFocus
-                    ? AppColors.primaryPurple
-                    : AppColors.textMuted,
+                color: _hasFocus ? AppColors.cosmicPink : AppColors.textMuted,
                 size: 22,
               ),
             ),
@@ -489,7 +487,7 @@ class _GenderOption extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
-                ? AppColors.primaryPurple.withOpacity(0.6)
+                ? AppColors.cosmicPink.withOpacity(0.6)
                 : Colors.white.withOpacity(0.08),
             width: isSelected ? 1.5 : 1,
           ),
@@ -498,7 +496,7 @@ class _GenderOption extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? AppColors.primaryPurple : AppColors.textMuted,
+              color: isSelected ? AppColors.cosmicPink : AppColors.textMuted,
               size: 28,
             ),
             const SizedBox(height: 8),
@@ -540,7 +538,7 @@ class ProfileSaveButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          gradient: AppColors.splashGradient,
+          gradient: AppColors.cosmicHeroGradient,
           borderRadius: BorderRadius.circular(18),
         ),
         child: Row(

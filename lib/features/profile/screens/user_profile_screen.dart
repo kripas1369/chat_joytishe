@@ -524,9 +524,9 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               decoration: BoxDecoration(
-                                color: selectedOption == 0
-                                    ? AppColors.primaryPurple.withOpacity(0.3)
-                                    : Colors.white.withOpacity(0.05),
+                                gradient: selectedOption == 0
+                                    ? AppColors.cosmicHeroGradient
+                                    : AppColors.backgroundGradient,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -555,9 +555,9 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               decoration: BoxDecoration(
-                                color: selectedOption == 1
-                                    ? AppColors.primaryPurple.withOpacity(0.3)
-                                    : Colors.white.withOpacity(0.05),
+                                gradient: selectedOption == 1
+                                    ? AppColors.cosmicHeroGradient
+                                    : AppColors.backgroundGradient,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -590,7 +590,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
+                                gradient: AppColors.backgroundGradient,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Center(
@@ -619,12 +619,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppColors.primaryPurple.withOpacity(0.3),
-                                    AppColors.deepPurple,
-                                  ],
-                                ),
+                                gradient: AppColors.cosmicPrimaryGradient,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Center(
