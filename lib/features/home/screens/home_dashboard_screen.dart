@@ -270,7 +270,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
         'title': 'Katha Vachak',
         'subtitle': 'Events & programs',
         'colors': [Color(0xFF9333EA), Color(0xFFDB2777)],
-        'route': '/katha_vachak',
+        'route': '/book_katha_vachak_screen',
         'isComingSoon': false,
       },
       {

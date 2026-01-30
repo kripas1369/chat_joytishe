@@ -136,10 +136,7 @@ class _RotatingQuestionsWidgetState extends State<RotatingQuestionsWidget>
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppColors.cosmicPink.withOpacity(0.4),
-          width: 1,
-        ),
+
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),

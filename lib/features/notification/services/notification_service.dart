@@ -551,6 +551,7 @@ class NotificationService {
       final refreshToken = prefs.getString('refreshToken');
 
       if (accessToken == null || refreshToken == null) {
+
         throw Exception('Authentication tokens not found');
       }
 

@@ -1,4 +1,5 @@
 import 'package:chat_jyotishi/features/appointment/screens/appointment_screen.dart';
+import 'package:chat_jyotishi/features/appointment/screens/user_booking_appointment.dart';
 import 'package:chat_jyotishi/features/auth/screens/initial_logo_screen.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat/screens/chat_list_screen.dart';
@@ -6,8 +7,9 @@ import 'package:chat_jyotishi/features/chat_astrologer/screens/chat_list_screen_
 import 'package:chat_jyotishi/features/chat_astrologer/screens/incoming_requests_screen.dart';
 import 'package:chat_jyotishi/features/history_client/screens/history_screen_client.dart';
 import 'package:chat_jyotishi/features/home/screens/about_us_screen.dart';
+import 'package:chat_jyotishi/features/home/screens/book_katha_vachak_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/book_pandit_screen.dart';
-import 'package:chat_jyotishi/features/home/screens/book_vaastu_sastri.dart';
+import 'package:chat_jyotishi/features/home/screens/book_vaastu_sastri_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/help_support_screen.dart';
 import 'package:chat_jyotishi/features/home/screens/home_screen_client.dart'
     show HomeScreenClient;
@@ -70,12 +72,14 @@ class MyApp extends StatelessWidget {
         '/history_screen_client': (context) => HistoryScreenClient(),
         '/book_pandit_screen': (context) => BookPanditScreen(),
         '/book_vaastu_sastri_screen': (context) => BookVaastuSastriScreen(),
+        '/book_katha_vachak_screen': (context) => BookKathaVachakScreen(),
         '/settings_screen': (context) => SettingsScreen(),
         '/help_support_screen': (context) => HelpSupportScreen(),
         '/about_us_screen': (context) => AboutUsScreen(),
         '/privacy_policy_screen': (context) => PrivacyPolicyScreen(),
         '/home_screen_astrologer': (context) => HomeScreenAstrologer(),
         '/user_profile_screen': (context) => UserProfileScreen(),
+        '/user_bookings_screen': (context) => BookingsAppointmentsScreen(),
         // '/astrologer_profile_screen': (context) => AstrologerProfileScreen(),
         '/horoscope_screen': (context) => HoroscopeScreen(),
         // '/chat_screen': (context) => ChatScreen(),
@@ -99,7 +103,7 @@ class MyApp extends StatelessWidget {
         ///Notification service route
         '/notification_screen': (context) => NotificationScreen(),
       },
-      initialRoute: '/welcome_screen',
+      initialRoute: '/splash_screen',
     );
   }
 }

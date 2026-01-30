@@ -1652,6 +1652,11 @@ class _WelcomeScreenContentState extends State<WelcomeScreenContent>
         'route': '/user_profile_screen',
       },
       {
+        'icon': Icons.calendar_month,
+        'title': 'My bookings',
+        'route': '/user_bookings_screen',
+      },
+      {
         'icon': Icons.history_rounded,
         'title': 'History',
         'route': '/history_screen_client',

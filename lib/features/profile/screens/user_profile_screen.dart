@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:chat_jyotishi/constants/constant.dart';
-import 'package:chat_jyotishi/features/app_widgets/app_background_gradient.dart';
 import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
+import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/home/screens/welcome_screen.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_bloc.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_events.dart';
@@ -68,8 +69,10 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
+  late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _pulseAnimation;
+  late Animation<Offset> _slideAnimation;
   late ProfileBloc _profileBloc;
 
   @override
@@ -95,13 +98,24 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
+
     _fadeController.forward();
+    _slideController.forward();
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
     _pulseController.dispose();
+    _slideController.dispose();
     nameController.dispose();
     dobController.dispose();
     tobController.dispose();
@@ -122,6 +136,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.primaryBlack,
       ),
     );
 
@@ -189,11 +204,28 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
       },
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: AppColors.backgroundDark,
+          backgroundColor: AppColors.primaryBlack,
           body: Stack(
             children: [
-              buildGradientBackground(),
-              buildNightModeOverlay(),
+              // Star field background
+              // StarFieldBackground(),
+              // Cosmic gradient overlay
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.7),
+                      AppColors.cosmicPurple.withOpacity(0.3),
+                      Colors.black.withOpacity(0.9),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                ),
+              ),
+              // buildNightModeOverlay(),
+              // Decorative top glow
               Positioned(
                 top: -100,
                 left: -50,
@@ -207,7 +239,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                         gradient: RadialGradient(
                           colors: [
                             AppColors.cosmicPink.withOpacity(
-                              0.15 * _pulseAnimation.value,
+                              0.2 * _pulseAnimation.value,
                             ),
                             Colors.transparent,
                           ],
@@ -231,54 +263,59 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                         },
                       ),
                       Expanded(
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 8),
-                              ProfileAvatar(
-                                localImage: profileImage,
-                                // File?
-                                networkImage: networkProfileImage,
-                                // String?
-                                pulseAnimation: _pulseAnimation,
-                                displayName: nameController.text.isEmpty
-                                    ? 'Your Name'
-                                    : nameController.text,
-                                displayEmail: emailController.text.isEmpty
-                                    ? 'Add your email'
-                                    : emailController.text,
-                                onTap: _showImagePicker,
-                              ),
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 8),
+                                ProfileAvatar(
+                                  localImage: profileImage,
+                                  // File?
+                                  networkImage: networkProfileImage,
+                                  // String?
+                                  pulseAnimation: _pulseAnimation,
+                                  displayName: nameController.text.isEmpty
+                                      ? 'Your Name'
+                                      : nameController.text,
+                                  displayEmail: emailController.text.isEmpty
+                                      ? 'Add your email'
+                                      : emailController.text,
+                                  onTap: _showImagePicker,
+                                ),
 
-                              const SizedBox(height: 32),
-                              ProfileCompletionCard(
-                                filledFields: _calculateFilledFields(),
-                                totalFields: 9,
-                              ),
-                              const SizedBox(height: 24),
-                              _buildPersonalInfoSection(),
-                              const SizedBox(height: 24),
-                              _buildBirthDetailsSection(),
-                              const SizedBox(height: 24),
-                              _buildContactSection(),
-                              const SizedBox(height: 24),
-                              GenderSelector(
-                                selectedGender: selectedGender,
-                                onGenderChanged: (value) {
-                                  setState(() => selectedGender = value);
-                                },
-                              ),
-                              const SizedBox(height: 32),
-                              ProfileSaveButton(
-                                isLoading:
-                                    state is ProfileLoadingState ||
-                                    state is ProfileOperationInProgressState,
-                                onTap: _saveProfile,
-                              ),
-                              const SizedBox(height: 40),
-                            ],
+                                const SizedBox(height: 32),
+                                ProfileCompletionCard(
+                                  filledFields: _calculateFilledFields(),
+                                  totalFields: 9,
+                                ),
+                                const SizedBox(height: 24),
+                                _buildPersonalInfoSection(),
+                                const SizedBox(height: 24),
+                                _buildBirthDetailsSection(),
+                                const SizedBox(height: 24),
+                                _buildContactSection(),
+                                const SizedBox(height: 24),
+                                GenderSelector(
+                                  selectedGender: selectedGender,
+                                  onGenderChanged: (value) {
+                                    setState(() => selectedGender = value);
+                                  },
+                                ),
+                                const SizedBox(height: 32),
+                                ProfileSaveButton(
+                                  isLoading:
+                                      state is ProfileLoadingState ||
+                                      state is ProfileOperationInProgressState,
+                                  onTap: _saveProfile,
+                                ),
+                                const SizedBox(height: 24),
+                                _buildFooterInfo(),
+                                const SizedBox(height: 40),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -290,6 +327,56 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildFooterInfo() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Icon(
+              Icons.auto_awesome,
+              size: 14,
+              color: AppColors.cosmicPink.withOpacity(
+                0.5 + (_pulseAnimation.value * 0.3),
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 8),
+        ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [
+              AppColors.purple300.withOpacity(0.7),
+              AppColors.pink300.withOpacity(0.7),
+            ],
+          ).createShader(bounds),
+          child: const Text(
+            'Your cosmic identity awaits…',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Icon(
+              Icons.auto_awesome,
+              size: 14,
+              color: AppColors.cosmicPink.withOpacity(
+                0.5 + (_pulseAnimation.value * 0.3),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -481,65 +568,119 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
 
     await showDialog(
       context: context,
+      barrierColor: Colors.black54,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          return Dialog(
-            backgroundColor: Colors.transparent,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: AppColors.backgroundGradient,
-                borderRadius: BorderRadius.circular(20),
-              ),
+          return BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Dialog(
+              backgroundColor: Colors.transparent,
               child: Container(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.primaryPurple.withOpacity(0.15),
-                      AppColors.deepPurple.withOpacity(0.08),
+                      AppColors.cosmicPurple.withOpacity(0.2),
+                      AppColors.cosmicPink.withOpacity(0.15),
+                      AppColors.cosmicRed.withOpacity(0.1),
                     ],
                   ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: AppColors.cosmicPurple.withOpacity(0.3),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.cosmicPurple.withOpacity(0.2),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    ),
+                  ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      'Select Calendar Type',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.cosmicHeroGradient,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.calendar_month_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [AppColors.purple300, AppColors.pink300],
+                          ).createShader(bounds),
+                          child: const Text(
+                            'Select Calendar Type',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     Row(
                       children: [
                         Expanded(
                           child: GestureDetector(
                             onTap: () => setState(() => selectedOption = 0),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 20),
                               decoration: BoxDecoration(
                                 gradient: selectedOption == 0
                                     ? AppColors.cosmicHeroGradient
-                                    : AppColors.backgroundGradient,
-                                borderRadius: BorderRadius.circular(12),
+                                    : null,
+                                color: selectedOption == 0
+                                    ? null
+                                    : Colors.white.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: selectedOption == 0
+                                      ? AppColors.cosmicPink
+                                      : Colors.white.withOpacity(0.1),
+                                  width: selectedOption == 0 ? 1.5 : 1,
+                                ),
+                                boxShadow: selectedOption == 0
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.cosmicPurple
+                                              .withOpacity(0.4),
+                                          blurRadius: 12,
+                                          spreadRadius: 0,
+                                        ),
+                                      ]
+                                    : null,
                               ),
                               child: Column(
                                 children: [
                                   Icon(
                                     Icons.calendar_today,
                                     color: Colors.white,
+                                    size: 28,
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 10),
                                   Text(
                                     'B.S. (Nepali)',
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ],
@@ -551,26 +692,48 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                         Expanded(
                           child: GestureDetector(
                             onTap: () => setState(() => selectedOption = 1),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 20),
                               decoration: BoxDecoration(
                                 gradient: selectedOption == 1
                                     ? AppColors.cosmicHeroGradient
-                                    : AppColors.backgroundGradient,
-                                borderRadius: BorderRadius.circular(12),
+                                    : null,
+                                color: selectedOption == 1
+                                    ? null
+                                    : Colors.white.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: selectedOption == 1
+                                      ? AppColors.cosmicPink
+                                      : Colors.white.withOpacity(0.1),
+                                  width: selectedOption == 1 ? 1.5 : 1,
+                                ),
+                                boxShadow: selectedOption == 1
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.cosmicPurple
+                                              .withOpacity(0.4),
+                                          blurRadius: 12,
+                                          spreadRadius: 0,
+                                        ),
+                                      ]
+                                    : null,
                               ),
                               child: Column(
                                 children: [
                                   Icon(
                                     Icons.calendar_month,
                                     color: Colors.white,
+                                    size: 28,
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 10),
                                   Text(
                                     'A.D. (English)',
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ],
@@ -580,54 +743,71 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 28),
                     Row(
                       children: [
                         Expanded(
-                          child: GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                gradient: AppColors.backgroundGradient,
+                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                side: BorderSide(
+                                  color: Colors.white.withOpacity(0.2),
                                 ),
+                              ),
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: AppColors.textGray300,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: GestureDetector(
-                            onTap: () async {
-                              Navigator.pop(context);
-                              if (selectedOption == 0) {
-                                await _selectNepaliDate(context);
-                              } else {
-                                await _selectGregorianDate(context);
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                gradient: AppColors.cosmicPrimaryGradient,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Continue',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: AppColors.cosmicPrimaryGradient,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.cosmicPurple.withOpacity(
+                                    0.4,
                                   ),
+                                  blurRadius: 12,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                if (selectedOption == 0) {
+                                  await _selectNepaliDate(context);
+                                } else {
+                                  await _selectGregorianDate(context);
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Continue',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -666,36 +846,39 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
     DateTime? pickedDate;
     await showDialog(
       context: context,
+      barrierColor: Colors.black54,
       builder: (_) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.backgroundGradient,
-              borderRadius: BorderRadius.circular(24),
-            ),
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primaryPurple.withOpacity(0.15),
-                    AppColors.deepPurple.withOpacity(0.08),
+                    AppColors.cosmicPurple.withOpacity(0.2),
+                    AppColors.cosmicPink.withOpacity(0.15),
+                    AppColors.cosmicRed.withOpacity(0.1),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppColors.cosmicPurple.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Theme(
                 data: Theme.of(context).copyWith(
                   colorScheme: ColorScheme.dark(
-                    primary: Colors.white,
-                    onPrimary: AppColors.primaryPurple,
+                    primary: AppColors.cosmicPink,
+                    onPrimary: Colors.white,
                     surface: Colors.transparent,
                     onSurface: Colors.white,
                   ),
-                  textTheme: TextTheme(
+                  textTheme: const TextTheme(
                     bodyLarge: TextStyle(color: Colors.white),
                     bodyMedium: TextStyle(color: Colors.white70),
                     titleMedium: TextStyle(color: Colors.white),
@@ -731,9 +914,9 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primaryPurple,
+              primary: AppColors.cosmicPink,
               onPrimary: Colors.white,
-              surface: AppColors.backgroundDark,
+              surface: AppColors.primaryBlack,
               onSurface: Colors.white,
             ),
           ),

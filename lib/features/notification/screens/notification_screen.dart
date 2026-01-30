@@ -746,12 +746,12 @@ class _NotificationScreenContentState extends State<NotificationScreenContent>
                     : null,
                 color: isUnread ? null : Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isUnread
-                      ? Colors.white.withOpacity(0.15)
-                      : Colors.white.withOpacity(0.08),
-                  width: 1,
-                ),
+                // border: Border.all(
+                //   color: isUnread
+                //       ? Colors.white.withOpacity(0.15)
+                //       : Colors.white.withOpacity(0.08),
+                //   width: 1,
+                // ),
                 boxShadow: isUnread
                     ? [
                         BoxShadow(
