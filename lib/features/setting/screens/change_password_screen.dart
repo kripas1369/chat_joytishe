@@ -1,4 +1,6 @@
+import 'package:chat_jyotishi/features/app_widgets/app_background_gradient.dart';
 import 'package:chat_jyotishi/features/app_widgets/app_logo.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
 import 'package:chat_jyotishi/features/app_widgets/glass_icon_button.dart';
 import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:chat_jyotishi/features/setting/widgets/password_text_field.dart';
@@ -35,12 +37,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          StarFieldBackground(),
-          Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.backgroundGradient.withOpacity(0.9),
-            ),
-          ),
+          // StarFieldBackground(),
+          buildGradientBackground(),
+          buildNightModeOverlay(),
           Positioned(
             top: 60,
             left: 24,

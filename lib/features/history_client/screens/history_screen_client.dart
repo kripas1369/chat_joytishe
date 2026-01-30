@@ -104,7 +104,7 @@ class _HistoryScreenClientState extends State<HistoryScreenClient>
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          gradient: AppColors.cosmicHeroGradient,
           borderRadius: BorderRadius.circular(12),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
@@ -277,7 +277,7 @@ class _HistoryScreenClientState extends State<HistoryScreenClient>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.cosmicHeroGradient,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: Colors.white, size: 24),
@@ -344,7 +344,7 @@ class _HistoryScreenClientState extends State<HistoryScreenClient>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryPurple.withOpacity(0.2),
+                  color: AppColors.cosmicPink.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -352,13 +352,13 @@ class _HistoryScreenClientState extends State<HistoryScreenClient>
                     Icon(
                       Icons.monetization_on,
                       size: 14,
-                      color: AppColors.primaryPurple,
+                      color: AppColors.cosmicPink,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '$coins',
                       style: const TextStyle(
-                        color: AppColors.primaryPurple,
+                        color: AppColors.cosmicPink,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -421,13 +421,13 @@ class _HistoryScreenClientState extends State<HistoryScreenClient>
                 decoration: BoxDecoration(
                   color: isUpcoming
                       ? Colors.green.withOpacity(0.2)
-                      : AppColors.primaryPurple.withOpacity(0.2),
+                      : AppColors.cosmicPink.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   status,
                   style: TextStyle(
-                    color: isUpcoming ? Colors.green : AppColors.primaryPurple,
+                    color: isUpcoming ? Colors.green : AppColors.cosmicPink,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -495,13 +495,13 @@ class _HistoryScreenClientState extends State<HistoryScreenClient>
                   Icon(
                     Icons.monetization_on,
                     size: 16,
-                    color: AppColors.primaryPurple,
+                    color: AppColors.cosmicPink,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '$coins coins',
                     style: const TextStyle(
-                      color: AppColors.primaryPurple,
+                      color: AppColors.cosmicPink,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -579,13 +579,13 @@ class _HistoryScreenClientState extends State<HistoryScreenClient>
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryPurple.withOpacity(0.2),
+                          color: AppColors.cosmicPink.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           method,
                           style: const TextStyle(
-                            color: AppColors.primaryPurple,
+                            color: AppColors.cosmicPink,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),

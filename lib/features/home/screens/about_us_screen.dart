@@ -1,4 +1,5 @@
 import 'package:chat_jyotishi/features/app_widgets/app_logo.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:chat_jyotishi/constants/constant.dart';
@@ -51,6 +52,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
       body: Stack(
         children: [
           buildGradientBackground(),
+          buildNightModeOverlay(),
           SafeArea(
             child: Column(
               children: [
@@ -118,13 +120,13 @@ class _AboutUsScreenState extends State<AboutUsScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.cosmicPink.withOpacity(0.2),
             AppColors.deepPurple.withOpacity(0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.primaryPurple.withOpacity(0.3),
+          color: AppColors.cosmicPurple.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -136,7 +138,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  gradient: AppColors.cosmicHeroGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -241,7 +243,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.cosmicPink.withOpacity(0.2),
             AppColors.deepPurple.withOpacity(0.1),
           ],
         ),
@@ -253,7 +255,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.cosmicHeroGradient,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: Colors.white, size: 24),
@@ -303,7 +305,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  gradient: AppColors.cosmicHeroGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -354,7 +356,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.cosmicPink.withOpacity(0.2),
             AppColors.deepPurple.withOpacity(0.1),
           ],
         ),
@@ -393,7 +395,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
       children: [
         ShaderMask(
           shaderCallback: (bounds) =>
-              AppColors.primaryGradient.createShader(bounds),
+              AppColors.cosmicHeroGradient.createShader(bounds),
           child: Text(
             number,
             style: const TextStyle(
@@ -456,7 +458,7 @@ class _AboutUsScreenState extends State<AboutUsScreen>
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
+            gradient: AppColors.cosmicHeroGradient,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: Colors.white, size: 18),

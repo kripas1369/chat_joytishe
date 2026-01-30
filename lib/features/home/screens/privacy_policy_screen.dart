@@ -163,14 +163,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.cosmicPink.withOpacity(0.2),
             AppColors.deepPurple.withOpacity(0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.primaryPurple.withOpacity(0.3),
-          width: 1,
+          color: AppColors.cosmicPink.withOpacity(0.3),
+          width: 1.5,
         ),
       ),
       child: Row(
@@ -178,7 +178,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.cosmicHeroGradient,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -221,7 +221,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.cosmicPink.withOpacity(0.2),
             AppColors.deepPurple.withOpacity(0.1),
           ],
         ),
@@ -261,7 +261,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withOpacity(0.2),
+            AppColors.cosmicPink.withOpacity(0.2),
             AppColors.deepPurple.withOpacity(0.1),
           ],
         ),
@@ -279,7 +279,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  gradient: AppColors.cosmicHeroGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -320,7 +320,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   Widget _buildContactItem(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, color: AppColors.primaryPurple, size: 18),
+        Icon(icon, color: AppColors.cosmicPink, size: 18),
         const SizedBox(width: 12),
         Text(
           text,

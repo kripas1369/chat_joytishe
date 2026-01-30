@@ -8,11 +8,11 @@ Widget buildAppLogo() {
         height: 150,
         width: 150,
         decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          gradient: AppColors.cosmicHeroGradient,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryPurple.withOpacity(0.3),
+              color: AppColors.cosmicPink.withOpacity(0.3),
               blurRadius: 20,
               spreadRadius: 2,
             ),
@@ -24,8 +24,8 @@ Widget buildAppLogo() {
       ),
       const SizedBox(height: 20),
       ShaderMask(
-        shaderCallback: (bounds) => const LinearGradient(
-          colors: [Colors.white, AppColors.lightPurple],
+        shaderCallback: (bounds) =>  LinearGradient(
+          colors: [Colors.white, AppColors.cosmicPink],
         ).createShader(bounds),
         child: const Text(
           'ChatJyotishi',

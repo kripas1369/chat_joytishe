@@ -1,5 +1,6 @@
 // lib/features/support/screens/help_support_screen.dart
 
+import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:chat_jyotishi/constants/constant.dart';
@@ -73,6 +74,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
       body: Stack(
         children: [
           buildGradientBackground(),
+          buildNightModeOverlay(),
           SafeArea(
             child: Column(
               children: [
@@ -140,7 +142,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           icon: Icons.email_rounded,
           title: 'Email Support',
           subtitle: 'support@chatjyotishi.com',
-          gradient: AppColors.featureCardGradient1,
+          gradient: AppColors.cosmicCardGradient,
           // onTap: () => _launchEmail(),
           onTap: () {},
         ),
@@ -149,7 +151,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           icon: Icons.phone_rounded,
           title: 'Call Us',
           subtitle: '+977 01-XXXXXXX',
-          gradient: AppColors.featureCardGradient2,
+          gradient: AppColors.cosmicCardGradient,
           // onTap: () => _launchPhone(),
           onTap: () {},
         ),
@@ -279,7 +281,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.cosmicPink.withOpacity(0.5),
+            AppColors.deepPurple.withOpacity(0.5),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isExpanded
@@ -321,9 +330,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         isExpanded
                             ? Icons.keyboard_arrow_up_rounded
                             : Icons.keyboard_arrow_down_rounded,
-                        color: isExpanded
-                            ? AppColors.primaryPurple
-                            : AppColors.textMuted,
+                        color: isExpanded ? AppColors.cosmicPink : Colors.white,
                       ),
                     ],
                   ),
@@ -332,7 +339,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryPurple.withOpacity(0.1),
+                        color: AppColors.cardDark.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(

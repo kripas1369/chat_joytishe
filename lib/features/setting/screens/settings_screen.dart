@@ -1,3 +1,5 @@
+import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
+import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:chat_jyotishi/constants/constant.dart';
@@ -28,10 +30,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       body: Stack(
         children: [
+          // StarFieldBackground(),
           buildGradientBackground(),
+          // Container(
+          //   decoration: BoxDecoration(
+          //     gradient: LinearGradient(
+          //       begin: Alignment.topCenter,
+          //       end: Alignment.bottomCenter,
+          //       colors: [
+          //         Colors.black.withOpacity(0.7),
+          //         AppColors.cosmicPurple.withOpacity(0.3),
+          //         Colors.black.withOpacity(0.9),
+          //       ],
+          //       stops: const [0.0, 0.5, 1.0],
+          //     ),
+          //   ),
+          // ),
+          buildNightModeOverlay(),
           SafeArea(
             child: Column(
               children: [
@@ -220,14 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primaryPurple.withOpacity(0.15),
-                AppColors.deepPurple.withOpacity(0.08),
-              ],
-            ),
+            gradient: AppColors.cardGradient,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
           ),
@@ -253,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
+                gradient: AppColors.cosmicHeroGradient,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: Colors.white, size: 20),
@@ -296,7 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.cosmicHeroGradient,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: Colors.white, size: 20),
@@ -315,8 +325,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primaryPurple,
-            activeTrackColor: AppColors.primaryPurple.withOpacity(0.5),
+            activeColor: AppColors.cosmicPink,
+            activeTrackColor: AppColors.cosmicPink.withOpacity(0.5),
           ),
         ],
       ),

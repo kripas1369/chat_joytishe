@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:chat_jyotishi/constants/constant.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_background_gradient.dart';
+import 'package:chat_jyotishi/features/app_widgets/app_night_mode_overlay.dart';
 import 'package:chat_jyotishi/features/home/screens/welcome_screen.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_bloc.dart';
 import 'package:chat_jyotishi/features/profile/bloc/profile_events.dart';
@@ -190,11 +192,8 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
           backgroundColor: AppColors.backgroundDark,
           body: Stack(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  gradient: AppColors.backgroundGradient,
-                ),
-              ),
+              buildGradientBackground(),
+              buildNightModeOverlay(),
               Positioned(
                 top: -100,
                 left: -50,
@@ -207,7 +206,7 @@ class _UserProfileScreenContentState extends State<UserProfileScreenContent>
                       decoration: BoxDecoration(
                         gradient: RadialGradient(
                           colors: [
-                            AppColors.primaryPurple.withOpacity(
+                            AppColors.cosmicPink.withOpacity(
                               0.15 * _pulseAnimation.value,
                             ),
                             Colors.transparent,

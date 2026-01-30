@@ -40,14 +40,14 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _hasFocus
-                ? AppColors.primaryPurple.withOpacity(0.5)
+                ? AppColors.cosmicPink.withOpacity(0.5)
                 : Colors.white.withOpacity(0.08),
             width: _hasFocus ? 1.5 : 1,
           ),
           boxShadow: _hasFocus
               ? [
                   BoxShadow(
-                    color: AppColors.primaryPurple.withOpacity(0.15),
+                    color: AppColors.cosmicPink.withOpacity(0.15),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -66,7 +66,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
             labelText: widget.label,
             hintText: widget.hint,
             labelStyle: TextStyle(
-              color: _hasFocus ? AppColors.primaryPurple : AppColors.textMuted,
+              color: _hasFocus ? AppColors.cosmicPink : AppColors.textMuted,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -75,9 +75,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
               padding: const EdgeInsets.only(left: 16, right: 12),
               child: Icon(
                 Icons.lock_outline,
-                color: _hasFocus
-                    ? AppColors.primaryPurple
-                    : AppColors.textMuted,
+                color: _hasFocus ? AppColors.cosmicPink : AppColors.textMuted,
                 size: 22,
               ),
             ),
@@ -85,7 +83,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
               icon: Icon(
                 widget.isVisible ? Icons.visibility : Icons.visibility_off,
                 color: _hasFocus
-                    ? AppColors.primaryPurple.withOpacity(0.7)
+                    ? AppColors.cosmicPink.withOpacity(0.7)
                     : Colors.white70,
               ),
               onPressed: widget.onVisibilityToggle,

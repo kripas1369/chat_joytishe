@@ -52,6 +52,13 @@ class AppColors {
     end: Alignment.bottomRight,
     colors: [primaryPurple, deepPurple],
   );
+  static const LinearGradient cosmicCardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppColors.cosmicPink, AppColors.deepPurple],
+  );
+
+  //0.2,0.1 opacity
   static const LinearGradient featureCardGradient2 = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,

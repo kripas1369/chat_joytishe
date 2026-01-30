@@ -345,7 +345,7 @@ class _AppTextFieldState extends State<AppTextField> {
           boxShadow: _hasFocus
               ? [
                   BoxShadow(
-                    color: AppColors.primaryPurple.withOpacity(0.15),
+                    color: AppColors.cosmicPink.withOpacity(0.15),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -478,7 +478,7 @@ class _GenderOption extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.primaryPurple.withOpacity(0.3),
+                    AppColors.cosmicPink.withOpacity(0.3),
                     AppColors.deepPurple.withOpacity(0.2),
                   ],
                 )
@@ -724,7 +724,7 @@ class _ImageSourceOption extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
+                gradient: AppColors.cosmicHeroGradient,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: Colors.white, size: 28),
@@ -808,7 +808,7 @@ class ProfileCompletionCard extends StatelessWidget {
                 child: Text(
                   '${(percentage * 100).round()}%',
                   style: const TextStyle(
-                    color: AppColors.lightPurple,
+                    color: AppColors.cosmicPink,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
