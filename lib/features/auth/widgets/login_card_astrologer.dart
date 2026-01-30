@@ -25,8 +25,12 @@ class LoginCardAstrologer extends StatefulWidget {
 }
 
 class _LoginCardAstrologerState extends State<LoginCardAstrologer> {
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  TextEditingController emailController = TextEditingController(
+    text: "jyotish@gmail.com",
+  );
+  TextEditingController passwordController = TextEditingController(
+    text: "Admin@123",
+  );
   bool isLoading = false;
 
   @override
@@ -48,9 +52,7 @@ class _LoginCardAstrologerState extends State<LoginCardAstrologer> {
               context: context,
               barrierDismissible: false,
               builder: (_) => Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.cosmicPurple,
-                ),
+                child: CircularProgressIndicator(color: AppColors.cosmicPurple),
               ),
             );
           }

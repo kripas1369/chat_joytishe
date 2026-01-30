@@ -41,14 +41,25 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp();
+  // Initialize Firebase (optional - app runs without it if config missing)
+  bool firebaseInitialized = false;
+  try {
+    await Firebase.initializeApp();
+    firebaseInitialized = true;
+  } catch (e) {
+    debugPrint('Firebase initialization skipped: $e');
+  }
 
-  // Setup background message handler
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-  // Initialize notification service
-  await NotificationService().initialize();
+  if (firebaseInitialized) {
+    // Setup background message handler
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    // Initialize notification service
+    try {
+      await NotificationService().initialize();
+    } catch (e) {
+      debugPrint('NotificationService init skipped: $e');
+    }
+  }
 
   runApp(MyApp());
 }

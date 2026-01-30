@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math';
+import 'dart:ui';
 import 'package:chat_jyotishi/constants/api_endpoints.dart';
 import 'package:chat_jyotishi/features/auth/screens/login_screen_astrologer.dart';
 import 'package:chat_jyotishi/features/chat/service/socket_service.dart';
@@ -8,6 +10,7 @@ import 'package:chat_jyotishi/features/home/widgets/drawer_item.dart';
 import 'package:chat_jyotishi/features/home/widgets/notification_button.dart';
 import 'package:chat_jyotishi/features/notification/services/notification_service.dart';
 import 'package:chat_jyotishi/features/chat_astrologer/service/astrologer_chat_service.dart';
+import 'package:chat_jyotishi/features/app_widgets/star_field_background.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
@@ -32,8 +35,16 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
+  late AnimationController _gradientShiftController;
+  late AnimationController _floatController;
   late Animation<double> _pulseAnimation;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _gradientShiftAnimation;
+  late Animation<double> _floatAnimation;
+
+  // Scroll controller for app bar opacity
+  final ScrollController _scrollController = ScrollController();
+  double _appBarOpacity = 0.0;
 
   bool isOnline = false;
   bool _isTogglingStatus = false;
@@ -50,6 +61,9 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   // Track shown instant chat request IDs to prevent duplicate dialogs
   final Set<String> _shownInstantChatRequestIds = {};
   bool _isInstantChatDialogShowing = false;
+
+  // Track chat IDs that have already shown accept/reject dialog (for one-to-one chats)
+  final Set<String> _shownChatDialogIds = {};
 
   // Real-time chat/notification badge count (from `notification:new`)
   int _realtimeNotificationCount = 0;
@@ -395,17 +409,19 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         final senderId = metaMap['senderId']?.toString();
         final notifId = map['id']?.toString();
 
-        // Only show accept/reject dialog for the FIRST message (new chat)
-        // If count > 1, it's an ongoing conversation - just show snackbar
-        final messageCount = incomingCount is int
-            ? incomingCount
-            : (int.tryParse(incomingCount?.toString() ?? '') ?? 0);
+        // Only show accept/reject dialog for the FIRST message from this chat
+        // Check if we've already shown the dialog for this chatId
+        final bool isFirstTimeForThisChat = chatId != null &&
+            !_shownChatDialogIds.contains(chatId);
 
-        if (messageCount == 1 &&
+        debugPrint('📋 Chat notification - chatId: $chatId, isFirstTime: $isFirstTimeForThisChat');
+
+        if (isFirstTimeForThisChat &&
             notifId != null &&
-            chatId != null &&
             senderId != null) {
-          // First message - new chat request, show accept/reject dialog
+          // First message from this chat - show accept/reject dialog
+          _shownChatDialogIds.add(chatId);
+          debugPrint('✅ Added chatId to shown dialogs: $chatId');
           _showChatMessageDialog(
             notificationId: notifId,
             chatId: chatId,
@@ -949,7 +965,25 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   Future<void> _toggleOnlineStatus(bool newStatus) async {
     if (_isTogglingStatus) return;
 
+    // Check if we have valid tokens
+    if (accessToken.isEmpty) {
+      debugPrint('⚠️ Toggle online status failed: accessToken is empty');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please login again to update your status'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isTogglingStatus = true);
+
+    debugPrint('🔄 Toggling online status to: $newStatus');
+    debugPrint('📍 API URL: ${ApiEndpoints.baseUrl}/astrologer/toggle-online');
+    debugPrint('🔑 Access token present: ${accessToken.isNotEmpty}');
 
     try {
       final response = await http.post(
@@ -991,6 +1025,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
           });
           // Clear shown request IDs when going offline
           _shownInstantChatRequestIds.clear();
+          _shownChatDialogIds.clear();
           // Remove listeners when going offline
           _removeRealtimeNotificationListeners();
           // Disable local notifications when offline
@@ -1011,8 +1046,27 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
         }
       } else {
         // API error
-        final errorBody = jsonDecode(response.body);
-        final errorMessage = errorBody['message'] ?? 'Failed to update status';
+        debugPrint('❌ Toggle online status failed with status: ${response.statusCode}');
+
+        String errorMessage = 'Failed to update status';
+
+        // Handle specific status codes
+        if (response.statusCode == 401) {
+          errorMessage = 'Session expired. Please login again.';
+          debugPrint('⚠️ Token expired or invalid. Need to re-login.');
+        } else {
+          // Try to parse error message from response
+          try {
+            final errorBody = jsonDecode(response.body);
+            errorMessage = errorBody['message'] ??
+                          errorBody['error']?['message'] ??
+                          'Failed to update status (${response.statusCode})';
+          } catch (parseError) {
+            errorMessage = 'Failed to update status (${response.statusCode})';
+            debugPrint('Error parsing response body: $parseError');
+          }
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
@@ -1214,6 +1268,7 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
   }
 
   void _initAnimations() {
+    // Fade in animation
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -1222,15 +1277,48 @@ class _HomeScreenAstrologerState extends State<HomeScreenAstrologer>
       parent: _fadeController,
       curve: Curves.easeOut,
     );
+
+    // Pulse animation for glowing effects
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+    _pulseAnimation = Tween<double>(begin: 0.2, end: 0.4).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    // Gradient shift animation
+    _gradientShiftController = AnimationController(
+      duration: const Duration(seconds: 5),
+      vsync: this,
+    )..repeat();
+    _gradientShiftAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _gradientShiftController, curve: Curves.linear),
+    );
+
+    // Float animation for cards
+    _floatController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat(reverse: true);
+    _floatAnimation = Tween<double>(begin: 0.0, end: -8.0).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+    );
+
+    // Scroll listener for app bar opacity
+    _scrollController.addListener(_onScroll);
+
     _fadeController.forward();
+  }
+
+  void _onScroll() {
+    final offset = _scrollController.offset;
+    final newOpacity = (offset / 100).clamp(0.0, 1.0);
+    if (_appBarOpacity != newOpacity) {
+      setState(() {
+        _appBarOpacity = newOpacity;
+      });
+    }
   }
 
   @override

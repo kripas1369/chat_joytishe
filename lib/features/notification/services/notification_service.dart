@@ -23,7 +23,8 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  /// Set only after Firebase is initialized (in initialize())
+  FirebaseMessaging? _fcm;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -65,11 +66,18 @@ class NotificationService {
     enableVibration: true,
   );
 
-  /// Initialize notification service
+  /// Initialize notification service (only when Firebase is already initialized)
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     try {
+      // Use Firebase only if it has been initialized (e.g. by main())
+      if (Firebase.apps.isEmpty) {
+        debugPrint('NotificationService: Firebase not initialized, skipping FCM');
+        return;
+      }
+      _fcm = FirebaseMessaging.instance;
+
       // Request permission
       await _requestPermission();
 
@@ -88,7 +96,8 @@ class NotificationService {
 
   /// Request notification permissions
   Future<void> _requestPermission() async {
-    final settings = await _fcm.requestPermission(
+    if (_fcm == null) return;
+    final settings = await _fcm!.requestPermission(
       alert: true,
       badge: true,
       sound: true,
@@ -151,6 +160,8 @@ class NotificationService {
 
   /// Setup Firebase Cloud Messaging handlers
   void _setupFirebaseMessaging() {
+    if (_fcm == null) return;
+    final fcm = _fcm!;
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen((message) {
       debugPrint('Foreground message: ${message.notification?.title}');
@@ -164,7 +175,7 @@ class NotificationService {
     });
 
     // Handle initial notification (app opened from terminated state)
-    _fcm.getInitialMessage().then((message) {
+    fcm.getInitialMessage().then((message) {
       if (message != null) {
         debugPrint('Initial message: ${message.notification?.title}');
         _handleMessageOpen(message);
@@ -172,7 +183,7 @@ class NotificationService {
     });
 
     // Listen for token refresh
-    _fcm.onTokenRefresh.listen((newToken) {
+    fcm.onTokenRefresh.listen((newToken) {
       debugPrint('FCM Token refreshed: $newToken');
       _registerTokenWithBackend(newToken);
     });
@@ -276,8 +287,9 @@ class NotificationService {
 
   /// Get FCM token
   Future<String?> getToken() async {
+    if (_fcm == null) return null;
     try {
-      final token = await _fcm.getToken();
+      final token = await _fcm!.getToken();
       debugPrint('FCM Token: $token');
       return token;
     } catch (e) {
@@ -288,8 +300,9 @@ class NotificationService {
 
   /// Subscribe to topic (e.g., astrologer-specific notifications)
   Future<void> subscribeToTopic(String topic) async {
+    if (_fcm == null) return;
     try {
-      await _fcm.subscribeToTopic(topic);
+      await _fcm!.subscribeToTopic(topic);
       debugPrint('Subscribed to topic: $topic');
     } catch (e) {
       debugPrint('Error subscribing to topic: $e');
@@ -298,8 +311,9 @@ class NotificationService {
 
   /// Unsubscribe from topic
   Future<void> unsubscribeFromTopic(String topic) async {
+    if (_fcm == null) return;
     try {
-      await _fcm.unsubscribeFromTopic(topic);
+      await _fcm!.unsubscribeFromTopic(topic);
       debugPrint('Unsubscribed from topic: $topic');
     } catch (e) {
       debugPrint('Error unsubscribing from topic: $e');
